@@ -1,0 +1,4 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:Button text="Host" name="HostButton" selectable="true" style="height: 56px; width: 241px; align-content: auto; align-items: auto;"/>
+    <ui:Button text="Client" name="ClientButton" style="width: 239px; height: 66px; align-items: stretch; align-content: auto;"/>
+</ui:UXML>

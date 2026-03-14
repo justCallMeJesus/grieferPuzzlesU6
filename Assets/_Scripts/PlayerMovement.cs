@@ -1,9 +1,10 @@
 using Unity.Cinemachine;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour
 {
     public enum PlayerMovementState
     {
@@ -33,6 +34,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (!IsOwner) return;
         currentMode.Tick(this);
     }
 
@@ -51,7 +53,7 @@ public class PlayerMovement : MonoBehaviour
             Vector2 inputVector = player.Move.action.ReadValue<Vector2>().normalized;
             Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
 
-            moveDir = Quaternion.AngleAxis(player.freeLook.HorizontalAxis.Value, Vector3.up) * moveDir;
+            //moveDir = Quaternion.AngleAxis(player.freeLook.HorizontalAxis.Value, Vector3.up) * moveDir;
 
             // player speed
             float moveDistance = player.speed * Time.deltaTime;
