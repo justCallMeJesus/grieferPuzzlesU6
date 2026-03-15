@@ -1,17 +1,83 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class Item : MonoBehaviour, IInteractable
+public class Item : NetworkBehaviour, IInteractable
 {
     public ItemData ItemData;
-
     public GameObject GameObject => this.gameObject;
 
-    public void OnInteract(PlayerInventory player)
-    {
-        // try pickup
-        player.smallItemInventory[0] = ItemData;
-        Destroy(gameObject);
+    // [AI] Syncs collected state across all clients, including late joiners
+    private NetworkVariable<bool> isCollected = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
+    // [AI] Called when this object is spawned on the network (including late joiners)
+    public override void OnNetworkSpawn()
+    {
+        // [AI] Subscribe to future changes
+        isCollected.OnValueChanged += OnCollectedChanged;
+        // [AI] Apply current state immediately (handles late joiners)
+        gameObject.SetActive(!isCollected.Value);
     }
 
+    // [AI] Called on every client whenever isCollected changes
+    private void OnCollectedChanged(bool previous, bool current)
+    {
+        gameObject.SetActive(!current);
+    }
+
+    // Called when a player interacts with this item
+    public void OnInteract(PlayerInventory player)
+    {
+        if(!player.HasSpace()) { return; }
+
+        // Add item to player's inventory
+        for (int i = 0; i < player.smallItemInventory.Length; i++)
+        {
+            if (player.smallItemInventory[i] == null)
+            {
+                RequestPickup(player, i);
+                RequestDestroy();
+                return;
+            }
+        }
+        RequestDestroy();
+    }
+     
+    // Initiates the networked removal of this item
+    public void RequestDestroy()
+    {
+        DestroyRpc();
+    }
+
+    // [AI] Runs on the server — marks item as collected and hides it
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void DestroyRpc()
+    {
+        // [AI] Setting this to true syncs to all current and future clients,
+        // triggering OnCollectedChanged which hides the object on each client
+        isCollected.Value = true;
+        gameObject.SetActive(false);
+    }
+
+    public void RequestPickup(PlayerInventory player, int slot)
+    {
+        PickupRpc(player.NetworkObject, slot);
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void PickupRpc(NetworkObjectReference playerRef, int slot)
+    {
+        if (isCollected.Value) return; // prevent double pickup
+
+        if (playerRef.TryGet(out NetworkObject playerNetObj))
+        {
+            PlayerInventory inventory = playerNetObj.GetComponent<PlayerInventory>();
+            inventory.smallItemInventory[slot] = ItemData;
+        }
+
+        isCollected.Value = true;
+    }
 }

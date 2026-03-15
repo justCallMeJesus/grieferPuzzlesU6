@@ -618,7 +618,7 @@ MonoBehaviour:
   m_MaxConnectAttempts: 60
   m_DisconnectTimeoutMS: 30000
   ConnectionData:
-    Address: 192.168.1.157
+    Address: 127.0.0.1
     Port: 7777
     ServerListenAddress: 127.0.0.1
     ClientBindPort: 0
@@ -1043,6 +1043,18 @@ PrefabInstance:
     - target: {fileID: 7829726129052758184, guid: e643239f5b3ada3488c987aca8809a3d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 25.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 8523617712005554088, guid: e643239f5b3ada3488c987aca8809a3d, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 533910660
+      objectReference: {fileID: 0}
+    - target: {fileID: 8523617712005554088, guid: e643239f5b3ada3488c987aca8809a3d, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8523617712005554088, guid: e643239f5b3ada3488c987aca8809a3d, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 3315846403
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

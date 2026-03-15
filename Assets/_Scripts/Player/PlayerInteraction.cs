@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerInteraction : MonoBehaviour
+public class PlayerInteraction : NetworkBehaviour
 {
 
     [SerializeField] private float interactRadius;
@@ -31,6 +32,7 @@ public class PlayerInteraction : MonoBehaviour
     }
     private void Action_performed(InputAction.CallbackContext obj)
     {
+        if(!IsOwner) { return; }
         // try interact
         if (closestInteractableInRange != null)
         {
