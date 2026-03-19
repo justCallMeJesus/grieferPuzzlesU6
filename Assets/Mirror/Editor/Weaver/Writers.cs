@@ -33,24 +33,12 @@ namespace Mirror.Weaver
 
         public void Register(TypeReference dataType, MethodReference methodReference)
         {
-            // sometimes we define multiple write methods for the same type.
-            // for example:
-            //   WriteInt()     // alwasy writes 4 bytes: should be available to the user for binary protocols etc.
-            //   WriteVarInt()  // varint compression: we may want Weaver to always use this for minimal bandwidth
-            // give the user a way to define the weaver prefered one if two exists:
-            //   "[WeaverPriority]" attribute is automatically detected and prefered.
-            MethodDefinition methodDefinition = methodReference.Resolve();
-            bool priority = methodDefinition.HasCustomAttribute<WeaverPriorityAttribute>();
-            // if (priority) Log.Warning($"Weaver: Registering priority Write<{dataType.FullName}> with {methodReference.FullName}.", methodReference);
-
-            // Weaver sometimes calls Register for <T> multiple times because we resolve assemblies multiple times.
-            // if the function name is the same: always use the latest one.
-            // if the function name differes: use the priority one.
-            if (writeFuncs.TryGetValue(dataType, out MethodReference existingMethod) && // if it was already defined
-                existingMethod.FullName != methodReference.FullName && // and this one is a different name
-                !priority) // and it's not the priority one
+            if (writeFuncs.ContainsKey(dataType))
             {
-                return; // then skip
+                // TODO enable this again later.
+                // Writer has some obsolete functions that were renamed.
+                // Don't want weaver warnings for all of them.
+                //Log.Warning($"Registering a Write method for {dataType.FullName} when one already exists", methodReference);
             }
 
             // we need to import type when we Initialize Writers so import here in case it is used anywhere else
@@ -126,17 +114,8 @@ namespace Mirror.Weaver
 
                 return GenerateCollectionWriter(variableReference, elementType, nameof(NetworkWriterExtensions.WriteList), ref WeavingFailed);
             }
-            if (variableReference.Is(typeof(HashSet<>)))
-            {
-                GenericInstanceType genericInstance = (GenericInstanceType)variableReference;
-                TypeReference elementType = genericInstance.GenericArguments[0];
 
-                return GenerateCollectionWriter(variableReference, elementType, nameof(NetworkWriterExtensions.WriteHashSet), ref WeavingFailed);
-            }
-
-            // handle both NetworkBehaviour and inheritors.
-            // fixes: https://github.com/MirrorNetworking/Mirror/issues/2939
-            if (variableReference.IsDerivedFrom<NetworkBehaviour>() || variableReference.Is<NetworkBehaviour>())
+            if (variableReference.IsDerivedFrom<NetworkBehaviour>())
             {
                 return GetNetworkBehaviourWriter(variableReference);
             }

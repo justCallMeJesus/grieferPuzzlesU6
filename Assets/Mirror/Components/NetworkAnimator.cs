@@ -13,8 +13,8 @@ namespace Mirror
     /// <para>If the object has authority on the server, then it should be animated on the server and state information will be sent to all clients. This is common for objects not related to a specific client, such as an enemy unit.</para>
     /// <para>The NetworkAnimator synchronizes all animation parameters of the selected Animator. It does not automatically synchronize triggers. The function SetTrigger can by used by an object with authority to fire an animation trigger on other clients.</para>
     /// </remarks>
-    // [RequireComponent(typeof(NetworkIdentity))] disabled to allow child NetworkBehaviours
     [AddComponentMenu("Network/Network Animator")]
+    [RequireComponent(typeof(NetworkIdentity))]
     [HelpURL("https://mirror-networking.gitbook.io/docs/components/network-animator")]
     public class NetworkAnimator : NetworkBehaviour
     {
@@ -31,12 +31,11 @@ namespace Mirror
         public Animator animator;
 
         /// <summary>
-        /// Syncs animator.speed.
-        /// Default to 1 because Animator.speed defaults to 1.
+        /// Syncs animator.speed
         /// </summary>
         [SyncVar(hook = nameof(OnAnimatorSpeedChanged))]
-        float animatorSpeed = 1f;
-        float previousSpeed = 1f;
+        float animatorSpeed;
+        float previousSpeed;
 
         // Note: not an object[] array because otherwise initialization is real annoying
         int[] lastIntParameters;
@@ -68,11 +67,11 @@ namespace Mirror
                         return true;
                 }
 
-                return (isOwned && clientAuthority);
+                return (hasAuthority && clientAuthority);
             }
         }
 
-        void Initialize()
+        void Awake()
         {
             // store the animator parameters in a variable - the "Animator.parameters" getter allocates
             // a new parameter array every time it is accessed so we should avoid doing it in a loop
@@ -86,17 +85,6 @@ namespace Mirror
             animationHash = new int[animator.layerCount];
             transitionHash = new int[animator.layerCount];
             layerWeight = new float[animator.layerCount];
-        }
-
-        // fix https://github.com/MirrorNetworking/Mirror/issues/2810
-        // both Awake and Enable need to initialize arrays.
-        // in case users call SetActive(false) -> SetActive(true).
-        void Awake() => Initialize();
-        void OnEnable() => Initialize();
-
-        public virtual void Reset()
-        {
-            syncDirection = SyncDirection.ClientToServer;
         }
 
         void FixedUpdate()
@@ -149,7 +137,7 @@ namespace Mirror
         {
             // skip if host or client with authority
             // they will have already set the speed so don't set again
-            if (isServer || (isOwned && clientAuthority))
+            if (isServer || (hasAuthority && clientAuthority))
                 return;
 
             animator.speed = value;
@@ -239,7 +227,7 @@ namespace Mirror
 
         void HandleAnimMsg(int stateHash, float normalizedTime, int layerId, float weight, NetworkReader reader)
         {
-            if (isOwned && clientAuthority)
+            if (hasAuthority && clientAuthority)
                 return;
 
             // usually transitions will be triggered by parameters, if not, play anims directly.
@@ -257,7 +245,7 @@ namespace Mirror
 
         void HandleAnimParamsMsg(NetworkReader reader)
         {
-            if (isOwned && clientAuthority)
+            if (hasAuthority && clientAuthority)
                 return;
 
             ReadParameters(reader);
@@ -314,18 +302,9 @@ namespace Mirror
 
         bool WriteParameters(NetworkWriter writer, bool forceAll = false)
         {
-            // fix: https://github.com/MirrorNetworking/Mirror/issues/2852
-            // serialize parameterCount to be 100% sure we deserialize correct amount of bytes.
-            // (255 parameters should be enough for everyone, write it as byte)
-            byte parameterCount = (byte)parameters.Length;
-            writer.WriteByte(parameterCount);
-
             ulong dirtyBits = forceAll ? (~0ul) : NextDirtyBits();
             writer.WriteULong(dirtyBits);
-
-            // iterate on byte count. if it's >256, it won't break
-            // serialization - just not serialize excess layers.
-            for (int i = 0; i < parameterCount; i++)
+            for (int i = 0; i < parameters.Length; i++)
             {
                 if ((dirtyBits & (1ul << i)) == 0)
                     continue;
@@ -352,20 +331,11 @@ namespace Mirror
 
         void ReadParameters(NetworkReader reader)
         {
-            // fix: https://github.com/MirrorNetworking/Mirror/issues/2852
-            // serialize parameterCount to be 100% sure we deserialize correct amount of bytes.
-            // mismatch shows error to make this super easy to debug.
-            byte parameterCount = reader.ReadByte();
-            if (parameterCount != parameters.Length)
-            {
-                Debug.LogError($"NetworkAnimator: serialized parameter count={parameterCount} does not match expected parameter count={parameters.Length}. Are you changing animators at runtime?", gameObject);
-                return;
-            }
-
             bool animatorEnabled = animator.enabled;
             // need to read values from NetworkReader even if animator is disabled
+
             ulong dirtyBits = reader.ReadULong();
-            for (int i = 0; i < parameterCount; i++)
+            for (int i = 0; i < parameters.Length; i++)
             {
                 if ((dirtyBits & (1ul << i)) == 0)
                     continue;
@@ -392,54 +362,54 @@ namespace Mirror
             }
         }
 
-        public override void OnSerialize(NetworkWriter writer, bool initialState)
+        /// <summary>
+        /// Custom Serialization
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <param name="initialState"></param>
+        /// <returns></returns>
+        public override bool OnSerialize(NetworkWriter writer, bool initialState)
         {
-            base.OnSerialize(writer, initialState);
+            bool changed = base.OnSerialize(writer, initialState);
             if (initialState)
             {
-                // fix: https://github.com/MirrorNetworking/Mirror/issues/2852
-                // serialize layerCount to be 100% sure we deserialize correct amount of bytes.
-                // (255 layers should be enough for everyone, write it as byte)
-                byte layerCount = (byte)animator.layerCount;
-                writer.WriteByte(layerCount);
-
-                // iterate on byte count. if it's >256, it won't break
-                // serialization - just not serialize excess layers.
-                for (int i = 0; i < layerCount; i++)
+                for (int i = 0; i < animator.layerCount; i++)
                 {
-                    AnimatorStateInfo st = animator.IsInTransition(i)
-                        ? animator.GetNextAnimatorStateInfo(i)
-                        : animator.GetCurrentAnimatorStateInfo(i);
-                    writer.WriteInt(st.fullPathHash);
-                    writer.WriteFloat(st.normalizedTime);
+                    if (animator.IsInTransition(i))
+                    {
+                        AnimatorStateInfo st = animator.GetNextAnimatorStateInfo(i);
+                        writer.WriteInt(st.fullPathHash);
+                        writer.WriteFloat(st.normalizedTime);
+                    }
+                    else
+                    {
+                        AnimatorStateInfo st = animator.GetCurrentAnimatorStateInfo(i);
+                        writer.WriteInt(st.fullPathHash);
+                        writer.WriteFloat(st.normalizedTime);
+                    }
                     writer.WriteFloat(animator.GetLayerWeight(i));
                 }
-                WriteParameters(writer, true);
+                WriteParameters(writer, initialState);
+                return true;
             }
+            return changed;
         }
 
+        /// <summary>
+        /// Custom Deserialization
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="initialState"></param>
         public override void OnDeserialize(NetworkReader reader, bool initialState)
         {
             base.OnDeserialize(reader, initialState);
             if (initialState)
             {
-                // fix: https://github.com/MirrorNetworking/Mirror/issues/2852
-                // serialize layerCount to be 100% sure we deserialize correct amount of bytes.
-                // mismatch shows error to make this super easy to debug.
-                byte layerCount = reader.ReadByte();
-                if (layerCount != animator.layerCount)
-                {
-                    Debug.LogError($"NetworkAnimator: serialized layer count={layerCount} does not match expected layer count={animator.layerCount}. Are you changing animators at runtime?", gameObject);
-                    return;
-                }
-
-                for (int i = 0; i < layerCount; i++)
+                for (int i = 0; i < animator.layerCount; i++)
                 {
                     int stateHash = reader.ReadInt();
                     float normalizedTime = reader.ReadFloat();
-                    float weight = reader.ReadFloat();
-
-                    animator.SetLayerWeight(i, weight);
+                    animator.SetLayerWeight(i, reader.ReadFloat());
                     animator.Play(stateHash, i, normalizedTime);
                 }
 
@@ -467,13 +437,13 @@ namespace Mirror
             {
                 if (!isClient)
                 {
-                    Debug.LogWarning("Tried to set animation in the server for a client-controlled animator", gameObject);
+                    Debug.LogWarning("Tried to set animation in the server for a client-controlled animator");
                     return;
                 }
 
-                if (!isOwned)
+                if (!hasAuthority)
                 {
-                    Debug.LogWarning("Only the client with authority can set animations", gameObject);
+                    Debug.LogWarning("Only the client with authority can set animations");
                     return;
                 }
 
@@ -487,7 +457,7 @@ namespace Mirror
             {
                 if (!isServer)
                 {
-                    Debug.LogWarning("Tried to set animation in the client for a server-controlled animator", gameObject);
+                    Debug.LogWarning("Tried to set animation in the client for a server-controlled animator");
                     return;
                 }
 
@@ -506,7 +476,9 @@ namespace Mirror
             ResetTrigger(Animator.StringToHash(triggerName));
         }
 
-        /// <summary>Causes an animation trigger to be reset for a networked object.</summary>
+        /// <summary>
+        /// Causes an animation trigger to be reset for a networked object.
+        /// </summary>
         /// <param name="hash">Hash id of trigger (from the Animator).</param>
         public void ResetTrigger(int hash)
         {
@@ -514,13 +486,13 @@ namespace Mirror
             {
                 if (!isClient)
                 {
-                    Debug.LogWarning("Tried to reset animation in the server for a client-controlled animator", gameObject);
+                    Debug.LogWarning("Tried to reset animation in the server for a client-controlled animator");
                     return;
                 }
 
-                if (!isOwned)
+                if (!hasAuthority)
                 {
-                    Debug.LogWarning("Only the client with authority can reset animations", gameObject);
+                    Debug.LogWarning("Only the client with authority can reset animations");
                     return;
                 }
 
@@ -534,7 +506,7 @@ namespace Mirror
             {
                 if (!isServer)
                 {
-                    Debug.LogWarning("Tried to reset animation in the client for a server-controlled animator", gameObject);
+                    Debug.LogWarning("Tried to reset animation in the client for a server-controlled animator");
                     return;
                 }
 
@@ -586,7 +558,7 @@ namespace Mirror
 
             // handle and broadcast
             // host should have already the trigger
-            bool isHostOwner = isClient && isOwned;
+            bool isHostOwner = isClient && hasAuthority;
             if (!isHostOwner)
             {
                 HandleAnimTriggerMsg(hash);
@@ -604,7 +576,7 @@ namespace Mirror
 
             // handle and broadcast
             // host should have already the trigger
-            bool isHostOwner = isClient && isOwned;
+            bool isHostOwner = isClient && hasAuthority;
             if (!isHostOwner)
             {
                 HandleAnimResetTriggerMsg(hash);
@@ -639,22 +611,22 @@ namespace Mirror
                 HandleAnimParamsMsg(networkReader);
         }
 
-        [ClientRpc(includeOwner = false)]
+        [ClientRpc]
         void RpcOnAnimationTriggerClientMessage(int hash)
         {
-            // already handled on server in SetTrigger
-            // or CmdOnAnimationTriggerServerMessage
-            if (!isServer)
-                HandleAnimTriggerMsg(hash);
+            // host/owner handles this before it is sent
+            if (isServer || (clientAuthority && hasAuthority)) return;
+
+            HandleAnimTriggerMsg(hash);
         }
 
-        [ClientRpc(includeOwner = false)]
+        [ClientRpc]
         void RpcOnAnimationResetTriggerClientMessage(int hash)
         {
-            // already handled on server in ResetTrigger
-            // or CmdOnAnimationResetTriggerServerMessage
-            if (!isServer)
-                HandleAnimResetTriggerMsg(hash);
+            // host/owner handles this before it is sent
+            if (isServer || (clientAuthority && hasAuthority)) return;
+
+            HandleAnimResetTriggerMsg(hash);
         }
 
         #endregion

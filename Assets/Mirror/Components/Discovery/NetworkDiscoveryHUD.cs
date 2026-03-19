@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Mirror.Discovery
@@ -18,20 +17,11 @@ namespace Mirror.Discovery
 #if UNITY_EDITOR
         void OnValidate()
         {
-            if (Application.isPlaying) return;
-            Reset();
-        }
-
-        void Reset()
-        {
-            networkDiscovery = GetComponent<NetworkDiscovery>();
-
-            // Add default event handler if not already present
-            if (!Enumerable.Range(0, networkDiscovery.OnServerFound.GetPersistentEventCount())
-                .Any(i => networkDiscovery.OnServerFound.GetPersistentMethodName(i) == nameof(OnDiscoveredServer)))
+            if (networkDiscovery == null)
             {
+                networkDiscovery = GetComponent<NetworkDiscovery>();
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(networkDiscovery.OnServerFound, OnDiscoveredServer);
-                UnityEditor.Undo.RecordObjects(new UnityEngine.Object[] { this, networkDiscovery }, "Set NetworkDiscovery");
+                UnityEditor.Undo.RecordObjects(new Object[] { this, networkDiscovery }, "Set NetworkDiscovery");
             }
         }
 #endif
@@ -135,8 +125,6 @@ namespace Mirror.Discovery
 
         public void OnDiscoveredServer(ServerResponse info)
         {
-            Debug.Log($"Discovered Server: {info.serverId} | {info.EndPoint} | {info.uri}");
-
             // Note that you can check the versioning to decide if you can connect to the server or not using this method
             discoveredServers[info.serverId] = info;
         }

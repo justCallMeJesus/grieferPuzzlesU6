@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,7 +17,7 @@ namespace Mirror.Authenticators
         public string username;
         public string password;
 
-        readonly HashSet<NetworkConnectionToClient> connectionsPendingDisconnect = new HashSet<NetworkConnectionToClient>();
+        readonly HashSet<NetworkConnection> connectionsPendingDisconnect = new HashSet<NetworkConnection>();
 
         #region Messages
 
@@ -50,7 +51,7 @@ namespace Mirror.Authenticators
 
         /// <summary>
         /// Called on server from StopServer to reset the Authenticator
-        /// <para>Server message handlers should be unregistered in this method.</para>
+        /// <para>Server message handlers should be registered in this method.</para>
         /// </summary>
         public override void OnStopServer()
         {
@@ -162,7 +163,7 @@ namespace Mirror.Authenticators
                 authPassword = password
             };
 
-            NetworkClient.Send(authRequestMessage);
+            NetworkClient.connection.Send(authRequestMessage);
         }
 
         /// <summary>

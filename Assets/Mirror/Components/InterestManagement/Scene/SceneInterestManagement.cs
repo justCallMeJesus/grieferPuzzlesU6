@@ -17,7 +17,6 @@ namespace Mirror
 
         HashSet<Scene> dirtyScenes = new HashSet<Scene>();
 
-        [ServerCallback]
         public override void OnSpawned(NetworkIdentity identity)
         {
             Scene currentScene = identity.gameObject.scene;
@@ -32,23 +31,17 @@ namespace Mirror
             objects.Add(identity);
         }
 
-        [ServerCallback]
         public override void OnDestroyed(NetworkIdentity identity)
         {
-            // Don't RebuildSceneObservers here - that will happen in LateUpdate.
-            // Multiple objects could be destroyed in same frame and we don't
-            // want to rebuild for each one...let LateUpdate do it once.
-            // We must add the current scene to dirtyScenes for LateUpdate to rebuild it.
-            if (lastObjectScene.TryGetValue(identity, out Scene currentScene))
-            {
-                lastObjectScene.Remove(identity);
-                if (sceneObjects.TryGetValue(currentScene, out HashSet<NetworkIdentity> objects) && objects.Remove(identity))
-                    dirtyScenes.Add(currentScene);
-            }
+            Scene currentScene = lastObjectScene[identity];
+            lastObjectScene.Remove(identity);
+            if (sceneObjects.TryGetValue(currentScene, out HashSet<NetworkIdentity> objects) && objects.Remove(identity))
+                RebuildSceneObservers(currentScene);
         }
 
+        // internal so we can update from tests
         [ServerCallback]
-        void LateUpdate()
+        internal void Update()
         {
             // for each spawned:
             //   if scene changed:
@@ -56,9 +49,7 @@ namespace Mirror
             //     add new to dirty
             foreach (NetworkIdentity identity in NetworkServer.spawned.Values)
             {
-                if (!lastObjectScene.TryGetValue(identity, out Scene currentScene))
-                    continue;
-
+                Scene currentScene = lastObjectScene[identity];
                 Scene newScene = identity.gameObject.scene;
                 if (newScene == currentScene)
                     continue;

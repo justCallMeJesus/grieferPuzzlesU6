@@ -57,7 +57,11 @@ namespace Mirror.Weaver
                 }
             }
 
+#if UNITY_2019_3_OR_NEWER
             EditorUtility.RequestScriptReload();
+#else
+            UnityEditorInternal.InternalEditorUtility.RequestScriptReload();
+#endif
         }
 
         static Assembly FindCompilationPipelineAssembly(string assemblyName) =>
@@ -75,16 +79,13 @@ namespace Mirror.Weaver
                 return;
             }
 
-            // Should not run on the editor only assemblies (test ones still need to be weaved)
-            if (assemblyPath.Contains("-Editor") || 
-                (assemblyPath.Contains(".Editor") && !assemblyPath.Contains(".Tests")))
+            // Should not run on the editor only assemblies
+            if (assemblyPath.Contains("-Editor") || assemblyPath.Contains(".Editor"))
             {
                 return;
             }
 
-            // skip Mirror.dll because CompilationFinishedHook can't weave itself.
-            // this would cause a sharing violation.
-            // skip Mirror.Weaver.dll too.
+            // don't weave mirror files
             string assemblyName = Path.GetFileNameWithoutExtension(assemblyPath);
             if (assemblyName == MirrorRuntimeAssemblyName || assemblyName == MirrorWeaverAssemblyName)
             {
