@@ -1,6 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerManager : MonoBehaviour
+public class PlayerManager : NetworkBehaviour
 {
     [HideInInspector]
     public PlayerInventory inventory;
@@ -12,4 +13,6 @@ public class PlayerManager : MonoBehaviour
         inventory = GetComponent<PlayerInventory>();
         interaction = GetComponent<PlayerInteraction>();
     }
+
+    
 }

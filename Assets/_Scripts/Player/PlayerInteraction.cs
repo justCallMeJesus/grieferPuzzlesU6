@@ -38,7 +38,6 @@ public class PlayerInteraction : NetworkBehaviour
         {
             closestInteractableInRange.OnInteract(playerManager.inventory);
         }
-
     }
 
     private void Update()
