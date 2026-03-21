@@ -16,7 +16,8 @@ public class PlayerMovement : NetworkBehaviour
     // input access fields
     [SerializeField] private InputActionReference move;
     public InputActionReference Move => move;
-    [SerializeField] public CinemachineOrbitalFollow freeLook;
+    [SerializeField] public GameObject freeLookPrefab;
+    private GameObject spawnedCamera;
 
     [Header("Free Movement Parameters")]
     public float speed = 4f;
@@ -99,5 +100,27 @@ public class PlayerMovement : NetworkBehaviour
                 player.transform.position += moveDir * moveDistance;
             }
         }
+    }
+
+
+
+    public override void OnNetworkSpawn()
+    {
+        if (!IsOwner) return;
+
+        spawnedCamera = Instantiate(freeLookPrefab);
+
+        var freelook = spawnedCamera.GetComponent<CinemachineCamera>();
+        if(freelook != null)
+        {
+            freelook.Follow = this.transform;
+            freelook.LookAt = this.transform;
+        }
+
+    }
+    public override void OnNetworkDespawn()
+    {
+        if (spawnedCamera != null)
+            Destroy(spawnedCamera);
     }
 }

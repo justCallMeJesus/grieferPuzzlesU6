@@ -103,7 +103,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   state: 0
   move: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  freeLook: {fileID: 0}
+  freeLookPrefab: {fileID: 8442894187739528673, guid: c88b51311532fc944aede764a15bdc1f, type: 3}
   speed: 4
   collisionIgnoreMask:
     serializedVersion: 2
@@ -120,6 +120,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3af46957ed72365428ac873c793fbc9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInventory
+  ShowTopMostFoldoutHeaderGroup: 1
   smallItemInventory:
   - {fileID: 0}
   - {fileID: 0}
@@ -136,6 +137,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55a3e465e4eb7a1419bc78b13d7fd853, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
+  ShowTopMostFoldoutHeaderGroup: 1
   interactRadius: 3
   interactAction: {fileID: 9095170737931812917, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   objectInRange: {fileID: 0}
@@ -151,6 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e174ce4e411137408ff58339b1e5f2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerManager
+  ShowTopMostFoldoutHeaderGroup: 1
   inventory: {fileID: 0}
   interaction: {fileID: 0}
 --- !u!114 &5431813926534380635
