@@ -9,9 +9,5 @@ public interface IPickupable
 public interface IInteractable
 {
     GameObject GameObject { get; }
-    public void OnInteract(PlayerManager player);
-
-    public void OnStopInteraction(PlayerManager player);
-
-    public bool CanInteract();
+    public void OnInteract(PlayerInventory player);
 }

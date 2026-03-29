@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Mirror;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,8 +17,6 @@ public class PlayerInteraction : NetworkBehaviour
 
     public PlayerManager playerManager;
 
-    public IInteractable currentlyInteractingObject;
-
     private void Start()
     {
         // get player manager
@@ -34,21 +32,11 @@ public class PlayerInteraction : NetworkBehaviour
 
     private void objectInteractAction_performed(InputAction.CallbackContext context)
     {
-        if (!isLocalPlayer) { return; }
-
-        if(currentlyInteractingObject != null) 
-        { 
-            currentlyInteractingObject.OnStopInteraction(playerManager);
-            currentlyInteractingObject = null;
-            return; 
-        }
-
+        if (!IsOwner) { return; }
         // try interact
         if(closestInteractableInRange != null)
         {
-            if(!closestInteractableInRange.CanInteract()) return;
-
-            closestInteractableInRange.OnInteract(playerManager);
+            closestInteractableInRange.OnInteract(playerManager.inventory);
         }
     }
 
@@ -59,7 +47,7 @@ public class PlayerInteraction : NetworkBehaviour
     }
     private void Action_performed(InputAction.CallbackContext obj)
     {
-        if(!isLocalPlayer) { return; }
+        if(!IsOwner) { return; }
         // try interact
         if (closestPickupableInRange != null)
         {
@@ -75,7 +63,7 @@ public class PlayerInteraction : NetworkBehaviour
         List<IPickupable> pickupables = new List<IPickupable>();
         List<IInteractable> interactables = new List<IInteractable>();
 
-        // add all interactable & pickupable objects to list
+        // add all interactable objects to list
         foreach (Collider hit in hits)
         {
             // check if this object has an IPickupable component
@@ -118,7 +106,6 @@ public class PlayerInteraction : NetworkBehaviour
             closestPickupableInRange = null;
         }
 
-        // if interactable objects list is not 0, get closest object. else set it to null
         if (interactables.Count > 0)
         {
             IInteractable closest = null;
