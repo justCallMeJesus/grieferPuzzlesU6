@@ -122,6 +122,7 @@ public class InventoryTetris : MonoBehaviour
         // Spawn visual
         PlacedItem placed = PlacedItem.Create(itemContainer, anchoredPos, origin, dir, itemSO, cellSize);
         placed.transform.rotation = Quaternion.Euler(0, 0, -itemSO.GetRotationAngle(dir));
+        placed.SetOriginAndDir(origin, dir);
 
         var dragHandler = placed.gameObject.AddComponent<InventoryDragHandler>();
         dragHandler.Init(this);

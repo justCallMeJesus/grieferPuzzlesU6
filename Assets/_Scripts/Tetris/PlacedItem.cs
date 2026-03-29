@@ -2,20 +2,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Runtime component on every item visual that exists on the inventory canvas.
-/// Stores what it is, where it is, and which grid cells it occupies.
-/// </summary>
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasGroup))]
 public class PlacedItem : MonoBehaviour
 {
 
-    // ── Static factory ────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Instantiates a PlacedItem visual inside <paramref name="container"/>.
-    /// </summary>
     public static PlacedItem Create(
         RectTransform container,
         Vector2 anchoredPosition,
@@ -34,7 +25,7 @@ public class PlacedItem : MonoBehaviour
         rt.anchoredPosition = anchoredPosition;
         rt.sizeDelta = new Vector2(itemSO.width * cellSize, itemSO.height * cellSize);
 
-        // Sprite image
+        // Sprite child fills the rect
         GameObject imgGo = new GameObject("Sprite", typeof(Image));
         RectTransform imgRt = imgGo.GetComponent<RectTransform>();
         imgRt.SetParent(rt, false);
@@ -55,14 +46,10 @@ public class PlacedItem : MonoBehaviour
         return placed;
     }
 
-    // ── Data ──────────────────────────────────────────────────────────────
-
     public ItemTetrisSO itemSO { get; private set; }
     public Vector2Int origin { get; private set; }
     public ItemTetrisSO.Dir dir { get; private set; }
     private float cellSize;
-
-    // ── Public API ────────────────────────────────────────────────────────
 
     public List<Vector2Int> GetGridPositionList() =>
         itemSO.GetGridPositionList(origin, dir);
