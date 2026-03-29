@@ -1,0 +1,17 @@
+using UnityEngine;
+
+public class Testing : MonoBehaviour
+{
+    [SerializeField] private ItemTetrisSO testSO;
+
+    private void Start()
+    {
+        InventoryTetris inv = GetComponent<InventoryTetris>();
+
+        // Place a pistol at grid position (0, 0), no rotation
+        PlacedItem result = inv.TryPlaceItem(testSO, new Vector2Int(0, 0), ItemTetrisSO.Dir.Down);
+
+        if (result == null)
+            Debug.Log("No space!");
+    }
+}

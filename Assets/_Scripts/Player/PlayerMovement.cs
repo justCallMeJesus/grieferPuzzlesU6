@@ -26,6 +26,7 @@ public class PlayerMovement : NetworkBehaviour
     IMovementMode currentMode;
 
     IMovementMode freeMovement = new FreeMovement();
+    IMovementMode noMovement = new NoMovement();
 
     public override void OnStartLocalPlayer()
     {
@@ -126,7 +127,13 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
-
+    public class NoMovement : IMovementMode
+    {
+        public void Tick(PlayerMovement player)
+        {
+            return;
+        }
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -146,5 +153,15 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (spawnedCamera != null)
             Destroy(spawnedCamera);
+    }
+
+    public void DisableMovement()
+    {
+        currentMode = noMovement;
+    }
+
+    public void EnableMovement()
+    {
+        currentMode = freeMovement;
     }
 }
