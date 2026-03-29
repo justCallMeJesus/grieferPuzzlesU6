@@ -12,5 +12,6 @@ public class ItemData : ScriptableObject
 
 public enum ItemType
 {
-    Banana
+    Banana,
+    TetrisBlock
 }

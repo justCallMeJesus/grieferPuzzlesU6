@@ -125,6 +125,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  bigInventorySlot: {fileID: 0}
 --- !u!114 &4244081607257289988
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,8 +140,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   ShowTopMostFoldoutHeaderGroup: 1
   interactRadius: 3
-  interactAction: {fileID: 9095170737931812917, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  pickupAction: {fileID: 9095170737931812917, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  objectInteractAction: {fileID: -6001151658830469970, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   objectInRange: {fileID: 0}
+  playerManager: {fileID: 0}
 --- !u!114 &5742913846630144154
 MonoBehaviour:
   m_ObjectHideFlags: 0

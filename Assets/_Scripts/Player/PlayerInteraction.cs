@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -7,12 +8,14 @@ public class PlayerInteraction : NetworkBehaviour
 {
 
     [SerializeField] private float interactRadius;
-    [SerializeField] private InputActionReference interactAction;
+    [SerializeField] private InputActionReference pickupAction;
+    [SerializeField] private InputActionReference objectInteractAction;
 
     public GameObject objectInRange;
+    private IPickupable closestPickupableInRange;
     private IInteractable closestInteractableInRange;
 
-    PlayerManager playerManager;
+    public PlayerManager playerManager;
 
     private void Start()
     {
@@ -23,20 +26,32 @@ public class PlayerInteraction : NetworkBehaviour
     private void OnEnable()
     {
         // listen to interaction action
-        interactAction.action.performed += Action_performed;
+        pickupAction.action.performed += Action_performed;
+        objectInteractAction.action.performed += objectInteractAction_performed;
+    }
+
+    private void objectInteractAction_performed(InputAction.CallbackContext context)
+    {
+        if (!IsOwner) { return; }
+        // try interact
+        if(closestInteractableInRange != null)
+        {
+            closestInteractableInRange.OnInteract(playerManager.inventory);
+        }
     }
 
     private void OnDisable()
     {
-        interactAction.action.performed -= Action_performed;
+        pickupAction.action.performed -= Action_performed;
+        objectInteractAction.action.performed -= objectInteractAction_performed;
     }
     private void Action_performed(InputAction.CallbackContext obj)
     {
         if(!IsOwner) { return; }
         // try interact
-        if (closestInteractableInRange != null)
+        if (closestPickupableInRange != null)
         {
-            closestInteractableInRange.OnInteract(playerManager.inventory);
+            closestPickupableInRange.OnPickup(playerManager.inventory);
         }
     }
 
@@ -45,21 +60,53 @@ public class PlayerInteraction : NetworkBehaviour
         // get all object in radius
         Collider[] hits = Physics.OverlapSphere(transform.position, interactRadius);
 
+        List<IPickupable> pickupables = new List<IPickupable>();
         List<IInteractable> interactables = new List<IInteractable>();
 
         // add all interactable objects to list
         foreach (Collider hit in hits)
         {
-            // check if this object has an InteractableItem component
-            IInteractable item = hit.GetComponent<IInteractable>();
+            // check if this object has an IPickupable component
+            IPickupable item = hit.GetComponent<IPickupable>();
             if (item != null)
             {
-                interactables.Add(item);
+                pickupables.Add(item);
             }
+            IInteractable interactable = hit.GetComponent<IInteractable>();
+            if(interactable != null)
+            {
+                interactables.Add(interactable);
+            }
+
         }
 
-        // if interactbale objects list is not 0, get closest object. else set it to null
-        if( interactables.Count > 0 )
+        // if pickupables objects list is not 0, get closest object. else set it to null
+        if( pickupables.Count > 0 )
+        {
+            IPickupable closest = null;
+            float minDistance = Mathf.Infinity;
+            Vector3 playerPos = transform.position;
+
+            foreach (IPickupable item in pickupables)
+            {
+                float distance = Vector3.Distance(playerPos, item.GameObject.transform.position);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closest = item;
+                }
+
+            }
+
+            objectInRange = closest.GameObject;
+            closestPickupableInRange = closest;
+        }
+        else
+        {
+            closestPickupableInRange = null;
+        }
+
+        if (interactables.Count > 0)
         {
             IInteractable closest = null;
             float minDistance = Mathf.Infinity;
@@ -84,6 +131,6 @@ public class PlayerInteraction : NetworkBehaviour
             closestInteractableInRange = null;
         }
 
-        
+
     }
 }
