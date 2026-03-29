@@ -1,7 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class Item : NetworkBehaviour, IInteractable
+public class Item : NetworkBehaviour, IPickupable
 {
     public ItemData ItemData;
     public GameObject GameObject => this.gameObject;
@@ -29,21 +29,32 @@ public class Item : NetworkBehaviour, IInteractable
     }
 
     // Called when a player interacts with this item
-    public void OnInteract(PlayerInventory player)
+    public void OnPickup(PlayerInventory player)
     {
-        if(!player.HasSpace()) { return; }
-
-        // Add item to player's inventory
-        for (int i = 0; i < player.smallItemInventory.Length; i++)
+        if (!ItemData.largeItem)
         {
-            if (player.smallItemInventory[i] == null)
+            if (!player.HasSmallSpace()) { return; }
+
+            // Add item to player's inventory
+            for (int i = 0; i < player.smallItemInventory.Length; i++)
             {
-                RequestPickup(player, i);
-                RequestDestroy();
-                return;
+                if (player.smallItemInventory[i] == null)
+                {
+                    RequestPickup(player, i);
+                    RequestDestroy();
+                    return;
+                }
             }
+            RequestDestroy();
         }
-        RequestDestroy();
+        else
+        {
+            if (!player.HasBigSpace()) { return; }
+
+            RequestPickupLarge(player);
+            RequestDestroy();
+        }
+        
     }
      
     // Initiates the networked removal of this item
@@ -67,6 +78,11 @@ public class Item : NetworkBehaviour, IInteractable
         PickupRpc(player.NetworkObject, slot);
     }
 
+    public void RequestPickupLarge(PlayerInventory player)
+    {
+        PickupLargeRpc(player.NetworkObject);
+    }
+
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void PickupRpc(NetworkObjectReference playerRef, int slot)
     {
@@ -76,6 +92,20 @@ public class Item : NetworkBehaviour, IInteractable
         {
             PlayerInventory inventory = playerNetObj.GetComponent<PlayerInventory>();
             inventory.smallItemInventory[slot] = ItemData;
+        }
+
+        isCollected.Value = true;
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void PickupLargeRpc(NetworkObjectReference playerRef)
+    {
+        if (isCollected.Value) return;
+
+        if (playerRef.TryGet(out NetworkObject playerNetObj))
+        {
+            PlayerInventory inventory = playerNetObj.GetComponent<PlayerInventory>();
+            inventory.bigInventorySlot = ItemData;
         }
 
         isCollected.Value = true;
