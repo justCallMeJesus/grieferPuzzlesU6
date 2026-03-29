@@ -17,6 +17,8 @@ public class PlayerInteraction : NetworkBehaviour
 
     public PlayerManager playerManager;
 
+    public IInteractable currentlyInteractingObject;
+
     private void Start()
     {
         // get player manager
@@ -33,10 +35,20 @@ public class PlayerInteraction : NetworkBehaviour
     private void objectInteractAction_performed(InputAction.CallbackContext context)
     {
         if (!IsOwner) { return; }
+
+        if(currentlyInteractingObject != null) 
+        { 
+            currentlyInteractingObject.OnStopInteraction(playerManager);
+            currentlyInteractingObject = null;
+            return; 
+        }
+
         // try interact
         if(closestInteractableInRange != null)
         {
-            closestInteractableInRange.OnInteract(playerManager.inventory);
+            if(!closestInteractableInRange.CanInteract()) return;
+
+            closestInteractableInRange.OnInteract(playerManager);
         }
     }
 
@@ -63,7 +75,7 @@ public class PlayerInteraction : NetworkBehaviour
         List<IPickupable> pickupables = new List<IPickupable>();
         List<IInteractable> interactables = new List<IInteractable>();
 
-        // add all interactable objects to list
+        // add all interactable & pickupable objects to list
         foreach (Collider hit in hits)
         {
             // check if this object has an IPickupable component
@@ -106,6 +118,7 @@ public class PlayerInteraction : NetworkBehaviour
             closestPickupableInRange = null;
         }
 
+        // if interactable objects list is not 0, get closest object. else set it to null
         if (interactables.Count > 0)
         {
             IInteractable closest = null;
