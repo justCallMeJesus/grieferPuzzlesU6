@@ -47,26 +47,15 @@ public class InventoryDragDropSystem : MonoBehaviour
     {
         isDragging = false;
 
-        // Read drop origin directly from where the visual is snapped to
-        InventoryTetris targetInventory = GetInventoryUnderMouse();
+        InventoryTetris target = GetInventoryUnderMouse();
         bool placed = false;
 
-        if (targetInventory != null)
+        if (target != null)
         {
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                targetInventory.GetItemContainer(),
-                Mouse.current.position.value,
-                null,
-                out Vector2 localMouse);
+            // Drop origin = the grid cell the mouse is over
+            Vector2Int dropOrigin = GetCellUnderMouse(target);
 
-            float cs = targetInventory.GetCellSize();
-            int mouseGridX = Mathf.FloorToInt(localMouse.x / cs);
-            int mouseGridY = Mathf.FloorToInt(localMouse.y / cs);
-
-            Vector2Int rotOffset = draggingItem.itemSO.GetRotationOffset(currentDir);
-            Vector2Int dropOrigin = new Vector2Int(mouseGridX - rotOffset.x, mouseGridY - rotOffset.y);
-
-            PlacedItem result = targetInventory.TryPlaceItem(draggingItem.itemSO, dropOrigin, currentDir);
+            PlacedItem result = target.TryPlaceItem(draggingItem.itemSO, dropOrigin, currentDir);
             if (result != null)
             {
                 draggingItem.DestroySelf();
@@ -76,8 +65,12 @@ public class InventoryDragDropSystem : MonoBehaviour
 
         if (!placed)
         {
-            PlacedItem result = sourceInventory.TryPlaceItem(draggingItem.itemSO, originOnPickup, dirOnPickup);
-            if (result != null) draggingItem.DestroySelf();
+            PlacedItem result = sourceInventory.TryPlaceItem(
+                draggingItem.itemSO, originOnPickup, dirOnPickup);
+            if (result != null)
+            {
+                draggingItem.DestroySelf();
+            }
             else
             {
                 Debug.LogWarning("[InventoryDragDropSystem] Could not return item to origin.");
@@ -89,34 +82,27 @@ public class InventoryDragDropSystem : MonoBehaviour
         sourceInventory = null;
     }
 
+    // ── Private ───────────────────────────────────────────────────────────
+
     private void SnapDraggedItem()
     {
         InventoryTetris snapTarget = GetInventoryUnderMouse() ?? sourceInventory;
-
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            snapTarget.GetItemContainer(),
-            Mouse.current.position.value,
-            null,
-            out Vector2 localMouse);
-
         float cs = snapTarget.GetCellSize();
 
-        // Snap the mouse position itself to the nearest cell
-        int mouseGridX = Mathf.FloorToInt(localMouse.x / cs);
-        int mouseGridY = Mathf.FloorToInt(localMouse.y / cs);
+        // Which cell is the mouse over?
+        Vector2Int cell = GetCellUnderMouse(snapTarget);
 
-        // Place origin at the snapped mouse cell
+        // anchoredPosition = cell * cs + rotationOffset * cs
+        // This matches exactly what TryPlaceItem sets when placing at this cell.
         Vector2Int rotOffset = draggingItem.itemSO.GetRotationOffset(currentDir);
-        float originX = (mouseGridX - rotOffset.x) * cs;
-        float originY = (mouseGridY - rotOffset.y) * cs;
-
-        // Visual position includes the rotation offset
-        Vector2 target = new Vector2(originX, originY)
-                       + new Vector2(rotOffset.x, rotOffset.y) * cs;
+        Vector2 target = new Vector2(
+            (cell.x + rotOffset.x) * cs,
+            (cell.y + rotOffset.y) * cs);
 
         RectTransform rt = draggingItem.GetComponent<RectTransform>();
         rt.SetParent(snapTarget.GetItemContainer(), false);
-        rt.anchoredPosition = Vector2.Lerp(rt.anchoredPosition, target, Time.unscaledDeltaTime * 25f);
+        rt.anchoredPosition = Vector2.Lerp(
+            rt.anchoredPosition, target, Time.unscaledDeltaTime * 25f);
 
         draggingItem.transform.rotation = Quaternion.Slerp(
             draggingItem.transform.rotation,
@@ -124,13 +110,27 @@ public class InventoryDragDropSystem : MonoBehaviour
             Time.unscaledDeltaTime * 20f);
     }
 
+    /// <summary>Returns the grid cell the mouse is currently over in the given inventory.</summary>
+    private Vector2Int GetCellUnderMouse(InventoryTetris inv)
+    {
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            inv.GetItemContainer(),
+            Mouse.current.position.value,
+            null,
+            out Vector2 local);
+        float cs = inv.GetCellSize();
+        return new Vector2Int(
+            Mathf.FloorToInt(local.x / cs),
+            Mathf.FloorToInt(local.y / cs));
+    }
+
     private InventoryTetris GetInventoryUnderMouse()
     {
-        Vector2 mouseScreen = Mouse.current.position.value;
+        Vector2 mouse = Mouse.current.position.value;
         foreach (var inv in inventories)
         {
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                inv.GetItemContainer(), mouseScreen, null, out Vector2 local);
+                inv.GetItemContainer(), mouse, null, out Vector2 local);
             if (inv.IsValidGridPosition(inv.GetGridPosition(local))) return inv;
         }
         return null;
