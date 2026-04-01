@@ -10,11 +10,16 @@ public class PlayerManager : NetworkBehaviour
     [HideInInspector]
     public PlayerMovement movement;
 
+    [SerializeField] public PlayerInventoryUI playerInventoryUI;
+
     private void Start()
     {
         inventory = GetComponent<PlayerInventory>();
         interaction = GetComponent<PlayerInteraction>();
         movement = GetComponent<PlayerMovement>();
+
+        Canvas canvas = FindAnyObjectByType<Canvas>();
+        playerInventoryUI = Instantiate(playerInventoryUI, canvas.transform);
     }
 
     public void FreezePlayer()
