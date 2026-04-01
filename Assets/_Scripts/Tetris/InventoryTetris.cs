@@ -105,6 +105,11 @@ public class InventoryTetris : MonoBehaviour
     /// </summary>
     public PlacedItem TryPlaceItem(ItemTetrisSO itemSO, Vector2Int origin, ItemTetrisSO.Dir dir)
     {
+        Debug.Log($"TryPlaceItem: origin={origin}, dir={dir}");
+        List<Vector2Int> debugPositions = itemSO.GetGridPositionList(origin, dir);
+        foreach (var p in debugPositions)
+            Debug.Log($"  needs cell {p}, valid={grid.IsValidGridPosition(p)}, empty={(grid.IsValidGridPosition(p) ? grid.GetGridObject(p).IsEmpty() : false)}");
+
         List<Vector2Int> positions = itemSO.GetGridPositionList(origin, dir);
 
         // Validate every required cell
@@ -149,7 +154,17 @@ public class InventoryTetris : MonoBehaviour
         PlacedItem item = grid.GetGridObject(gridPos).GetOccupant();
         if (item == null) return null;
 
-        ClearCells(item);
+        // Clear ALL cells this item occupies by scanning the grid
+        // instead of trusting item.origin which may be stale
+        var cellsToClear = new List<Vector2Int>();
+        for (int x = 0; x < grid.GetWidth(); x++)
+            for (int y = 0; y < grid.GetHeight(); y++)
+                if (grid.GetGridObject(x, y).GetOccupant() == item)
+                    cellsToClear.Add(new Vector2Int(x, y));
+
+        foreach (var cell in cellsToClear)
+            grid.GetGridObject(cell).Clear();
+
         OnItemRemoved?.Invoke(item);
         return item;
     }
@@ -247,5 +262,32 @@ public class InventoryTetris : MonoBehaviour
         foreach (var so in itemSODatabase)
             if (so.name == soName) return so;
         return null;
+    }
+
+    public Vector2Int GetActualOrigin(PlacedItem item)
+    {
+        int minX = int.MaxValue, minY = int.MaxValue;
+        for (int x = 0; x < grid.GetWidth(); x++)
+            for (int y = 0; y < grid.GetHeight(); y++)
+                if (grid.GetGridObject(x, y).GetOccupant() == item)
+                {
+                    if (x < minX) minX = x;
+                    if (y < minY) minY = y;
+                }
+        return new Vector2Int(minX, minY);
+    }
+
+    public void PickUpItem(PlacedItem item)
+    {
+        var cellsToClear = new List<Vector2Int>();
+        for (int x = 0; x < grid.GetWidth(); x++)
+            for (int y = 0; y < grid.GetHeight(); y++)
+                if (grid.GetGridObject(x, y).GetOccupant() == item)
+                    cellsToClear.Add(new Vector2Int(x, y));
+
+        foreach (var cell in cellsToClear)
+            grid.GetGridObject(cell).Clear();
+
+        OnItemRemoved?.Invoke(item);
     }
 }

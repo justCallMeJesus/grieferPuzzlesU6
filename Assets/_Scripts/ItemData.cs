@@ -7,6 +7,9 @@ public class ItemData : ScriptableObject
 
     public bool largeItem = false;
 
+    public Sprite sprite;
+
+
     
 }
 
@@ -15,3 +18,5 @@ public enum ItemType
     Banana,
     TetrisBlock
 }
+
+

@@ -34,12 +34,12 @@ public class InventoryDragDropSystem : MonoBehaviour
     {
         sourceInventory = inventory;
         draggingItem = item;
-        originOnPickup = item.origin;
+        originOnPickup = inventory.GetActualOrigin(item);
         dirOnPickup = item.dir;
         currentDir = item.dir;
         isDragging = true;
 
-        inventory.PickUpItemAt(item.origin);
+        inventory.PickUpItem(item);
         draggingItem.transform.SetAsLastSibling();
     }
 
@@ -62,7 +62,7 @@ public class InventoryDragDropSystem : MonoBehaviour
                 placed = true;
             }
         }
-
+        Debug.Log($"Returning to origin={originOnPickup}, dir={dirOnPickup}");
         if (!placed)
         {
             PlacedItem result = sourceInventory.TryPlaceItem(

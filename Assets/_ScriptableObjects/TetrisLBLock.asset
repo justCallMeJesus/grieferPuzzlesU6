@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5666a3e40b6236f439509a843ef7c87f, type: 3}
-  m_Name: TetrisLBLock
+  m_Name: TetrisLBlock
   m_EditorClassIdentifier: Assembly-CSharp::ItemTetrisSO
   itemName: Test
-  sprite: {fileID: 21300000, guid: 97e815a7e3fd19443ac73a82fc3d0cf2, type: 3}
+  sprite: {fileID: 21300000, guid: 20c0e548b2f7e4f45b6bf40d73938b7d, type: 3}
   width: 2
   height: 3
   cells:
