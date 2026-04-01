@@ -35,16 +35,7 @@ public class Item : NetworkBehaviour, IPickupable
         {
             if (!player.HasSmallSpace()) { return; }
 
-            // Add item to player's inventory
-            for (int i = 0; i < player.smallItemInventory.Length; i++)
-            {
-                if (player.smallItemInventory[i] == null)
-                {
-                    RequestPickup(player, i);
-                    RequestDestroy();
-                    return;
-                }
-            }
+            RequestPickup(player);
             RequestDestroy();
         }
         else
@@ -73,9 +64,9 @@ public class Item : NetworkBehaviour, IPickupable
         gameObject.SetActive(false);
     }
 
-    public void RequestPickup(PlayerInventory player, int slot)
+    public void RequestPickup(PlayerInventory player)
     {
-        PickupRpc(player.NetworkObject, slot);
+        PickupRpc(player.NetworkObject);
     }
 
     public void RequestPickupLarge(PlayerInventory player)
@@ -84,14 +75,14 @@ public class Item : NetworkBehaviour, IPickupable
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void PickupRpc(NetworkObjectReference playerRef, int slot)
+    private void PickupRpc(NetworkObjectReference playerRef)
     {
         if (isCollected.Value) return; // prevent double pickup
 
         if (playerRef.TryGet(out NetworkObject playerNetObj))
         {
             PlayerInventory inventory = playerNetObj.GetComponent<PlayerInventory>();
-            inventory.smallItemInventory[slot] = ItemData;
+            inventory.StoreSmallItem(ItemData);
         }
 
         isCollected.Value = true;
@@ -105,7 +96,7 @@ public class Item : NetworkBehaviour, IPickupable
         if (playerRef.TryGet(out NetworkObject playerNetObj))
         {
             PlayerInventory inventory = playerNetObj.GetComponent<PlayerInventory>();
-            inventory.bigInventorySlot = ItemData;
+            inventory.StoreBigItem(ItemData);
         }
 
         isCollected.Value = true;

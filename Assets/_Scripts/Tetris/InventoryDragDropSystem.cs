@@ -84,7 +84,7 @@ public class InventoryDragDropSystem : MonoBehaviour
                 placed = true;
             }
         }
-
+        Debug.Log($"Returning to origin={originOnPickup}, dir={dirOnPickup}");
         if (!placed)
         {
             if (newItem)
