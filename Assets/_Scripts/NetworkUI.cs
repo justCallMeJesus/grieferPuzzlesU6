@@ -1,12 +1,19 @@
-using Unity.Netcode;
+
 using UnityEngine;
 using UnityEngine.UIElements;
+using Mirror;
+using Steamworks;
+using Steamworks.Data;
+
 
 public class NetworkUI : MonoBehaviour
 {
     private UIDocument document;
     private Button clientButton;
     private Button hostButton;
+    private Button leaveButton;
+    public SteamLobbyManager lobbyManager;
+    public SteamId steamid;
 
 
     private void Awake()
@@ -18,33 +25,34 @@ public class NetworkUI : MonoBehaviour
 
         hostButton = document.rootVisualElement.Q("HostButton") as Button;
         hostButton.RegisterCallback<ClickEvent>(OnHostClick);
+
+        leaveButton = document.rootVisualElement.Q("LeaveButton") as Button;
+        //leaveButton.RegisterCallback<ClickEvent>(OnLeaveClick);
+
     }
 
     private void OnDisable()
     {
-        clientButton.UnregisterCallback<ClickEvent>(OnPlayGameClick);
-        hostButton.UnregisterCallback<ClickEvent>(OnHostClick);
+        //clientButton.UnregisterCallback<ClickEvent>(OnPlayGameClick);
+        //hostButton.UnregisterCallback<ClickEvent>(OnHostClick);
     }
 
     private void OnPlayGameClick(ClickEvent evt)
     {
         Debug.Log("Client pressed");
-        Client();
+       
     }
 
     private void OnHostClick(ClickEvent evt)
     {
-        Debug.Log("Host pressed");
-        Host();
+        Debug.Log("Host pressed2");
+        
     }
 
-    public void Host()
+    private void OnLeaveClick(ClickEvent evt)
     {
-        NetworkManager.Singleton.StartHost();
+        Debug.Log("Leave pressed");
+        lobbyManager.LeaveLobby();
     }
 
-    public void Client()
-    {
-        NetworkManager.Singleton.StartClient();
-    }
 }

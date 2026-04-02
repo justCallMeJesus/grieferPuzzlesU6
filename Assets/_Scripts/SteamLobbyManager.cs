@@ -1,4 +1,5 @@
 ﻿using Mirror;
+
 using Steamworks;
 using Steamworks.Data;
 using System;
@@ -8,31 +9,50 @@ using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UI;  
+using UnityEngine.UI;
+
+using static UnityEngine.LowLevelPhysics2D.PhysicsLayers;
 
 
 public class SteamLobbyManager : MonoBehaviour
 {
-    public static Lobby currentLobby;
-    public static bool UserInLobby;
+    public Lobby currentLobby;
+    
+
     public UnityEvent OnLobbyCreated;
+
     public UnityEvent OnLobbyJoined;
+    
+
     public UnityEvent OnLobbyLeave;
 
     public GameObject tank;
     public GameObject prefabToSpawn;
-    public CameraFollowScript FollowPrefab; // Reference your camera's follow script
 
-    public GameObject UI2;
 
-    public GameObject InLobbyFriend;
-    public Transform content;
 
+    public GameObject HomeScreenUI;
+    public GameObject InLobbyUI;
+    public GameObject StartButton;
+    public GameObject LeaveButton;
+
+
+    public GameObject BackGroundImage;
     public Dictionary<SteamId, GameObject> inLobby = new Dictionary<SteamId, GameObject>();
+
+
+    public static SteamLobbyManager Instance { get; private set; }
+    private void Awake()
+    {
+        // 2. Initialize the Instance
+        if (Instance == null) { Instance = this; }
+        else { Destroy(gameObject); }
+    }
 
     private void Start()
     {
         DontDestroyOnLoad(this);
+
 
         SteamMatchmaking.OnLobbyCreated += OnLobbyCreatedCallBack;
         SteamMatchmaking.OnLobbyEntered += OnLobbyEntered;
@@ -45,9 +65,24 @@ public class SteamLobbyManager : MonoBehaviour
         SteamMatchmaking.OnLobbyInvite += OnLobbyInvite;
         SteamMatchmaking.OnLobbyDataChanged += OnLobbyDataUpdated;
 
+        
+
     }
 
 
+
+    public void StartGame()
+    {
+        Debug.Log("Starting Game...");
+        Debug.Log(NetworkServer.active);
+        BackGroundImage.SetActive(false);
+        InLobbyUI.SetActive(false);
+
+        GameObject newPlayerPrefab = Instantiate(tank);
+        Debug.Log("------------Instantiated player prefab for host. ------------");
+        NetworkServer.Spawn(newPlayerPrefab);
+        NetworkServer.AddPlayerForConnection(NetworkServer.localConnection, newPlayerPrefab);
+    }
 
     void OnLobbyInvite(Friend friend, Lobby lobby)
     {
@@ -62,20 +97,48 @@ public class SteamLobbyManager : MonoBehaviour
         //GameObject newPlayerPrefab = Instantiate(tank);
 
         //NetworkServer.Spawn(newPlayerPrefab);
-       // NetworkServer.AddPlayerForConnection(NetworkServer.localConnection, newPlayerPrefab);
+        //NetworkServer.AddPlayerForConnection(NetworkServer.localConnection, newPlayerPrefab);
         //FollowPrefab.target = newPlayerPrefab.transform;
+    }
+
+    private Texture2D ConvertSteamImage(Steamworks.Data.Image image)
+    {
+        var texture = new Texture2D((int)image.Width, (int)image.Height, TextureFormat.RGBA32, false);
+
+        // Facepunch gives us raw RGBA bytes; Unity can load this directly
+        texture.LoadRawTextureData(image.Data);
+        texture.Apply();
+        return texture;
+    }
+
+    public static Texture2D GetTextureFromImage(Steamworks.Data.Image img)
+    {
+        Texture2D texture = new Texture2D((int)img.Width, (int)img.Height, TextureFormat.RGBA32, false);
+        for (int y = 0; y < img.Height; y++)
+        {
+            for (int x = 0; x < img.Width; x++)
+            {
+                var p = img.GetPixel(x, y);
+                texture.SetPixel(x, (int)img.Height - y, new UnityEngine.Color(p.r / 255.0f, p.g / 255.0f, p.b / 255.0f, p.a / 255.0f));
+            }
+        }
+        texture.Apply();
+        return texture;
     }
 
     private async void OnLobbyMemberJoined(Lobby lobby, Friend friend)
     {
+
+        Debug.Log("Someone joinged");
+
         
 
 
-        Debug.Log($"{friend.Name} joined the lobby");
-        GameObject obj = Instantiate(InLobbyFriend, content);
-        obj.GetComponentInChildren<Text>().text = friend.Name;
-        obj.GetComponentInChildren<RawImage>().texture = await SteamFriendsManager.GetTextureFromSteamIdAsync(friend.Id);
-        inLobby.Add(friend.Id, obj);
+        //GameObject obj = Instantiate(InLobbyFriend, content);
+        //obj.GetComponentInChildren<Text>().text = friend.Name;
+        //var img = await SteamFriends.GetLargeAvatarAsync(friend.Id);
+        //obj.GetComponentInChildren<RawImage>().texture = ConvertSteamImage(img.Value); ;//SteamFriendsManager.GetTextureFromSteamIdAsync(friend.Id);
+        //inLobby.Add(friend.Id, obj);
 
     }
 
@@ -130,21 +193,19 @@ public class SteamLobbyManager : MonoBehaviour
 
     void OnLobbyCreatedCallBack(Result result, Lobby lobby)
     {
+        Debug.Log("Lobby creation callback received with result: " + result);
         if (result != Result.OK)
         {
             Debug.LogError("Lobby creation failed");
             return;
         }
 
+
+        // Start the Network Manager 
        
-        
-
-
-        // A. Start the Network Manager IMMEDIATELY
-        // This makes 'Server Active' = True and spawns the host
         NetworkManager.singleton.StartHost();
-
-        // B. Set the Steam Data so others can join
+        Debug.Log("Host started successfully.");
+        //  Set the Steam Data so others can join
         lobby.SetData("HostAddress", SteamClient.SteamId.ToString());
 
       
@@ -156,71 +217,53 @@ public class SteamLobbyManager : MonoBehaviour
     {
        
 
-        //string hostAddress = lobby.GetData("HostAddress");
-
-       
-
-   
-
-        //Debug.Log("Host Address : " + hostAddress);
-        //if (!string.IsNullOrEmpty(hostAddress))
-        //{
-            // If we found the address and aren't already connected, start the client
-           // if (!NetworkClient.isConnected && !NetworkServer.active)
-           // {
-             //   NetworkManager.singleton.networkAddress = hostAddress;
-             //   NetworkManager.singleton.StartClient();
-              //  Debug.Log("Connecting to Host: " + hostAddress);
-           // }
-        //}
-
-        UI2.SetActive(false);
-
+     
         Debug.Log("Client joined the lobby");
-        UserInLobby = true;
+        
         foreach (var user in inLobby.Values)
         {
             Destroy(user);
         }
         inLobby.Clear();
 
-        GameObject obj = Instantiate(InLobbyFriend, content);
-        obj.GetComponentInChildren<Text>().text = SteamClient.Name;
-        obj.GetComponentInChildren<RawImage>().texture = await SteamFriendsManager.GetTextureFromSteamIdAsync(SteamClient.SteamId);
-
-        inLobby.Add(SteamClient.SteamId, obj);
-
-        foreach (var friend in currentLobby.Members)
-        {
-            if (friend.Id != SteamClient.SteamId)
-            {
-                GameObject obj2 = Instantiate(InLobbyFriend, content);
-                obj2.GetComponentInChildren<Text>().text = friend.Name;
-                obj2.GetComponentInChildren<RawImage>().texture = await SteamFriendsManager.GetTextureFromSteamIdAsync(friend.Id);
-
-                inLobby.Add(friend.Id, obj2);
-
-                
-
-            }
-        }
+        
         OnLobbyJoined.Invoke();
     }
 
 
-    public async void CreateLobbyAsync()
+    public async Task<bool> CreateLobbyAsync()
     {
+        
+        
+        HomeScreenUI.SetActive(false);
+        StartButton.SetActive(true);
+        LeaveButton.SetActive(true);
+        Debug.Log("Creating lobby...");
+        
         bool result = await CreateLobby();
+        OnLobbyCreatedCallBack(lobby: default, result: Result.OK);
         if (!result)
         {
-            //Invoke a error message.
+            Debug.Log("Failed to create lobby.");
+            return false;
         }
+       return true;
     }
 
     public static async Task<bool> CreateLobby()
     {
 
+        //try
+        //{
+        //    SteamClient.Init(480);
+        //    Debug.Log("Steam client initialized successfully.");
+        //}
+        //catch (System.Exception e)
+        //{
+        //    Debug.Log("Could not connect to Steam: " + e.Message);
+        //}
 
+        
         try
         {
             var createLobbyOutput = await SteamMatchmaking.CreateLobbyAsync();
@@ -229,13 +272,14 @@ public class SteamLobbyManager : MonoBehaviour
                 Debug.Log("Lobby created but not correctly instantiated.");
                 return false;
             }
-            currentLobby = createLobbyOutput.Value;
+            Instance.currentLobby = createLobbyOutput.Value;  //Instance being used because currentlobby cant be static becuase its needs to be passed into friendsmanager
 
-            currentLobby.SetPublic();
+            Instance.currentLobby.SetPublic();
             //currentLobby.SetPrivate();
-            currentLobby.SetJoinable(true);
+            Instance.currentLobby.SetJoinable(true);
 
-          
+
+            Debug.Log("Lobby created successfully.");
 
             return true;
         }
@@ -244,26 +288,39 @@ public class SteamLobbyManager : MonoBehaviour
             Debug.Log("Failed to create multiplayer lobby : " + exception);
             return false;
         }
+        
     }
 
     public void LeaveLobby()
     {
         try
         {
-            UserInLobby = false;
+
+
             currentLobby.Leave();
             OnLobbyLeave.Invoke();
-            foreach (var user in inLobby.Values)
-            {
-                Destroy(user);
-            }
-            inLobby.Clear();
+            currentLobby = default;
+
+
+            StartButton.SetActive(false);
+            LeaveButton.SetActive(false);
+            HomeScreenUI.SetActive(true);
+            
+
+            Debug.Log("Left lobby succesfully");
         }
         catch
         {
-
+            Debug.Log("failed to leave lobby");
         }
-    }
     
+    }
+
+
+    void OnDisable()
+    {
+        SteamClient.Shutdown();
+        
+    }
 
 }

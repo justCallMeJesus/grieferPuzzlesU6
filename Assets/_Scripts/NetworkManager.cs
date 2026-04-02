@@ -17,16 +17,20 @@ public class SteamNetworkManager : NetworkManager
     // --- MIRROR OVERRIDES ---
 
     // Called on the Server/Host when a client finishes connecting via Steam
-    public override void OnServerAddPlayer(NetworkConnectionToClient conn)
-    {
+    //public override void OnServerAddPlayer(NetworkConnectionToClient conn)
+    //{
+
+    //-----Removed cause it spawned a PreFab on a player joining lobby------
+
+
         // 1. Instantiate the prefab (assigned in Inspector)
-        GameObject player = Instantiate(playerPrefab);
+        //GameObject player = Instantiate(playerPrefab);
 
         // 2. Link the prefab to the connection (This sets isLocalPlayer correctly)
-        NetworkServer.AddPlayerForConnection(conn, player);
+        //NetworkServer.AddPlayerForConnection(conn, player);
 
-        Debug.Log($"Player spawned for Steam Connection: {conn.connectionId}");
-    }
+        //Debug.Log($"Player spawned for Steam Connection: {conn.connectionId}");
+    //}
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))

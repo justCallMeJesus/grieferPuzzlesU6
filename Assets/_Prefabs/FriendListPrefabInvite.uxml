@@ -1,0 +1,8 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="FriendListPrefab" enabled="true" data-source-type="UnityEditor.SerializedPropertyFilters+None, UnityEditor.CoreModule" style="flex-grow: 0; flex-direction: row; align-items: flex-start; justify-content: flex-start; align-self: auto; position: relative; bottom: auto; height: 50px; width: 330px; left: auto; flex-shrink: 0; min-height: 50px; max-height: 50px; align-content: center; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; margin-bottom: 50px; display: none; transform-origin: center;">
+        <ui:Image name="FriendProfilePic" data-source-type="UnityEngine.UI.RawImage, UnityEngine.UI" style="height: 30px; width: 39px; position: relative; bottom: auto; top: auto; left: auto; right: auto; flex-shrink: 0; justify-content: flex-start;"/>
+        <ui:Label text="" name="FriendName" style="width: 152px; text-overflow: clip; height: 20px; position: relative; top: auto; left: auto; bottom: auto; font-size: 16px;"/>
+        <ui:Button text="Invite" name="InviteButton" style="font-size: 10px; display: flex; left: auto; bottom: auto;"/>
+        <ui:Label text="Label" name="FriendSteamID" style="display: none;"/>
+    </ui:VisualElement>
+</ui:UXML>

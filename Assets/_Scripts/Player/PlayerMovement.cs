@@ -1,9 +1,9 @@
 using Unity.Cinemachine;
-using Unity.Netcode;
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
-
+using Mirror;
 public class PlayerMovement : NetworkBehaviour
 {
     public enum PlayerMovementState
@@ -34,7 +34,8 @@ public class PlayerMovement : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
+        if (!isLocalPlayer) return;
+        //Debug.Log("PlayerMovement Update");
         currentMode.Tick(this);
     }
 
