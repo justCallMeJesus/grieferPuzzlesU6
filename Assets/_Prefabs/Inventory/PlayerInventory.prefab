@@ -56,6 +56,7 @@ MonoBehaviour:
   - {fileID: 5383125279974586787}
   - {fileID: 622931805596708397}
   - {fileID: 3245899558260591564}
+  playerManager: {fileID: 0}
 --- !u!1 &5839534166241070220
 GameObject:
   m_ObjectHideFlags: 0
@@ -245,6 +246,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventorySlot
   bigSlot: 1
+  slotIndex: 0
 --- !u!1 &9065111013730128231
 GameObject:
   m_ObjectHideFlags: 0
@@ -409,6 +411,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Slot (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 4172057494946716872, guid: 73a40cfe562aefa46b839701566507d1, type: 3}
+      propertyPath: slotIndex
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -516,6 +522,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Slot (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 4172057494946716872, guid: 73a40cfe562aefa46b839701566507d1, type: 3}
+      propertyPath: slotIndex
+      value: 2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -622,6 +632,10 @@ PrefabInstance:
     - target: {fileID: 3568906979932463598, guid: 73a40cfe562aefa46b839701566507d1, type: 3}
       propertyPath: m_Name
       value: Slot (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4172057494946716872, guid: 73a40cfe562aefa46b839701566507d1, type: 3}
+      propertyPath: slotIndex
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

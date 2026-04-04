@@ -14,6 +14,8 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     [SerializeField] public ItemData itemData;
 
+    public PlayerInventory inventory;
+
     private static readonly Dictionary<ItemType, System.Type> draggableTypeMap = new()
     {
         { ItemType.TetrisBlock, typeof(TetrisDraggableItem) },
@@ -44,7 +46,7 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         image.raycastTarget = true;
     }
 
-    public static DraggableItem Create(ItemData itemData, GameObject parentSlot)
+    public static DraggableItem Create(ItemData itemData, GameObject parentSlot, PlayerInventory inventory)
     {
         GameObject go = new GameObject(itemData.type.ToString(), typeof(RectTransform));
 
@@ -60,6 +62,8 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         draggable.itemData = itemData;
 
         draggable.transform.SetParent(parentSlot.transform);
+
+        draggable.inventory = inventory;
 
         return draggable;
     }

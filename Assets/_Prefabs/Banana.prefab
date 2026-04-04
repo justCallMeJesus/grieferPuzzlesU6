@@ -101,6 +101,7 @@ GameObject:
   - component: {fileID: 7829726129052758184}
   - component: {fileID: 8523617712005554088}
   - component: {fileID: 6111166281103668547}
+  - component: {fileID: 783328655103731687}
   - component: {fileID: 2213042076486791301}
   - component: {fileID: 3770672912537110957}
   - component: {fileID: 5645901704275140184}
@@ -166,6 +167,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   ShowTopMostFoldoutHeaderGroup: 1
   ItemData: {fileID: 11400000, guid: 4fac0724403b11f4d867cc08e51fc17c, type: 2}
+--- !u!114 &783328655103731687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3518657916991147774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec286555256c5044fabc3d1fd26fc12f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowableItem
+  throwForce: 12.82
+  upwardAngle: 10
+  stunDuration: 2
+  knockbackForce: 8
 --- !u!65 &2213042076486791301
 BoxCollider:
   m_ObjectHideFlags: 0

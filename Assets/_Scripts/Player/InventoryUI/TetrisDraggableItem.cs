@@ -29,8 +29,14 @@ public class TetrisDraggableItem : DraggableItem
         InventoryDragDropSystem.Instance.OnDragEnded -= Instance_OnDragEnded;
 
         if (placed)
+        {
             Destroy(gameObject); // placed successfully, remove from player inventory
+            inventory.RemoveItem(0);
+        }
         else
+        {
             gameObject.SetActive(true); // failed, return item to player inventory
+        }
+            
     }
 }
