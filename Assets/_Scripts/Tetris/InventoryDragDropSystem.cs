@@ -4,6 +4,8 @@ using UnityEngine.InputSystem;
 
 public class InventoryDragDropSystem : MonoBehaviour
 {
+    public event System.Action<bool> OnDragEnded;
+    private bool isNewItem = false;
 
     public static InventoryDragDropSystem Instance { get; private set; }
 
@@ -28,10 +30,17 @@ public class InventoryDragDropSystem : MonoBehaviour
         if (Keyboard.current.rKey.wasPressedThisFrame)
             currentDir = ItemTetrisSO.GetNextDir(currentDir);
         SnapDraggedItem();
+
+        if (isNewItem && Mouse.current.leftButton.wasReleasedThisFrame)
+        {
+            EndDrag();
+        }
     }
 
     public void BeginDrag(InventoryTetris inventory, PlacedItem item)
     {
+        isNewItem = false;
+
         sourceInventory = inventory;
         draggingItem = item;
         originOnPickup = inventory.GetActualOrigin(item);
@@ -47,45 +56,63 @@ public class InventoryDragDropSystem : MonoBehaviour
     {
         isDragging = false;
 
+        // Cache and clear references before any destroys
+        PlacedItem item = draggingItem;
+        InventoryTetris source = sourceInventory;
+        Vector2Int origin = originOnPickup;
+        ItemTetrisSO.Dir dir = dirOnPickup;
+        bool newItem = isNewItem;
+
+        draggingItem = null;
+        sourceInventory = null;
+        isNewItem = false;
+
+        // Restore visuals
+        var cg = item.GetComponent<CanvasGroup>();
+        if (cg != null) { cg.alpha = 1f; cg.blocksRaycasts = true; }
+
         InventoryTetris target = GetInventoryUnderMouse();
         bool placed = false;
 
         if (target != null)
         {
-            // Drop origin = the grid cell the mouse is over
             Vector2Int dropOrigin = GetCellUnderMouse(target);
-
-            PlacedItem result = target.TryPlaceItem(draggingItem.itemSO, dropOrigin, currentDir);
+            PlacedItem result = target.TryPlaceItem(item.itemSO, dropOrigin, currentDir);
             if (result != null)
             {
-                draggingItem.DestroySelf();
+                item.DestroySelf();
                 placed = true;
             }
         }
-        Debug.Log($"Returning to origin={originOnPickup}, dir={dirOnPickup}");
+
         if (!placed)
         {
-            PlacedItem result = sourceInventory.TryPlaceItem(
-                draggingItem.itemSO, originOnPickup, dirOnPickup);
-            if (result != null)
+            if (newItem)
             {
-                draggingItem.DestroySelf();
+                item.DestroySelf();
             }
             else
             {
-                Debug.LogWarning("[InventoryDragDropSystem] Could not return item to origin.");
-                draggingItem.DestroySelf();
+                PlacedItem result = source.TryPlaceItem(item.itemSO, origin, dir);
+                if (result != null)
+                    item.DestroySelf();
+                else
+                {
+                    Debug.LogWarning("[InventoryDragDropSystem] Could not return item to origin.");
+                    item.DestroySelf();
+                }
             }
         }
 
-        draggingItem = null;
-        sourceInventory = null;
+        OnDragEnded?.Invoke(placed);
     }
 
     // ── Private ───────────────────────────────────────────────────────────
 
     private void SnapDraggedItem()
     {
+        if (draggingItem == null) return;
+
         InventoryTetris snapTarget = GetInventoryUnderMouse() ?? sourceInventory;
         float cs = snapTarget.GetCellSize();
 
@@ -134,5 +161,20 @@ public class InventoryDragDropSystem : MonoBehaviour
             if (inv.IsValidGridPosition(inv.GetGridPosition(local))) return inv;
         }
         return null;
+    }
+
+    public void BeginDragNewItem(InventoryTetris inventory, PlacedItem item)
+    {
+        isNewItem = true;
+
+        sourceInventory = inventory;
+        draggingItem = item;
+        originOnPickup = Vector2Int.zero;
+        dirOnPickup = ItemTetrisSO.Dir.Down;
+        currentDir = ItemTetrisSO.Dir.Down;
+        isDragging = true;
+
+        // Don't call PickUpItemAt — item isn't in the grid yet
+        draggingItem.transform.SetAsLastSibling();
     }
 }

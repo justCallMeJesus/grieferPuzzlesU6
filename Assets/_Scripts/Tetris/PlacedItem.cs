@@ -4,9 +4,9 @@ using UnityEngine.UI;
 
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasGroup))]
-public class PlacedItem : MonoBehaviour
+public class PlacedItem : MonoBehaviour, IStorable
 {
-
+    public ItemData _data;
     public static PlacedItem Create(
         RectTransform container,
         Vector2 anchoredPosition,
@@ -43,6 +43,8 @@ public class PlacedItem : MonoBehaviour
         placed.origin = origin;
         placed.dir = dir;
         placed.cellSize = cellSize;
+        placed._data = itemSO.itemData;
+
         return placed;
     }
 
@@ -61,4 +63,15 @@ public class PlacedItem : MonoBehaviour
     }
 
     public void DestroySelf() => Destroy(gameObject);
+
+    public void ConfigureNewBlock()
+    {
+        InventoryDragHandler handler = GetComponent<InventoryDragHandler>();
+        handler.OnBeginDragNewBlock();
+    }
+
+    public ItemData GetItemData()
+    {
+        return _data;
+    }
 }

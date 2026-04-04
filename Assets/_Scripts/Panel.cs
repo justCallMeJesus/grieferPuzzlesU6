@@ -19,6 +19,7 @@ public class Panel : MonoBehaviour, IInteractable
         inventoryPanel.SetActive(true);
 
         Debug.Log("interacted with panel");
+        inventoryTetris.SetPanelIsOpen(true);
         //UIPanel.SetActive(true);
 
 
@@ -40,6 +41,7 @@ public class Panel : MonoBehaviour, IInteractable
         inventoryPanel.SetActive(false);
         //UIPanel.SetActive(false);
         player.UnfreezePlayer();
+        inventoryTetris.SetPanelIsOpen(false);
     }
 
     

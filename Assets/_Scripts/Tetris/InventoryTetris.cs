@@ -37,6 +37,18 @@ public class InventoryTetris : MonoBehaviour
     private Grid<GridCell> grid;
     private RectTransform itemContainer;
 
+    public static InventoryTetris Instance { get; private set; }
+
+    public static bool IsPanelOpen { get; private set; }
+
+    public void SetPanelIsOpen(bool state)
+    {
+        IsPanelOpen = state;
+    }
+
+    //public void OpenPanel() { IsPanelOpen = true; gameObject.SetActive(true); }
+    //public void ClosePanel() { IsPanelOpen = false; gameObject.SetActive(false); }
+
     // ── Inner type ────────────────────────────────────────────────────────
 
     public class GridCell
@@ -79,6 +91,9 @@ public class InventoryTetris : MonoBehaviour
         itemContainer = transform.Find("ItemContainer")?.GetComponent<RectTransform>();
         if (itemContainer == null)
             Debug.LogError($"[InventoryTetris] '{name}' needs a child called 'ItemContainer'.");
+
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
     }
 
     // ── Public getters ────────────────────────────────────────────────────
@@ -289,5 +304,22 @@ public class InventoryTetris : MonoBehaviour
             grid.GetGridObject(cell).Clear();
 
         OnItemRemoved?.Invoke(item);
+    }
+    public PlacedItem SpawnItemAtMouse(ItemTetrisSO itemSO)
+    {
+        PlacedItem spawned = PlacedItem.Create(
+            itemContainer, Vector2.zero, Vector2Int.zero,
+            ItemTetrisSO.Dir.Down, itemSO, cellSize);
+
+        spawned.transform.rotation = Quaternion.Euler(0, 0, 0);
+
+        var dragHandler = spawned.gameObject.AddComponent<InventoryDragHandler>();
+        dragHandler.Init(this);
+
+        // Immediately start dragging it
+        InventoryDragDropSystem.Instance.BeginDragNewItem(this, spawned);
+        spawned.ConfigureNewBlock();
+
+        return spawned;
     }
 }
