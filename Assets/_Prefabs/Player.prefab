@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2066353450693026516
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 860755880715265609}
+  m_Layer: 0
+  m_Name: ThrowPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &860755880715265609
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066353450693026516}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0.733}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 679301315230951945}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4476075104031600432
 GameObject:
   m_ObjectHideFlags: 0
@@ -38,6 +69,7 @@ Transform:
   m_Children:
   - {fileID: 655399947916986148}
   - {fileID: 585409986283830213}
+  - {fileID: 860755880715265609}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!136 &4228528932611032227
@@ -121,12 +153,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInventory
   ShowTopMostFoldoutHeaderGroup: 1
+  throwAction: {fileID: -862975104781376979, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  slot1Action: {fileID: 6952331865104089584, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  slot2Action: {fileID: 2923611884001594267, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  slot3Action: {fileID: 4774426815415865306, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  slot4Action: {fileID: -1205990299519898754, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   smallItemInventory:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   bigInventorySlot: {fileID: 0}
   bigInventorySlotUI: {fileID: 0}
+  testThrowPrefab: {fileID: 3518657916991147774, guid: e643239f5b3ada3488c987aca8809a3d, type: 3}
+  playerThrowPoint: {fileID: 860755880715265609}
 --- !u!114 &4244081607257289988
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -161,6 +200,7 @@ MonoBehaviour:
   inventory: {fileID: 0}
   interaction: {fileID: 0}
   movement: {fileID: 0}
+  playerInventoryUIPrefab: {fileID: 1307190218980334714, guid: 4122f1cefd5dde9438f02b172329ddbe, type: 3}
   playerInventoryUI: {fileID: 1307190218980334714, guid: 4122f1cefd5dde9438f02b172329ddbe, type: 3}
 --- !u!114 &5431813926534380635
 MonoBehaviour:
