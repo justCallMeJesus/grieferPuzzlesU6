@@ -21,6 +21,8 @@ public class InventoryDragHandler : MonoBehaviour,
     private CanvasGroup canvasGroup;
     private InventoryTetris inventory; // which inventory this item belongs to
 
+    private bool newItemMoving = false;
+
     private void Awake()
     {
         placedItem = GetComponent<PlacedItem>();
@@ -34,10 +36,12 @@ public class InventoryDragHandler : MonoBehaviour,
 
     public void OnBeginDrag(PointerEventData e)
     {
+        Debug.Log("OnbeginDrag");
         canvasGroup.alpha = 0.6f;
         canvasGroup.blocksRaycasts = false;
         InventoryDragDropSystem.Instance.BeginDrag(inventory, placedItem);
     }
+    
 
     public void OnDrag(PointerEventData e)
     {
@@ -50,6 +54,15 @@ public class InventoryDragHandler : MonoBehaviour,
         canvasGroup.blocksRaycasts = true;
         InventoryDragDropSystem.Instance.EndDrag();
     }
+
+    public void OnBeginDragNewBlock()
+    {
+        canvasGroup.alpha = 0.6f;
+        canvasGroup.blocksRaycasts = false;
+    }
+
+
+
 }
 
 

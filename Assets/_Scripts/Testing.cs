@@ -29,5 +29,14 @@ public class Testing : MonoBehaviour
             if (result == null)
                 Debug.Log("No space!");
         }
+
+        if (Keyboard.current.oKey.wasPressedThisFrame)
+        {
+            InventoryTetris inv = GetComponent<InventoryTetris>();
+
+            PlacedItem result = inv.SpawnItemAtMouse(testSO);
+            if (result == null)
+                Debug.Log("No space!");
+        }
     }
 }

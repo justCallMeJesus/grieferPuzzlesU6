@@ -6,6 +6,7 @@ public class ItemTetrisSO : ScriptableObject
 {
 
     public string itemName;
+    public ItemData itemData;
     public Sprite sprite;
     public int width = 1;
     public int height = 1;

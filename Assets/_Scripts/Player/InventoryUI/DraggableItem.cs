@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -13,13 +14,18 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     [SerializeField] public ItemData itemData;
 
+    private static readonly Dictionary<ItemType, System.Type> draggableTypeMap = new()
+    {
+        { ItemType.TetrisBlock, typeof(TetrisDraggableItem) },
+    };  
+
     private void OnEnable()
     {
         image = GetComponent<Image>();
         //image.sprite = itemData.sprite;
     }
 
-    public void OnBeginDrag(PointerEventData eventData)
+    public virtual void OnBeginDrag(PointerEventData eventData)
     {
         parentAfterDrag = transform.parent;
         transform.SetParent(transform.root);
@@ -45,7 +51,12 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         Image image = go.AddComponent<Image>();
         image.sprite = itemData.sprite;
 
-        DraggableItem draggable = image.AddComponent<DraggableItem>();
+        System.Type draggableType = draggableTypeMap.TryGetValue(itemData.type, out var t)
+        ? t
+        : typeof(DraggableItem);
+        
+
+        DraggableItem draggable = (DraggableItem)go.AddComponent(draggableType);
         draggable.itemData = itemData;
 
         draggable.transform.SetParent(parentSlot.transform);
