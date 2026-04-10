@@ -4180,7 +4180,6 @@ MonoBehaviour:
   contentParent: {fileID: 1414151888}
   lobbyManager: {fileID: 1552373673}
   lobbyContentParent: {fileID: 1269213191}
-  SteamNotOpen: {fileID: 68065406}
 --- !u!1 &1635638259
 GameObject:
   m_ObjectHideFlags: 0
@@ -4707,8 +4706,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 96.8, y: 0}
-  m_SizeDelta: {x: 943.7, y: 50}
+  m_AnchoredPosition: {x: 148, y: 43.1}
+  m_SizeDelta: {x: 1010.4, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1911414953
 MonoBehaviour:
@@ -4730,7 +4729,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Steam ist nicht ge\xF6ffnet"
+  m_text: "Steam nicht ge\xF6ffnet"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -4739,8 +4738,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278190335
-  m_fontColor: {r: 1, g: 0, b: 0, a: 1}
+    rgba: 4278912985
+  m_fontColor: {r: 0.8490566, g: 0.028034903, b: 0.043635145, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -4757,8 +4756,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 73.74
-  m_fontSizeBase: 73.74
+  m_fontSize: 80.73
+  m_fontSizeBase: 80.73
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18

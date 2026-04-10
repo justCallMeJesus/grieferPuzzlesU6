@@ -11,10 +11,12 @@ GameObject:
   - component: {fileID: 679301315230951945}
   - component: {fileID: 4228528932611032227}
   - component: {fileID: 8491326312750147419}
+  - component: {fileID: -87280228198437037}
   - component: {fileID: 1369480863665674825}
   - component: {fileID: 4244081607257289988}
   - component: {fileID: 5742913846630144154}
   - component: {fileID: -2818725941007479345}
+  - component: {fileID: -8251713356488939310}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -74,7 +76,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bc2cd2facc527248b7de7d6890ef378, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
-  ShowTopMostFoldoutHeaderGroup: 1
+  syncMode: 0
+  syncInterval: 0.1
   state: 0
   move: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   freeLook: {fileID: 0}
@@ -82,6 +85,31 @@ MonoBehaviour:
   collisionIgnoreMask:
     serializedVersion: 2
     m_Bits: 128
+--- !u!114 &-87280228198437037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4476075104031600432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1447356615
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &1369480863665674825
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,6 +174,40 @@ MonoBehaviour:
   visible: 0
   m_AssetId: febb531ef4c4b684b893405188a8a94c
   hasSpawned: 0
+--- !u!114 &-8251713356488939310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4476075104031600432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f74aedd71d9a4f55b3ce499326d45fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransform
+  syncMode: 0
+  syncInterval: 0.1
+  clientAuthority: 1
+  sendInterval: 0.05
+  syncPosition: 1
+  syncRotation: 1
+  syncScale: 0
+  interpolatePosition: 1
+  interpolateRotation: 1
+  interpolateScale: 0
+  bufferTimeMultiplier: 1
+  bufferSizeLimit: 64
+  catchupThreshold: 4
+  catchupMultiplier: 0.1
+  onlySyncOnChange: 1
+  bufferResetMultiplier: 5
+  positionSensitivity: 0.01
+  rotationSensitivity: 0.01
+  scaleSensitivity: 0.01
+  showGizmos: 0
+  showOverlay: 0
+  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
 --- !u!1 &7262896246588094828
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,8 +1,10 @@
+using Mirror;
 using Steamworks;
 using Steamworks.Data;
 using System;
+using Unity.Services.Lobbies;
 using UnityEngine;
-using Mirror;
+using UnityEngine.Events;
 
 namespace Mirror.FizzySteam
 {
@@ -12,6 +14,10 @@ namespace Mirror.FizzySteam
     private event Action<int, byte[], int> OnReceivedData;
     private event Action<int> OnDisconnected;
     private event Action<int, Exception> OnReceivedError;
+
+
+ 
+
 
     private BidirectionalDictionary<Connection, int> connToMirrorID;
     private BidirectionalDictionary<SteamId, int> steamIDToMirrorID;
@@ -83,8 +89,10 @@ namespace Mirror.FizzySteam
         connToMirrorID.Add(conn, connectionId);
         steamIDToMirrorID.Add(clientSteamID, connectionId);
         OnConnected.Invoke(connectionId);
+        
         Debug.Log($"Client with SteamID {clientSteamID} connected. Assigning connection id {connectionId}");
-      }
+        GameObject.Find("SteamLobbyManager")?.SendMessage("TriggerLobbyEvent");
+            }
       else if(info.State == ConnectionState.ClosedByPeer)
       {
         if (connToMirrorID.TryGetValue(conn, out int connId))

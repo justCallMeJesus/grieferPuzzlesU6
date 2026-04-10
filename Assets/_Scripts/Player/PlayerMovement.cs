@@ -26,12 +26,35 @@ public class PlayerMovement : NetworkBehaviour
 
     IMovementMode freeMovement = new FreeMovement();
 
+    public override void OnStartLocalPlayer()
+    {
+        base.OnStartLocalPlayer();
 
+        // Find the Cinemachine camera in the scene and tell it to follow THIS tank
+        var vcam = GameObject.Find("FreeLook Camera").GetComponent<CinemachineCamera>();
+        if (vcam != null)
+        {
+            vcam.Follow = transform;
+            vcam.LookAt = transform;
+        }
+    }
     private void Awake()
     {
         currentMode = freeMovement;
     }
+    [ClientRpc]
+    public void RpcHideUI()
+    {
+        // Because this script is on the tank, we need to FIND the UI in the scene
+        // You can't drag UI into a Prefab, so we find it by name or tag
+        GameObject bg = GameObject.Find("Image");
+        GameObject lobby = GameObject.Find("InLobbyUI");
 
+        if (bg != null) bg.SetActive(false);
+        if (lobby != null) lobby.SetActive(false);
+
+        Debug.Log("UI Hidden via Tank RPC");
+    }
     private void Update()
     {
         if (!isLocalPlayer) return;

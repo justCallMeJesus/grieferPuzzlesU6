@@ -1,9 +1,11 @@
 using Mirror;
 using Steamworks;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Threading.Tasks;
 
 
 public class SteamFriendsManager : MonoBehaviour
@@ -14,8 +16,13 @@ public class SteamFriendsManager : MonoBehaviour
     public Transform contentParent;         //scroll view for friends list
     public SteamLobbyManager lobbyManager;
     public Transform lobbyContentParent;   //scroll view for lobby members
+    public GameObject SteamNotOpen;
+    private Dictionary<SteamId, GameObject> friendRows = new Dictionary<SteamId, GameObject>();
 
-
+    void Update()
+    {
+        SteamClient.RunCallbacks();
+    }
     private void OnEnable()
     {
         // Listen for the event you already created
@@ -29,17 +36,37 @@ public class SteamFriendsManager : MonoBehaviour
 
     async void Start()
     {
-        Debug.Log("Checking if Steam client is valid...");
-        if (!SteamClient.IsValid)  //Normally SteamClient should already be running bc of Fizzy
+        await InitializeSteam();
+        SteamNotOpen.SetActive(false);
+    }
+    private async Task InitializeSteam()
+    {
+        bool connected = false;
+
+        while (!connected)
         {
-            try
+            Debug.Log("Checking if Steam client is valid...");
+
+            if (SteamClient.IsValid)
             {
-                SteamClient.Init(480); //AppID
-                
+                connected = true;
+                Debug.Log("Steam is already valid and running!");
             }
-            catch (System.Exception e)
+            else
             {
-                Debug.Log("Could not connect to Steam: " + e.Message);
+                try
+                {
+                    SteamClient.Init(480); // AppID
+                    connected = true;
+                    Debug.Log("Successfully connected to Steam!");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"Could not connect to Steam: {e.Message}. Retrying in 5 seconds...");
+                    SteamNotOpen.SetActive(true);
+                    // Wait 5 seconds before trying again so we don't freeze the CPU
+                    await Task.Delay(5000);
+                }
             }
         }
 
@@ -52,9 +79,20 @@ public class SteamFriendsManager : MonoBehaviour
         Debug.Log("Steam client initialized successfully.");
         InitFriends();
 
+        SteamMatchmaking.OnLobbyMemberJoined += (lobby, friend) => {
+            Debug.Log($"{friend.Name} joined the lobby! Refreshing UI...");
+            UpdateLobbyUI(); // Call your function that clears and redraws the UI
+        };
 
+        // Also handle when people leave so the list stays accurate
+        SteamMatchmaking.OnLobbyMemberLeave += (lobby, friend) => {
+            UpdateLobbyUI();
+        };
+
+        SteamMatchmaking.OnLobbyMemberDisconnected += (lobby, friend) => {
+            UpdateLobbyUI();
+        };
     }
-
     public static Texture2D GetTextureFromImage(Steamworks.Data.Image img)
     {
         Texture2D texture = new Texture2D((int)img.Width, (int)img.Height, TextureFormat.RGBA32, false);
@@ -78,12 +116,14 @@ public class SteamFriendsManager : MonoBehaviour
         {
             // 1. Instantiate the Prefab
             GameObject row = Instantiate(friendRowPrefab, contentParent);
-
+            friendRows.Add(friend.Id, row);
             // 2. Get references to components
             var nameText = row.transform.Find("FriendName").GetComponent<TextMeshProUGUI>();
             var idText = row.transform.Find("FriendSteamID").GetComponent<TextMeshProUGUI>();
             var profilePic = row.transform.Find("FriendProfilePic").GetComponent<RawImage>();
             var inviteBtn = row.transform.Find("InviteButton").GetComponent<Button>();
+
+            var joinBtn = row.transform.Find("JoinButton").GetComponent<Button>();
 
             // 3. Set basic data
             nameText.text = friend.Name;
@@ -93,12 +133,70 @@ public class SteamFriendsManager : MonoBehaviour
             string friendId = friend.Id.ToString();
             inviteBtn.onClick.AddListener(() => OnInviteClick(friendId));
 
+            if (friend.IsPlayingThisGame && friend.GameInfo?.Lobby != null)
+            {
+                joinBtn.gameObject.SetActive(true);
+
+                // Get the Lobby ID for the join function
+                var lobbyId = friend.GameInfo.Value.Lobby.Value.Id;
+                joinBtn.onClick.AddListener(() => lobbyManager.JoinLobby(lobbyId));
+            }
+            else
+            {
+                joinBtn.gameObject.SetActive(false);
+            }
+            UpdateSingleFriendUI(friend, row);
             // 5. Load Avatar Asynchronously (So the UI doesn't freeze)
             LoadFriendAvatar(friend.Id, profilePic);
 
             Debug.Log($"Added friend {friend.Name} to the Canvas list.");
         }
+        StopAllCoroutines();
+        StartCoroutine(RefreshLobbyStatusLoop());
     }
+
+    private IEnumerator RefreshLobbyStatusLoop()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(7f);
+
+            foreach (var friend in SteamFriends.GetFriends())
+            {
+                // 1. Check if they have a lobby via GameInfo
+                if (friend.GameInfo?.Lobby != null)
+                {
+                    // 2. This is the Facepunch equivalent to RequestLobbyData
+                    // It refreshes the metadata for that specific lobby
+                    friend.GameInfo.Value.Lobby.Value.Refresh();
+                }
+
+                // 3. Update the UI row visibility
+                if (friendRows.TryGetValue(friend.Id, out GameObject row))
+                {
+                    UpdateSingleFriendUI(friend, row);
+                }
+            }
+        }
+    }
+
+    private void UpdateSingleFriendUI(Friend friend, GameObject row)
+    {
+        var joinBtn = row.transform.Find("JoinButton").GetComponent<Button>();
+
+        // Check Steam for lobby info
+        if (friend.IsPlayingThisGame && friend.GameInfo?.Lobby != null)
+        {
+            joinBtn.gameObject.SetActive(true);
+            joinBtn.onClick.RemoveAllListeners();
+            joinBtn.onClick.AddListener(() => lobbyManager.JoinLobby(friend.GameInfo.Value.Lobby.Value.Id));
+        }
+        else
+        {
+            joinBtn.gameObject.SetActive(false);
+        }
+    }
+
     private async void LoadFriendAvatar(SteamId id, RawImage targetImage)
     {
         var imgTask = await SteamFriends.GetLargeAvatarAsync(id);
@@ -139,13 +237,15 @@ public class SteamFriendsManager : MonoBehaviour
     public void UpdateLobbyUI()
     {
         // 1. Clear existing list
+        Debug.Log("Updating Lobby UI...");
         foreach (Transform child in lobbyContentParent) Destroy(child.gameObject);
-
+        Debug.Log("Cleared existing lobby member list.");
+   
         // 2. Loop through current lobby members (using Facepunch syntax)
         foreach (var member in lobbyManager.currentLobby.Members)
         {
             GameObject row = Instantiate(friendRowPrefab, lobbyContentParent);
-
+            Debug.Log($"Added lobby member {member.Name} to the Canvas list.");
             // 3. Set the data (Same paths as before)
             row.transform.Find("FriendName").GetComponent<TextMeshProUGUI>().text = member.Name;
             var profilePic = row.transform.Find("FriendProfilePic").GetComponent<RawImage>();

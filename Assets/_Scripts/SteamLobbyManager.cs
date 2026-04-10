@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -22,7 +23,9 @@ public class SteamLobbyManager : MonoBehaviour
     public UnityEvent OnLobbyCreated;
 
     public UnityEvent OnLobbyJoined;
-    
+
+    public static Action OnClientJoinedLobby;
+
 
     public UnityEvent OnLobbyLeave;
 
@@ -35,6 +38,7 @@ public class SteamLobbyManager : MonoBehaviour
     public GameObject InLobbyUI;
     public GameObject StartButton;
     public GameObject LeaveButton;
+    public TMP_InputField InputFieldHostId;
 
 
     public GameObject BackGroundImage;
@@ -47,6 +51,12 @@ public class SteamLobbyManager : MonoBehaviour
         // 2. Initialize the Instance
         if (Instance == null) { Instance = this; }
         else { Destroy(gameObject); }
+    }
+
+    public void TriggerLobbyEvent()
+    {
+        Debug.Log("Triggering lobby event for clients...");
+        OnLobbyJoined?.Invoke();
     }
 
     private void Start()
@@ -63,33 +73,36 @@ public class SteamLobbyManager : MonoBehaviour
         SteamMatchmaking.OnLobbyGameCreated += OnLobbyGameCreated;
         SteamFriends.OnGameLobbyJoinRequested += OnGameLobbyJoinRequest;
         SteamMatchmaking.OnLobbyInvite += OnLobbyInvite;
-        SteamMatchmaking.OnLobbyDataChanged += OnLobbyDataUpdated;
+        //SteamMatchmaking.OnLobbyDataChanged += OnLobbyDataUpdated;
 
         
 
     }
 
-
-
-    public void StartGame()
+    void Update()
     {
-        Debug.Log("Starting Game...");
-        Debug.Log(NetworkServer.active);
-        BackGroundImage.SetActive(false);
-        InLobbyUI.SetActive(false);
-
-        GameObject newPlayerPrefab = Instantiate(tank);
-        Debug.Log("------------Instantiated player prefab for host. ------------");
-        NetworkServer.Spawn(newPlayerPrefab);
-        NetworkServer.AddPlayerForConnection(NetworkServer.localConnection, newPlayerPrefab);
+        SteamClient.RunCallbacks();
     }
+
+    //public void StartGame()
+    //{
+      //  Debug.Log("Starting Game...");
+       // Debug.Log(NetworkServer.active);
+       // BackGroundImage.SetActive(false);
+        //InLobbyUI.SetActive(false);
+
+       // GameObject newPlayerPrefab = Instantiate(tank);
+       // Debug.Log("------------Instantiated player prefab for host. ------------");
+       // NetworkServer.Spawn(newPlayerPrefab);
+       // NetworkServer.AddPlayerForConnection(NetworkServer.localConnection, newPlayerPrefab);
+   // }
 
     void OnLobbyInvite(Friend friend, Lobby lobby)
     {
         Debug.Log($"{friend.Name} invited you to his lobby.");
     }
 
-
+    
     private void OnLobbyGameCreated(Lobby lobby, uint ip, ushort port, SteamId id)
     {
         
@@ -126,19 +139,15 @@ public class SteamLobbyManager : MonoBehaviour
         return texture;
     }
 
-    private async void OnLobbyMemberJoined(Lobby lobby, Friend friend)
+    void OnLobbyMemberJoined(Lobby lobby, Friend friend)
     {
 
-        Debug.Log("Someone joinged");
+        Debug.Log("------------Someone joinged------------------");
+        //currentLobby.SetData("Member", friend.Name);
+
+        Debug.Log($"{friend.Name} joined the lobby");
 
         
-
-
-        //GameObject obj = Instantiate(InLobbyFriend, content);
-        //obj.GetComponentInChildren<Text>().text = friend.Name;
-        //var img = await SteamFriends.GetLargeAvatarAsync(friend.Id);
-        //obj.GetComponentInChildren<RawImage>().texture = ConvertSteamImage(img.Value); ;//SteamFriendsManager.GetTextureFromSteamIdAsync(friend.Id);
-        //inLobby.Add(friend.Id, obj);
 
     }
 
@@ -160,6 +169,8 @@ public class SteamLobbyManager : MonoBehaviour
 
     async void OnGameLobbyJoinRequest(Lobby joinedLobby, SteamId id)
     {
+        
+        Debug.Log($"Received game lobby join request from {id}. Attempting to join...");
         RoomEnter joinedLobbySuccess = await joinedLobby.Join();
         if (joinedLobbySuccess != RoomEnter.Success)
         {
@@ -171,14 +182,69 @@ public class SteamLobbyManager : MonoBehaviour
         }
     }
 
+    public async void OnLobbyJoinRequest()
+    {
+        Debug.Log("OnLobbyJoinRequest triggered");
+        string hostIdString = InputFieldHostId.text;
 
-    void OnLobbyDataUpdated(Lobby lobby)
+        SteamId hostId = ulong.Parse(hostIdString);
+        Debug.Log($"Attempting to join lobby with Host ID: {hostId}");
+        var joinedLobby = await SteamMatchmaking.JoinLobbyAsync(hostId); //Joining SteamLobby
+        if (!joinedLobby.HasValue)
+        {
+            Debug.LogError("Join failed! Lobby is null. This usually means the ID was wrong or the lobby no longer exists.");
+            return;
+        }
+        Lobby lobbyToJoin = joinedLobby.Value;
+        Debug.Log($"Successfully joined lobby: {lobbyToJoin.Id}");
+        Debug.Log($"Member count is now: {lobbyToJoin.MemberCount}");
+        //lobbyToJoin.SetData("HostAddress", hostIdString);
+        //await lobbyToJoin.Join();
+        NetworkManager.singleton.networkAddress = lobbyToJoin.Owner.Id.ToString();
+        NetworkManager.singleton.StartClient();
+        // OnLobbyDataUpdated(hostIdString);
+    }
+
+    public async void JoinLobby(SteamId lobbyId)
+    {
+        Debug.Log($"Attempting to join Steam Lobby: {lobbyId}");
+
+        // 1. Join the Steam Lobby via API
+        // This adds the player to the 'lobby.Members' list
+        var lobbyResult = await SteamMatchmaking.JoinLobbyAsync(lobbyId);
+
+        if (lobbyResult.HasValue)
+        {
+            Lobby lobby = lobbyResult.Value;
+            currentLobby = lobby; // Store it in your manager
+
+            Debug.Log("Joined Steam Lobby successfully.");
+
+            // 2. Get the Host's SteamID from the Lobby
+            // We use the Owner of the lobby as the 'Network Address'
+            string hostSteamId = lobby.Owner.Id.ToString();
+
+            // 3. Connect Mirror
+            // Ensure FizzyFacepunch is the active transport on your NetworkManager
+            NetworkManager.singleton.networkAddress = hostSteamId;
+            NetworkManager.singleton.StartClient();
+
+            Debug.Log($"Mirror Client connecting to Host: {hostSteamId}");
+        }
+        else
+        {
+            Debug.LogError("Failed to join Steam Lobby. It might be full, private, or no longer exists.");
+        }
+    }
+    void OnLobbyDataUpdated(string hostIdString)
     {
         // 1. If we are the Host, we don't need to connect to ourselves
+        Debug.Log("Lobby data updated callback received.");
         if (NetworkServer.active) return;
-
+        string hostAddress = hostIdString;
         // 2. Try to get the Host's ID
-        string hostAddress = lobby.GetData("HostAddress");
+        //string hostAddress = lobby.GetData("HostAddress");
+        Debug.Log("Lobby data updated. Host Address: " + hostAddress);
 
         // 3. If it's not empty and we aren't already connecting...
         if (!string.IsNullOrEmpty(hostAddress) && !NetworkClient.active)
@@ -187,6 +253,7 @@ public class SteamLobbyManager : MonoBehaviour
 
             NetworkManager.singleton.networkAddress = hostAddress;
             NetworkManager.singleton.StartClient();
+            Debug.Log("Client started successfully, connecting to host at: " + hostAddress);
         }
     }
 
@@ -215,29 +282,24 @@ public class SteamLobbyManager : MonoBehaviour
  
     async void OnLobbyEntered(Lobby lobby)
     {
-       
 
-     
         Debug.Log("Client joined the lobby");
         
-        foreach (var user in inLobby.Values)
-        {
-            Destroy(user);
-        }
-        inLobby.Clear();
 
-        
-        OnLobbyJoined.Invoke();
+        OnLobbyJoined.Invoke();  //needed to display the hosts Name and profile picture in the InLobbyList
     }
 
+    public void HostLobby()
+    {
+        CreateLobbyAsync();  //Function for the button because a function called by a button has to be a void but createLobbyAsync has to return a bool for something but i dont remember what in what script
+    }
 
     public async Task<bool> CreateLobbyAsync()
     {
-        
-        
-        HomeScreenUI.SetActive(false);
-        StartButton.SetActive(true);
-        LeaveButton.SetActive(true);
+
+        //HomeScreenUI.SetActive(false);
+        //StartButton.SetActive(true);
+        //LeaveButton.SetActive(true);
         Debug.Log("Creating lobby...");
         
         bool result = await CreateLobby();
@@ -253,17 +315,6 @@ public class SteamLobbyManager : MonoBehaviour
     public static async Task<bool> CreateLobby()
     {
 
-        //try
-        //{
-        //    SteamClient.Init(480);
-        //    Debug.Log("Steam client initialized successfully.");
-        //}
-        //catch (System.Exception e)
-        //{
-        //    Debug.Log("Could not connect to Steam: " + e.Message);
-        //}
-
-        
         try
         {
             var createLobbyOutput = await SteamMatchmaking.CreateLobbyAsync();
@@ -302,9 +353,9 @@ public class SteamLobbyManager : MonoBehaviour
             currentLobby = default;
 
 
-            StartButton.SetActive(false);
-            LeaveButton.SetActive(false);
-            HomeScreenUI.SetActive(true);
+            //StartButton.SetActive(false);
+            //LeaveButton.SetActive(false);
+            //HomeScreenUI.SetActive(true);
             
 
             Debug.Log("Left lobby succesfully");
@@ -321,6 +372,14 @@ public class SteamLobbyManager : MonoBehaviour
     {
         SteamClient.Shutdown();
         
+
+
     }
 
 }
+
+
+
+//To do:
+//Refresh friends list every x seconds to check if they have a joinable lobby 
+//When game is on, friends in lobby shouldnt refresh
