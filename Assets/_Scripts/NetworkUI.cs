@@ -1,4 +1,4 @@
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -40,11 +40,11 @@ public class NetworkUI : MonoBehaviour
 
     public void Host()
     {
-        NetworkManager.Singleton.StartHost();
+        NetworkManager.singleton.StartHost();
     }
 
     public void Client()
     {
-        NetworkManager.Singleton.StartClient();
+        NetworkManager.singleton.StartClient();
     }
 }

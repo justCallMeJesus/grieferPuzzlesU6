@@ -1,9 +1,9 @@
 using Unity.Cinemachine;
-using Unity.Netcode;
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
-
+using Mirror;
 public class PlayerMovement : NetworkBehaviour
 {
     public enum PlayerMovementState
@@ -26,18 +26,33 @@ public class PlayerMovement : NetworkBehaviour
     IMovementMode currentMode;
 
     IMovementMode freeMovement = new FreeMovement();
+    IMovementMode noMovement = new NoMovement();
 
 
     private void Awake()
     {
         currentMode = freeMovement;
     }
+    [ClientRpc]
+    public void RpcHideUI()
+    {
+        // Because this script is on the PlayerPrefab, we need to FIND the UI in the scene
+        // You can't drag UI into a Prefab, so we find it by name or tag
+        GameObject bg = GameObject.Find("Image");
+        GameObject lobby = GameObject.Find("InLobbyUI");
 
+        if (bg != null) bg.SetActive(false);
+        if (lobby != null) lobby.SetActive(false);
+
+        Debug.Log("UI Hidden via Tank RPC");
+    }
     private void Update()
     {
-        if (!IsOwner) return;
+        if (!isLocalPlayer) return;
+        //Debug.Log("PlayerMovement Update");
         currentMode.Tick(this);
     }
+
 
 
     public interface IMovementMode
@@ -102,25 +117,45 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
-
-
-    public override void OnNetworkSpawn()
+    public class NoMovement : IMovementMode
     {
-        if (!IsOwner) return;
+        public void Tick(PlayerMovement player)
+        {
+            return;
+        }
+    }
 
+    public override void OnStartLocalPlayer()
+    {
+        // base.OnStartLocalPlayer() is optional but good practice
+        base.OnStartLocalPlayer();
+
+        // Instantiate and setup camera
         spawnedCamera = Instantiate(freeLookPrefab);
 
         var freelook = spawnedCamera.GetComponent<CinemachineCamera>();
-        if(freelook != null)
+        if (freelook != null)
         {
             freelook.Follow = this.transform;
             freelook.LookAt = this.transform;
         }
-
     }
-    public override void OnNetworkDespawn()
+
+    public override void OnStopClient()
     {
         if (spawnedCamera != null)
             Destroy(spawnedCamera);
+
+        base.OnStopClient();
+    }
+
+    public void DisableMovement()
+    {
+        currentMode = noMovement;
+    }
+
+    public void EnableMovement()
+    {
+        currentMode = freeMovement;
     }
 }

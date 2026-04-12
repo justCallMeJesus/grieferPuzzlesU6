@@ -7,10 +7,18 @@ public class ItemData : ScriptableObject
 
     public bool largeItem = false;
 
-    
+    public Sprite sprite;
+
+    public GameObject prefab;
+
+
+
 }
 
 public enum ItemType
 {
-    Banana
+    Banana,
+    TetrisBlock
 }
+
+

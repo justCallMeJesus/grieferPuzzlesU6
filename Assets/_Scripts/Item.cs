@@ -1,83 +1,70 @@
-using Unity.Netcode;
+using Mirror;
 using UnityEngine;
 
-public class Item : NetworkBehaviour, IInteractable
+public class Item : NetworkBehaviour, IPickupable
 {
     public ItemData ItemData;
     public GameObject GameObject => this.gameObject;
 
-    // [AI] Syncs collected state across all clients, including late joiners
-    private NetworkVariable<bool> isCollected = new NetworkVariable<bool>(
-        false,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server
-    );
+    // [SyncVar] replaces NetworkVariable. 
+    // The "hook" is the function that runs on all clients when this value changes.
+    [SyncVar(hook = nameof(OnCollectedChanged))]
+    private bool isCollected = false;
 
-    // [AI] Called when this object is spawned on the network (including late joiners)
-    public override void OnNetworkSpawn()
+    // Mirror equivalent of OnNetworkSpawn
+    public override void OnStartClient()
     {
-        // [AI] Subscribe to future changes
-        isCollected.OnValueChanged += OnCollectedChanged;
-        // [AI] Apply current state immediately (handles late joiners)
-        gameObject.SetActive(!isCollected.Value);
+        base.OnStartClient();
+        // Apply current state immediately (handles late joiners)
+        gameObject.SetActive(!isCollected);
     }
 
-    // [AI] Called on every client whenever isCollected changes
-    private void OnCollectedChanged(bool previous, bool current)
+    // Mirror hook signature: (oldValue, newValue)
+    private void OnCollectedChanged(bool oldVal, bool newVal)
     {
-        gameObject.SetActive(!current);
+        gameObject.SetActive(!newVal);
     }
 
-    // Called when a player interacts with this item
-    public void OnInteract(PlayerInventory player)
+    public void OnPickup(PlayerInventory player)
     {
-        if(!player.HasSpace()) { return; }
-
-        // Add item to player's inventory
-        for (int i = 0; i < player.smallItemInventory.Length; i++)
+        if (!ItemData.largeItem)
         {
-            if (player.smallItemInventory[i] == null)
-            {
-                RequestPickup(player, i);
-                RequestDestroy();
-                return;
-            }
+            if (!player.HasSmallSpace()) return;
+            CmdPickup(player.gameObject);
         }
-        RequestDestroy();
-    }
-     
-    // Initiates the networked removal of this item
-    public void RequestDestroy()
-    {
-        DestroyRpc();
-    }
-
-    // [AI] Runs on the server — marks item as collected and hides it
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void DestroyRpc()
-    {
-        // [AI] Setting this to true syncs to all current and future clients,
-        // triggering OnCollectedChanged which hides the object on each client
-        isCollected.Value = true;
-        gameObject.SetActive(false);
-    }
-
-    public void RequestPickup(PlayerInventory player, int slot)
-    {
-        PickupRpc(player.NetworkObject, slot);
-    }
-
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void PickupRpc(NetworkObjectReference playerRef, int slot)
-    {
-        if (isCollected.Value) return; // prevent double pickup
-
-        if (playerRef.TryGet(out NetworkObject playerNetObj))
+        else
         {
-            PlayerInventory inventory = playerNetObj.GetComponent<PlayerInventory>();
-            inventory.smallItemInventory[slot] = ItemData;
+            if (!player.HasBigSpace()) return;
+            CmdPickupLarge(player.gameObject);
         }
-
-        isCollected.Value = true;
     }
+
+    // Mirror uses [Command] to send from Client to Server.
+    // We can pass the GameObject directly; Mirror handles the network reference for us.
+    [Command(requiresAuthority = false)]
+    private void CmdPickup(GameObject playerObj)
+    {
+        if (isCollected) return;
+
+        if (playerObj.TryGetComponent(out PlayerInventory inventory))
+        {
+            inventory.StoreSmallItem(ItemData);
+            isCollected = true; // SyncVar updates all clients automatically
+        }
+    }
+
+    [Command(requiresAuthority = false)]
+    private void CmdPickupLarge(GameObject playerObj)
+    {
+        if (isCollected) return;
+
+        if (playerObj.TryGetComponent(out PlayerInventory inventory))
+        {
+            inventory.StoreBigItem(ItemData);
+            isCollected = true;
+        }
+    }
+
+    // Logic for RequestDestroy/DestroyRpc is redundant now because 
+    // setting isCollected = true in the Commands handles the hiding.
 }
