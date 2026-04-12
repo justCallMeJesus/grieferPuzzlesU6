@@ -8,12 +8,13 @@ using UnityEngine;
 /// NETWORK CONTRACT
 /// ────────────────
 /// • savedState    – authoritative JSON of the grid, server-only write.
-///                   Other clients never load this into the visual inventory
-///                   until they actually open the panel themselves.
-/// • currentUserId – who has the panel open right now. NOBODY = ulong.MaxValue.
+///                   Only loaded into the visual grid when a client actually opens the panel.
+/// • currentUserId – who has write-access right now. NOBODY = ulong.MaxValue.
 ///                   (Cannot use 0 — the host's LocalClientId is 0.)
+///                   Only one client may have write-access at a time.
 /// • ownerId       – set permanently the first time anyone interacts.
-///                   Only that client may open the panel afterwards.
+///                   The owner gets full read/write access.
+///                   All other clients get read-only (can view, cannot drag).
 ///
 /// SETUP
 /// ─────
@@ -42,9 +43,11 @@ public class Panel : NetworkBehaviour, IInteractable
     private readonly NetworkVariable<FixedString4096Bytes> savedState =
         new(default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    /// <summary>ClientId of the client that currently has write-access. NOBODY = available.</summary>
     private readonly NetworkVariable<ulong> currentUserId =
         new(NOBODY, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    /// <summary>First client to interact claims permanent ownership.</summary>
     private readonly NetworkVariable<ulong> ownerId =
         new(NOBODY, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -59,10 +62,6 @@ public class Panel : NetworkBehaviour, IInteractable
         savedState.OnValueChanged += OnSavedStateChanged;
         currentUserId.OnValueChanged += OnCurrentUserChanged;
         ownerId.OnValueChanged += OnOwnerChanged;
-
-        // NOTE: we deliberately do NOT call ReloadLocalInventory here for
-        // late-joining clients. The inventory is only ever loaded into the
-        // visual grid when this client actually opens the panel (GrantAccessRpc).
 
         if (inventoryTetris != null)
             inventoryTetris.OnGridFull += HandleGridFull;
@@ -93,8 +92,17 @@ public class Panel : NetworkBehaviour, IInteractable
         if (!player.IsOwner) return;
         if (!isLocallyOpen) return;
 
-        string json = inventoryTetris.Save();
-        RequestCloseRpc(NetworkManager.Singleton.LocalClientId, json);
+        // Only the owner persists changes; viewers just close locally
+        bool isOwner = NetworkManager.Singleton.LocalClientId == ownerId.Value;
+        if (isOwner)
+        {
+            string json = inventoryTetris.Save();
+            RequestCloseRpc(NetworkManager.Singleton.LocalClientId, json);
+        }
+        else
+        {
+            CloseLocalPanel();
+        }
     }
 
     // ── Server Rpcs ───────────────────────────────────────────────────────
@@ -102,34 +110,32 @@ public class Panel : NetworkBehaviour, IInteractable
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void RequestOpenRpc(ulong requesterId)
     {
-        // First-touch: unclaimed panel is permanently assigned to whoever opens it first
+        // First-touch: unclaimed panel is permanently assigned to the first opener
         if (ownerId.Value == NOBODY)
         {
             ownerId.Value = requesterId;
             Debug.Log($"[Panel] Client {requesterId} claimed ownership.");
         }
 
-        // Owner check
-        if (ownerId.Value != requesterId)
-        {
-            Debug.Log($"[Panel] Client {requesterId} denied: owned by {ownerId.Value}.");
-            GrantAccessRpc("This panel belongs to someone else.", false,
-                RpcTarget.Single(requesterId, RpcTargetUse.Temp));
-            return;
-        }
+        bool requesterIsOwner = ownerId.Value == requesterId;
 
-        // Lock check
-        if (currentUserId.Value != NOBODY)
+        if (requesterIsOwner)
         {
-            Debug.Log($"[Panel] Client {requesterId} denied: in use by {currentUserId.Value}.");
-            GrantAccessRpc("Someone else is already using this panel.", false,
-                RpcTarget.Single(requesterId, RpcTargetUse.Temp));
-            return;
-        }
+            // Owner: enforce the single-writer lock
+            if (currentUserId.Value != NOBODY)
+            {
+                Debug.Log($"[Panel] Owner {requesterId} denied: panel in use by {currentUserId.Value}.");
+                GrantAccessRpc("Panel is currently in use.", false, false,
+                    RpcTarget.Single(requesterId, RpcTargetUse.Temp));
+                return;
+            }
 
-        // Grant
-        currentUserId.Value = requesterId;
-        GrantAccessRpc(savedState.Value.ToString(), true,
+            // Acquire write lock
+            currentUserId.Value = requesterId;
+        }
+        // Non-owner: no lock — read-only view, nothing to lock
+
+        GrantAccessRpc(savedState.Value.ToString(), true, requesterIsOwner,
             RpcTarget.Single(requesterId, RpcTargetUse.Temp));
     }
 
@@ -143,18 +149,24 @@ public class Panel : NetworkBehaviour, IInteractable
             return;
         }
 
-        // Save state server-side — no clients reload from this change (see OnSavedStateChanged)
+        // Persist new state — no clients reload visuals from this (see OnSavedStateChanged)
         savedState.Value = new FixedString4096Bytes(json);
 
-        // Releasing the lock triggers OnCurrentUserChanged on all clients,
-        // which closes the UI only on the client that had it open
+        // Release write lock — triggers OnCurrentUserChanged on all clients
         currentUserId.Value = NOBODY;
     }
 
     // ── Targeted Client Rpc ───────────────────────────────────────────────
 
+    /// <summary>
+    /// Delivered only to the requesting client.
+    /// granted=false  → show denial message, do not open UI.
+    /// granted=true   → open UI; canEdit controls whether drag handlers are active.
+    /// RpcParams MUST be the last parameter for SendTo.SpecifiedInParams.
+    /// </summary>
     [Rpc(SendTo.SpecifiedInParams)]
-    private void GrantAccessRpc(string jsonOrReason, bool granted, RpcParams rpcParams = default)
+    private void GrantAccessRpc(string jsonOrReason, bool granted, bool canEdit,
+        RpcParams rpcParams = default)
     {
         if (!granted)
         {
@@ -165,10 +177,16 @@ public class Panel : NetworkBehaviour, IInteractable
 
         isLocallyOpen = true;
 
-        // Load the saved grid into the visual inventory NOW (only for this client)
+        // Load the saved grid visually
         inventoryTetris.ClearAll();
         if (!string.IsNullOrEmpty(jsonOrReason))
             inventoryTetris.Load(jsonOrReason);
+
+        // Tell InventoryTetris (and TetrisDraggableItem) whether this client may edit
+        inventoryTetris.SetLocalPlayerEditor(canEdit);
+
+        // Enable or disable drag handlers on already-placed items
+        SetDragHandlersEnabled(canEdit);
 
         inventoryPanel.SetActive(true);
         inventoryTetris.SetPanelIsOpen(true);
@@ -185,16 +203,13 @@ public class Panel : NetworkBehaviour, IInteractable
 
     private void OnSavedStateChanged(FixedString4096Bytes previous, FixedString4096Bytes current)
     {
-        // The JSON changed because someone closed the panel and saved their work.
-        // We deliberately do NOTHING here — other clients must not load items into
-        // the visual grid while the panel is closed, or items appear floating on screen.
-        // The fresh JSON will be passed directly in GrantAccessRpc when this client
-        // opens the panel next time.
+        // Intentionally empty — visuals are only loaded in GrantAccessRpc,
+        // never from a background state change, to prevent items floating on screen.
     }
 
     private void OnCurrentUserChanged(ulong previous, ulong current)
     {
-        // Lock released — close the UI on whichever client had it open
+        // Write lock released — close the UI on whichever client held it
         if (current == NOBODY
             && previous == NetworkManager.Singleton.LocalClientId
             && isLocallyOpen)
@@ -212,9 +227,28 @@ public class Panel : NetworkBehaviour, IInteractable
 
     // ── Private helpers ───────────────────────────────────────────────────
 
+    /// <summary>
+    /// Enables or disables every InventoryDragHandler under the item container,
+    /// allowing read-only view when enabled=false.
+    /// </summary>
+    private void SetDragHandlersEnabled(bool enabled)
+    {
+        if (inventoryTetris == null) return;
+        var container = inventoryTetris.GetItemContainer();
+        if (container == null) return;
+
+        foreach (var handler in container.GetComponentsInChildren<InventoryDragHandler>(true))
+            handler.enabled = enabled;
+    }
+
     private void CloseLocalPanel()
     {
         isLocallyOpen = false;
+
+        // Re-enable drag handlers and reset editor flag for next open
+        SetDragHandlersEnabled(true);
+        inventoryTetris.SetLocalPlayerEditor(false);
+
         inventoryTetris.ClearAll();
         inventoryPanel.SetActive(false);
         inventoryTetris.SetPanelIsOpen(false);
