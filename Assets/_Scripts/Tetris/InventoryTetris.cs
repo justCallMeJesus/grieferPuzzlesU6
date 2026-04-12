@@ -24,7 +24,7 @@ public class InventoryTetris : MonoBehaviour
 
     /// <summary>
     /// Fired once when every cell in the grid is occupied.
-    /// Will fire again if the grid is filled a second time after being cleared.
+    /// Resets when any item is removed so it can fire again after the next fill cycle.
     /// </summary>
     public event Action OnGridFull;
 
@@ -39,29 +39,40 @@ public class InventoryTetris : MonoBehaviour
     [Tooltip("All ItemTetrisSO assets in your project. Used for save/load by name.")]
     [SerializeField] private ItemTetrisSO[] itemSODatabase;
 
-    [Header("Ownership")]
-    [Tooltip("Only this player may open the panel. Leave empty to allow any player.")]
-    [SerializeField] private PlayerManager ownerPlayer;
-
     // ── Private state ─────────────────────────────────────────────────────
 
     private Grid<GridCell> grid;
     private RectTransform itemContainer;
 
     /// <summary>
-    /// Tracks whether OnGridFull has already been fired for the current fill cycle,
-    /// so the event does not spam on every subsequent placement once full.
-    /// Resets to false whenever any item is removed (grid is no longer full).
+    /// Prevents OnGridFull from firing more than once per fill cycle.
+    /// Resets to false whenever any item is removed.
     /// </summary>
     private bool gridFullEventFired = false;
 
+    // ── Static / singleton state ──────────────────────────────────────────
+
     public static InventoryTetris Instance { get; private set; }
 
+    /// <summary>True while any panel is open locally.</summary>
     public static bool IsPanelOpen { get; private set; }
+
+    /// <summary>
+    /// True when the local player has write-access to the currently open panel.
+    /// False when viewing as a non-owner (read-only).
+    /// Set by Panel before activating the panel UI.
+    /// </summary>
+    public static bool IsLocalPlayerEditor { get; private set; }
 
     public void SetPanelIsOpen(bool state)
     {
         IsPanelOpen = state;
+    }
+
+    /// <summary>Called by Panel when granting access to indicate edit vs view mode.</summary>
+    public void SetLocalPlayerEditor(bool canEdit)
+    {
+        IsLocalPlayerEditor = canEdit;
     }
 
     // ── Inner type ────────────────────────────────────────────────────────
@@ -126,30 +137,6 @@ public class InventoryTetris : MonoBehaviour
 
     public bool IsValidGridPosition(Vector2Int pos) =>
         grid.IsValidGridPosition(pos);
-
-    // ── Ownership ─────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Returns true if the given player is allowed to access this inventory.
-    /// Always returns true when no owner has been assigned.
-    /// </summary>
-    public bool IsOwnedBy(PlayerManager player)
-    {
-        if (ownerPlayer == null) return true;
-        return ownerPlayer == player;
-    }
-
-    /// <summary>
-    /// Assigns an owner at runtime (e.g. when a player crafts or claims a chest).
-    /// Pass null to make the panel accessible by anyone.
-    /// </summary>
-    public void SetOwner(PlayerManager player)
-    {
-        ownerPlayer = player;
-    }
-
-    /// <summary>Returns the current owner, or null if the panel is unowned.</summary>
-    public PlayerManager GetOwner() => ownerPlayer;
 
     // ── Placement ─────────────────────────────────────────────────────────
 
@@ -221,9 +208,7 @@ public class InventoryTetris : MonoBehaviour
         foreach (var cell in cellsToClear)
             grid.GetGridObject(cell).Clear();
 
-        // Grid is no longer full — allow the event to fire again next time
         gridFullEventFired = false;
-
         OnItemRemoved?.Invoke(item);
         return item;
     }
@@ -311,6 +296,32 @@ public class InventoryTetris : MonoBehaviour
         gridFullEventFired = false;
     }
 
+    // ── Grid-full check ───────────────────────────────────────────────────
+
+    /// <summary>Returns true if every cell in the grid is currently occupied.</summary>
+    public bool IsGridFull()
+    {
+        for (int x = 0; x < grid.GetWidth(); x++)
+            for (int y = 0; y < grid.GetHeight(); y++)
+                if (grid.GetGridObject(x, y).IsEmpty())
+                    return false;
+        return true;
+    }
+
+    /// <summary>
+    /// Called after every successful placement.
+    /// Fires OnGridFull once per fill cycle; resets when any item is removed.
+    /// </summary>
+    private void CheckGridFull()
+    {
+        if (gridFullEventFired) return;
+        if (!IsGridFull()) return;
+
+        gridFullEventFired = true;
+        Debug.Log("[InventoryTetris] Grid is full!");
+        OnGridFull?.Invoke();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     private void ClearCells(PlacedItem item)
@@ -350,9 +361,7 @@ public class InventoryTetris : MonoBehaviour
         foreach (var cell in cellsToClear)
             grid.GetGridObject(cell).Clear();
 
-        // Grid is no longer full — allow the event to fire again next time
         gridFullEventFired = false;
-
         OnItemRemoved?.Invoke(item);
     }
 
@@ -371,33 +380,5 @@ public class InventoryTetris : MonoBehaviour
         spawned.ConfigureNewBlock();
 
         return spawned;
-    }
-
-    // ── Grid-full check ───────────────────────────────────────────────────
-
-    /// <summary>
-    /// Returns true if every cell in the grid is currently occupied.
-    /// </summary>
-    public bool IsGridFull()
-    {
-        for (int x = 0; x < grid.GetWidth(); x++)
-            for (int y = 0; y < grid.GetHeight(); y++)
-                if (grid.GetGridObject(x, y).IsEmpty())
-                    return false;
-        return true;
-    }
-
-    /// <summary>
-    /// Called after every successful placement.
-    /// Fires OnGridFull once per fill cycle (resets when any item is removed).
-    /// </summary>
-    private void CheckGridFull()
-    {
-        if (gridFullEventFired) return;
-        if (!IsGridFull()) return;
-
-        gridFullEventFired = true;
-        Debug.Log("[InventoryTetris] Grid is full!");
-        OnGridFull?.Invoke();
     }
 }
