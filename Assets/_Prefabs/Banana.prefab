@@ -105,6 +105,7 @@ GameObject:
   - component: {fileID: 2213042076486791301}
   - component: {fileID: 3770672912537110957}
   - component: {fileID: 5645901704275140184}
+  - component: {fileID: 2795292631402844618}
   m_Layer: 7
   m_Name: Banana
   m_TagString: Untagged
@@ -277,3 +278,20 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &2795292631402844618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3518657916991147774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  serverOnly: 0
+  visible: 0
+  m_AssetId: e643239f5b3ada3488c987aca8809a3d
+  hasSpawned: 0
