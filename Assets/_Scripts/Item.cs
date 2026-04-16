@@ -1,4 +1,4 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 
 public class Item : NetworkBehaviour, IPickupable
@@ -6,78 +6,80 @@ public class Item : NetworkBehaviour, IPickupable
     public ItemData ItemData;
     public GameObject GameObject => this.gameObject;
 
-    // [AI] Syncs collected state across all clients, including late joiners
     private NetworkVariable<bool> isCollected = new NetworkVariable<bool>(
         false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
-    // [AI] Called when this object is spawned on the network (including late joiners)
+    private NetworkVariable<bool> isGrounded = new NetworkVariable<bool>(
+        true,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     public override void OnNetworkSpawn()
     {
-        // [AI] Subscribe to future changes
         isCollected.OnValueChanged += OnCollectedChanged;
-        // [AI] Apply current state immediately (handles late joiners)
         gameObject.SetActive(!isCollected.Value);
     }
 
-    // [AI] Called on every client whenever isCollected changes
     private void OnCollectedChanged(bool previous, bool current)
     {
         gameObject.SetActive(!current);
     }
 
-    // Called when a player interacts with this item
+    // ── Grounded state ────────────────────────────────────────────────────────
+
+    public void SetGrounded(bool grounded)
+    {
+        if (!IsSpawned)
+        {
+            if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+                isGrounded.Value = grounded;
+            return;
+        }
+
+        SetGroundedRpc(grounded);
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    private void SetGroundedRpc(bool grounded)
+    {
+        isGrounded.Value = grounded;
+    }
+
+    // ── Pickup ────────────────────────────────────────────────────────────────
+
     public void OnPickup(PlayerInventory player)
     {
+        // Both checks run client-side to avoid sending RPCs that arrive at the
+        // server after isCollected is already true — the root cause of duplicate
+        // inventory entries when the same item was thrown multiple times.
+        if (isCollected.Value) return;
+        if (!isGrounded.Value) return;
+
         if (!ItemData.largeItem)
         {
-            if (!player.HasSmallSpace()) { return; }
-
-            RequestPickup(player);
-            RequestDestroy();
+            if (!player.HasSmallSpace()) return;
+            PickupRpc(player.NetworkObject);
         }
         else
         {
-            if (!player.HasBigSpace()) { return; }
-
-            RequestPickupLarge(player);
-            RequestDestroy();
+            if (!player.HasBigSpace()) return;
+            PickupLargeRpc(player.NetworkObject);
         }
-        
-    }
-     
-    // Initiates the networked removal of this item
-    public void RequestDestroy()
-    {
-        DestroyRpc();
     }
 
-    // [AI] Runs on the server � marks item as collected and hides it
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void DestroyRpc()
-    {
-        // [AI] Setting this to true syncs to all current and future clients,
-        // triggering OnCollectedChanged which hides the object on each client
-        isCollected.Value = true;
-        gameObject.SetActive(false);
-    }
-
-    public void RequestPickup(PlayerInventory player)
-    {
-        PickupRpc(player.NetworkObject);
-    }
-
-    public void RequestPickupLarge(PlayerInventory player)
-    {
-        PickupLargeRpc(player.NetworkObject);
-    }
+    // Kept for any external callers
+    public void RequestPickup(PlayerInventory player) => PickupRpc(player.NetworkObject);
+    public void RequestPickupLarge(PlayerInventory player) => PickupLargeRpc(player.NetworkObject);
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
     private void PickupRpc(NetworkObjectReference playerRef)
     {
-        if (isCollected.Value) return; // prevent double pickup
+        if (isCollected.Value) return;
+        if (!isGrounded.Value) return;
 
         if (playerRef.TryGet(out NetworkObject playerNetObj))
         {
@@ -92,6 +94,7 @@ public class Item : NetworkBehaviour, IPickupable
     private void PickupLargeRpc(NetworkObjectReference playerRef)
     {
         if (isCollected.Value) return;
+        if (!isGrounded.Value) return;
 
         if (playerRef.TryGet(out NetworkObject playerNetObj))
         {

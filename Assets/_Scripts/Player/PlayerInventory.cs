@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -170,7 +170,7 @@ public class PlayerInventory : NetworkBehaviour
         if (item == null) return;
 
         ThrowServerRpc(selectedSlot, playerThrowPoint.position, transform.forward);
-        RemoveItem(selectedSlot);
+        // RemoveItem is now handled server-side and synced back via SyncInventoryClientRpc
         selectedSlot = -1;
         SetSelectedSlot(-1);
     }
@@ -178,9 +178,13 @@ public class PlayerInventory : NetworkBehaviour
     [ServerRpc]
     private void ThrowServerRpc(int slot, Vector3 spawnPos, Vector3 direction)
     {
-        GameObject thrown = Instantiate(GetSelectedItem(slot).prefab, spawnPos,
-                                        Quaternion.LookRotation(direction));
+        ItemData item = GetSelectedItem(slot);
+        if (item == null) return; // guard: item already gone on server side
+
+        RemoveItem(slot); // ← fix: keep server inventory in sync before any future PushStateToClient
+
+        GameObject thrown = Instantiate(item.prefab, spawnPos, Quaternion.LookRotation(direction));
         thrown.GetComponent<NetworkObject>().Spawn();
-        thrown.GetComponent<ThrowableItem>().Launch(direction);
+        thrown.GetComponent<ThrowableItem>().Launch(direction, OwnerClientId);
     }
 }

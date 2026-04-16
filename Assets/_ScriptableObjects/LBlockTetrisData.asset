@@ -15,4 +15,5 @@ MonoBehaviour:
   type: 1
   largeItem: 1
   sprite: {fileID: 21300000, guid: 5646008142534e94dbf4cb970fb36dbc, type: 3}
+  prefab: {fileID: 5866867830976764728, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
   tetrisSO: {fileID: 11400000, guid: 49d25b1d6f1a837449350a2366050a00, type: 2}

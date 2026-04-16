@@ -38,7 +38,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 46d45e0e7617b2d47ba56a13f4c217e4, type: 2}
     - target: {fileID: 5121714649184934007, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 903169659
+      value: 1576176745
       objectReference: {fileID: 0}
     - target: {fileID: 5121714649184934007, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
@@ -94,5 +94,30 @@ PrefabInstance:
     - {fileID: 7507068896929581474, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
     - {fileID: 6905106745844847416, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5866867830976764728, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -3519581875576423689}
   m_SourcePrefab: {fileID: 100100000, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
+--- !u!1 &1165039230313409972 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5866867830976764728, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
+  m_PrefabInstance: {fileID: 4701828606038439564}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &-3519581875576423689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1165039230313409972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec286555256c5044fabc3d1fd26fc12f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowableItem
+  throwForce: 5
+  upwardAngle: 10
+  stunDuration: 2
+  knockbackForce: 8
+  destroyOnPlayerHit: 0
