@@ -64,6 +64,19 @@ public class InventoryTetris : MonoBehaviour
     /// </summary>
     public static bool IsLocalPlayerEditor { get; private set; }
 
+    /// <summary>
+    /// True when the local player opened this inventory in steal mode.
+    /// In steal mode the player may only drag items OUT of this inventory,
+    /// never drop items IN. One successful steal closes the panel automatically.
+    /// </summary>
+    public static bool IsStealMode { get; private set; }
+
+    /// <summary>
+    /// The Panel that granted steal-mode access. Used by InventoryDragDropSystem
+    /// to commit the steal after a successful drop into the player's own inventory.
+    /// </summary>
+    public static Panel StealSourcePanel { get; private set; }
+
     public void SetPanelIsOpen(bool state)
     {
         IsPanelOpen = state;
@@ -73,6 +86,17 @@ public class InventoryTetris : MonoBehaviour
     public void SetLocalPlayerEditor(bool canEdit)
     {
         IsLocalPlayerEditor = canEdit;
+    }
+
+    /// <summary>
+    /// Called by Panel to enter or exit steal mode.
+    /// <paramref name="sourcePanel"/> is the Panel the steal originates from;
+    /// pass null when clearing steal mode.
+    /// </summary>
+    public void SetStealMode(bool active, Panel sourcePanel)
+    {
+        IsStealMode = active;
+        StealSourcePanel = active ? sourcePanel : null;
     }
 
     // ── Inner type ────────────────────────────────────────────────────────

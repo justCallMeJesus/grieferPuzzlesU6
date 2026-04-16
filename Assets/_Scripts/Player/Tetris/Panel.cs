@@ -16,6 +16,14 @@ using UnityEngine;
 ///                   The owner gets full read/write access.
 ///                   All other clients get read-only (can view, cannot drag).
 ///
+/// STEAL MODE
+/// ──────────
+/// A non-owner who has the panel owner in their KilledPlayers HashSet may open
+/// the panel in "steal mode": they can drag exactly one item OUT into their own
+/// inventory. They cannot drop items into the panel. Once the item is placed in
+/// their inventory the steal is committed server-side (panel state updated,
+/// owner removed from thief's KilledPlayers) and the panel closes automatically.
+///
 /// SETUP
 /// ─────
 ///   1. Add this component + NetworkObject to the panel GameObject.
@@ -55,6 +63,12 @@ public class Panel : NetworkBehaviour, IInteractable
 
     private bool isLocallyOpen = false;
 
+    /// <summary>
+    /// True on the local client when they opened this panel in steal mode.
+    /// Cleared on close.
+    /// </summary>
+    private bool isLocallyInStealMode = false;
+
     // ── NetworkBehaviour lifecycle ────────────────────────────────────────
 
     public override void OnNetworkSpawn()
@@ -92,7 +106,14 @@ public class Panel : NetworkBehaviour, IInteractable
         if (!player.IsOwner) return;
         if (!isLocallyOpen) return;
 
-        // Only the owner persists changes; viewers just close locally
+        // Steal-mode viewers just close locally — steal is committed on item drop, not on close
+        if (isLocallyInStealMode)
+        {
+            CloseLocalPanel();
+            return;
+        }
+
+        // Only the owner persists changes; plain viewers just close locally
         bool isOwner = NetworkManager.Singleton.LocalClientId == ownerId.Value;
         if (isOwner)
         {
@@ -125,17 +146,31 @@ public class Panel : NetworkBehaviour, IInteractable
             if (currentUserId.Value != NOBODY)
             {
                 Debug.Log($"[Panel] Owner {requesterId} denied: panel in use by {currentUserId.Value}.");
-                GrantAccessRpc("Panel is currently in use.", false, false,
+                GrantAccessRpc("Panel is currently in use.", false, false, false,
                     RpcTarget.Single(requesterId, RpcTargetUse.Temp));
                 return;
             }
 
             // Acquire write lock
             currentUserId.Value = requesterId;
-        }
-        // Non-owner: no lock — read-only view, nothing to lock
 
-        GrantAccessRpc(savedState.Value.ToString(), true, requesterIsOwner,
+            GrantAccessRpc(savedState.Value.ToString(), true, true, false,
+                RpcTarget.Single(requesterId, RpcTargetUse.Temp));
+            return;
+        }
+
+        // ── Non-owner path ────────────────────────────────────────────────
+        // Check whether the requester has killed the panel owner — steal mode
+        bool canSteal = false;
+        if (ownerId.Value != NOBODY)
+        {
+            PlayerManager requesterPM = GetPlayerManagerByClientId(requesterId);
+            if (requesterPM != null && requesterPM.KilledPlayers.Contains(ownerId.Value))
+                canSteal = true;
+        }
+
+        // No lock acquired for non-owners (read-only or steal-mode viewers)
+        GrantAccessRpc(savedState.Value.ToString(), true, false, canSteal,
             RpcTarget.Single(requesterId, RpcTargetUse.Temp));
     }
 
@@ -156,16 +191,50 @@ public class Panel : NetworkBehaviour, IInteractable
         currentUserId.Value = NOBODY;
     }
 
-    // ── Targeted Client Rpc ───────────────────────────────────────────────
+    /// <summary>
+    /// Called by the stealing client after they successfully dropped a stolen item
+    /// into their own inventory. The client passes the updated panel JSON (item removed).
+    /// Server: persists the new state, removes panel owner from thief's KilledPlayers,
+    /// then tells the thief to close.
+    /// </summary>
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void CommitStealRpc(ulong thiefId, string updatedPanelJson)
+    {
+        // Validate: thief must not be the owner
+        if (ownerId.Value == NOBODY || thiefId == ownerId.Value)
+        {
+            Debug.LogWarning($"[Panel] CommitSteal from {thiefId} rejected (invalid thief or no owner).");
+            return;
+        }
+
+        // Persist the panel without the stolen item
+        savedState.Value = new FixedString4096Bytes(updatedPanelJson);
+        Debug.Log($"[Panel] Client {thiefId} stole from panel owned by {ownerId.Value}. State saved.");
+
+        // Remove panel owner from thief's kill list
+        PlayerManager thiefPM = GetPlayerManagerByClientId(thiefId);
+        if (thiefPM != null)
+        {
+            thiefPM.RemoveKilledPlayer(ownerId.Value);
+            Debug.Log($"[Panel] Removed {ownerId.Value} from client {thiefId}'s KilledPlayers.");
+        }
+
+        // Force the thief's panel to close and revoke steal mode
+        RevokeStealAccessRpc(RpcTarget.Single(thiefId, RpcTargetUse.Temp));
+    }
+
+    // ── Targeted Client Rpcs ──────────────────────────────────────────────
 
     /// <summary>
     /// Delivered only to the requesting client.
     /// granted=false  → show denial message, do not open UI.
-    /// granted=true   → open UI; canEdit controls whether drag handlers are active.
+    /// granted=true   → open UI.
+    /// canEdit        → full owner edit access.
+    /// canSteal       → steal-mode: drag out only, no drop in, one item then auto-close.
     /// RpcParams MUST be the last parameter for SendTo.SpecifiedInParams.
     /// </summary>
     [Rpc(SendTo.SpecifiedInParams)]
-    private void GrantAccessRpc(string jsonOrReason, bool granted, bool canEdit,
+    private void GrantAccessRpc(string jsonOrReason, bool granted, bool canEdit, bool canSteal,
         RpcParams rpcParams = default)
     {
         if (!granted)
@@ -176,17 +245,19 @@ public class Panel : NetworkBehaviour, IInteractable
         }
 
         isLocallyOpen = true;
+        isLocallyInStealMode = canSteal;
 
         // Load the saved grid visually
         inventoryTetris.ClearAll();
         if (!string.IsNullOrEmpty(jsonOrReason))
             inventoryTetris.Load(jsonOrReason);
 
-        // Tell InventoryTetris (and TetrisDraggableItem) whether this client may edit
+        // Tell InventoryTetris whether this client may edit / steal
         inventoryTetris.SetLocalPlayerEditor(canEdit);
+        inventoryTetris.SetStealMode(canSteal, this);
 
-        // Enable or disable drag handlers on already-placed items
-        SetDragHandlersEnabled(canEdit);
+        // Enable drag handlers only for owner-editors and steal-mode viewers
+        SetDragHandlersEnabled(canEdit || canSteal);
 
         inventoryPanel.SetActive(true);
         inventoryTetris.SetPanelIsOpen(true);
@@ -197,6 +268,22 @@ public class Panel : NetworkBehaviour, IInteractable
             player.interaction.currentlyInteractingObject = this;
             player.FreezePlayer();
         }
+    }
+
+    /// <summary>
+    /// Sent to the stealing client after CommitSteal succeeds. Forces the panel closed
+    /// and clears steal mode so no further steals are possible.
+    /// </summary>
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void RevokeStealAccessRpc(RpcParams rpcParams = default)
+    {
+        Debug.Log("[Panel] Steal committed — closing panel and revoking access.");
+        CloseLocalPanel();
+
+        // Clear the interaction reference so the player can't close again
+        PlayerManager player = GetLocalPlayerManager();
+        if (player != null)
+            player.interaction.currentlyInteractingObject = null;
     }
 
     // ── NetworkVariable callbacks ─────────────────────────────────────────
@@ -244,10 +331,12 @@ public class Panel : NetworkBehaviour, IInteractable
     private void CloseLocalPanel()
     {
         isLocallyOpen = false;
+        isLocallyInStealMode = false;
 
-        // Re-enable drag handlers and reset editor flag for next open
+        // Re-enable drag handlers and reset editor / steal flags for next open
         SetDragHandlersEnabled(true);
         inventoryTetris.SetLocalPlayerEditor(false);
+        inventoryTetris.SetStealMode(false, null);
 
         inventoryTetris.ClearAll();
         inventoryPanel.SetActive(false);
@@ -267,6 +356,16 @@ public class Panel : NetworkBehaviour, IInteractable
     {
         foreach (var pm in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
             if (pm.IsOwner) return pm;
+        return null;
+    }
+
+    /// <summary>
+    /// Server-side helper: finds the PlayerManager NetworkBehaviour owned by clientId.
+    /// </summary>
+    private PlayerManager GetPlayerManagerByClientId(ulong clientId)
+    {
+        foreach (var pm in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
+            if (pm.OwnerClientId == clientId) return pm;
         return null;
     }
 
