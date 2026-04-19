@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private Image image;
-    
+
     [HideInInspector] public Transform parentAfterDrag;
 
     [SerializeField] public ItemData itemData;
@@ -19,7 +19,7 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private static readonly Dictionary<ItemType, System.Type> draggableTypeMap = new()
     {
         { ItemType.TetrisBlock, typeof(TetrisDraggableItem) },
-    };  
+    };
 
     private void OnEnable()
     {
@@ -40,7 +40,7 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         transform.position = eventData.position;
     }
 
-    public void OnEndDrag(PointerEventData eventData)
+    public virtual void OnEndDrag(PointerEventData eventData)
     {
         transform.SetParent(parentAfterDrag);
         image.raycastTarget = true;
@@ -56,7 +56,7 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         System.Type draggableType = draggableTypeMap.TryGetValue(itemData.type, out var t)
         ? t
         : typeof(DraggableItem);
-        
+
 
         DraggableItem draggable = (DraggableItem)go.AddComponent(draggableType);
         draggable.itemData = itemData;

@@ -106,6 +106,26 @@ public class Panel : NetworkBehaviour, IInteractable
         if (!player.IsOwner) return;
         if (!isLocallyOpen) return;
 
+        // If the player is mid-drag, cancel it first and let the item snap back.
+        // The actual panel close is deferred until the drag system finishes.
+        if (InventoryDragDropSystem.Instance != null && InventoryDragDropSystem.Instance.IsDragging)
+        {
+            // Subscribe once — unsubscribed immediately inside the handler.
+            void OnDragFinished(bool _placed)
+            {
+                InventoryDragDropSystem.Instance.OnDragEnded -= OnDragFinished;
+                DoClose(player);
+            }
+            InventoryDragDropSystem.Instance.OnDragEnded += OnDragFinished;
+            InventoryDragDropSystem.Instance.CancelDrag();
+            return;
+        }
+
+        DoClose(player);
+    }
+
+    private void DoClose(PlayerManager player)
+    {
         // Steal-mode viewers just close locally — steal is committed on item drop, not on close
         if (isLocallyInStealMode)
         {

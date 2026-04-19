@@ -45,6 +45,54 @@ public class InventoryDragDropSystem : MonoBehaviour
         }
     }
 
+    /// <summary>True while the player is actively dragging an item.</summary>
+    public bool IsDragging => isDragging;
+
+    /// <summary>
+    /// Cancels the current drag and returns the item to its original position.
+    /// New items (spawned from outside the grid) are simply destroyed.
+    /// Fires OnDragEnded(false).
+    /// </summary>
+    public void CancelDrag()
+    {
+        if (!isDragging) return;
+        isDragging = false;
+
+        PlacedItem item = draggingItem;
+        InventoryTetris source = sourceInventory;
+        Vector2Int origin = originOnPickup;
+        ItemTetrisSO.Dir dir = dirOnPickup;
+        bool newItem = isNewItem;
+
+        draggingItem = null;
+        sourceInventory = null;
+        isNewItem = false;
+
+        // Restore raycasts so the item can interact normally again
+        var cg = item.GetComponent<CanvasGroup>();
+        if (cg != null) { cg.alpha = 1f; cg.blocksRaycasts = true; }
+
+        if (newItem)
+        {
+            // Item never existed in the grid — just discard it
+            item.DestroySelf();
+        }
+        else
+        {
+            // Put the item back where it came from
+            PlacedItem result = source.TryPlaceItem(item.itemSO, origin, dir);
+            if (result != null)
+                item.DestroySelf();
+            else
+            {
+                Debug.LogWarning("[InventoryDragDropSystem] CancelDrag: could not return item to origin — destroying anyway.");
+                item.DestroySelf();
+            }
+        }
+
+        OnDragEnded?.Invoke(false);
+    }
+
     public void BeginDrag(InventoryTetris inventory, PlacedItem item)
     {
         isNewItem = false;
