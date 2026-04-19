@@ -2913,10 +2913,10 @@ MonoBehaviour:
   - {fileID: 610714535}
   - {fileID: 2115125789}
   - {fileID: 1885564792}
-  spawnCooldown: 6
+  desiredPoolSize: 5
+  spawnCooldown: 2
   initialDelay: 0
-  maxSpawnedObjects: 0
-  avoidRepeatSpawnPoint: 1
+  avoidRepeatSpawnPoint: 0
   autoStart: 1
 --- !u!4 &1271412223
 Transform:
