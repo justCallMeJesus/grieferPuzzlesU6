@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemTetrisSO
   itemName: 1x1Block
   itemData: {fileID: 11400000, guid: 229629553b26f0c4db4422ab227d64cd, type: 2}
-  sprite: {fileID: 21300000, guid: 170577bce7cbda144b82578f81308d23, type: 3}
+  sprite: {fileID: 21300000, guid: 1e66d5ab81a15ce44a9ae27b5fe8173c, type: 3}
   width: 1
   height: 1
   cells: []

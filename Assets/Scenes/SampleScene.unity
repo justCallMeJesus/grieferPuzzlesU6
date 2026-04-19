@@ -1549,12 +1549,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7aaffa6b4de49e647b7920abaf8dbb4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryTetris
-  gridWidth: 5
-  gridHeight: 5
+  gridWidth: 6
+  gridHeight: 6
   cellSize: 200
   itemSODatabase:
   - {fileID: 11400000, guid: 49d25b1d6f1a837449350a2366050a00, type: 2}
   - {fileID: 11400000, guid: 70abb4322b7ac8045932bf94199b2cbf, type: 2}
+  - {fileID: 11400000, guid: a1b7972966569b543950e2083cf79cc8, type: 2}
 --- !u!114 &508304306
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2748,6 +2749,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4fac0724403b11f4d867cc08e51fc17c, type: 2}
   - {fileID: 11400000, guid: 15b34711357e4a149bf9011dd0897411, type: 2}
   - {fileID: 11400000, guid: 229629553b26f0c4db4422ab227d64cd, type: 2}
+  - {fileID: 11400000, guid: bc6e644323b51c048a4de529247e1b12, type: 2}
 --- !u!4 &1154415894
 Transform:
   m_ObjectHideFlags: 0
@@ -2909,6 +2911,7 @@ MonoBehaviour:
   prefabsToSpawn:
   - {fileID: 5121714649184934007, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
   - {fileID: 455915119879515899, guid: 65c66b7f7682c6c4789d5f6f7ef842e1, type: 3}
+  - {fileID: 455915119879515899, guid: 2623997bbeb07be40b497ea1cc698c8c, type: 3}
   spawnPoints:
   - {fileID: 610714535}
   - {fileID: 2115125789}

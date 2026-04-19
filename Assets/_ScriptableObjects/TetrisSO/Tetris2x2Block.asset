@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5666a3e40b6236f439509a843ef7c87f, type: 3}
-  m_Name: ItemTetrisSO
+  m_Name: Tetris2x2Block
   m_EditorClassIdentifier: Assembly-CSharp::ItemTetrisSO
-  itemName: Test
-  sprite: {fileID: 21300000, guid: a0e35f6b808bb7447826cc6c69ffe448, type: 3}
-  width: 1
-  height: 1
+  itemName: 2x2Block
+  itemData: {fileID: 11400000, guid: bc6e644323b51c048a4de529247e1b12, type: 2}
+  sprite: {fileID: 21300000, guid: 95004e43659431d4480b1c7132e1b7fa, type: 3}
+  width: 2
+  height: 2
   cells: []
