@@ -614,6 +614,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5893460253137443368}
   - component: {fileID: 6770832743158465131}
+  - component: {fileID: 4554438212828993149}
   m_Layer: 5
   m_Name: FriendRowPrefab
   m_TagString: Untagged
@@ -665,6 +666,14 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!222 &4554438212828993149
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7760851938088781008}
+  m_CullTransparentMesh: 1
 --- !u!1 &8373812171450954764
 GameObject:
   m_ObjectHideFlags: 0

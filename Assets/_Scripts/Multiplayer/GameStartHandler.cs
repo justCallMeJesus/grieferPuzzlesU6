@@ -5,11 +5,6 @@ public class GameStartHandler : NetworkBehaviour
 {
     [Header("Prefabs & UI")]
     public GameObject PlayerPrefab;
-    public GameObject BackGroundImage;
-    public GameObject InLobbyUI;
-    public GameObject StartButton;
-    public GameObject LeaveButton;
-    public GameObject HomeScreenUI;
     public UiManager uiManager;
     // This is called by your UI Button (the "Start Game" button)
     // IMPORTANT: Only the Host should be able to click this!

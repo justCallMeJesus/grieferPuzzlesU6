@@ -14,6 +14,9 @@ public class UiManager : MonoBehaviour
 
     public GameObject LeaveButton;
     public GameObject mainMenuUI;
+    public GameObject HostedLobbyUI;
+    public GameObject RulesContainer;
+
 
     // This is the variable that was missing
     public Lobby currentLobby;
@@ -60,7 +63,8 @@ public class UiManager : MonoBehaviour
         currentLobby = lobby;
         lobby.SetPublic();
         lobby.SetJoinable(true);
-
+        if (mainMenuUI != null) mainMenuUI.SetActive(false);
+        if (HostedLobbyUI != null) HostedLobbyUI.SetActive(true);
         Debug.Log("Lobby created successfully.");
     }
 
@@ -98,8 +102,34 @@ public class UiManager : MonoBehaviour
         currentLobby.Leave();
         currentLobby = default; // Reset the variable
 
+        if (HostedLobbyUI != null) HostedLobbyUI.SetActive(false);
         if (mainMenuUI != null) mainMenuUI.SetActive(true);
         if (LeaveButton != null) LeaveButton.SetActive(false);
         if (startGameButton != null) startGameButton.SetActive(false);
+    }
+
+    // Some Ui stuff (hopefully every Change in Ui is in this script lol)
+
+    public void QuitGame()
+    {
+        // This line closes the actual built game (.exe / .app)
+        Application.Quit();
+
+        // This line stops the "Play" mode inside the Unity Editor so you can see it works
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #endif
+
+        Debug.Log("Game is exiting...");
+    }
+
+    public void ShowRules()
+    {
+        if (RulesContainer != null) RulesContainer.SetActive(true);
+    }
+
+    public void HideRules()
+    {
+        if (RulesContainer != null) RulesContainer.SetActive(false);
     }
 }
