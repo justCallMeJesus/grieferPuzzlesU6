@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Builds the checkerboard / grid-cell background for an InventoryTetris panel.
