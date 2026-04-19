@@ -126,7 +126,25 @@ public class PlayerInventory : NetworkBehaviour
                 smallItemInventory[i] = null;
         }
         if (IsServer) PushStateToClient();
-        else RefreshUILocal();
+        else
+        {
+            RemoveItemServerRpc(slot);
+            RefreshUILocal();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    private void RemoveItemServerRpc(int slot)
+    {
+        if (slot == 0)
+            bigInventorySlot = null;
+        else
+        {
+            int i = slot - 1;
+            if (i >= 0 && i < smallItemInventory.Length)
+                smallItemInventory[i] = null;
+        }
+        // Server state is now consistent; client already updated locally.
     }
 
     public void SyncItemToSlot(ItemData item, int slotIndex)
@@ -139,6 +157,28 @@ public class PlayerInventory : NetworkBehaviour
             if (i >= 0 && i < smallItemInventory.Length)
                 smallItemInventory[i] = item;
         }
+        if (IsServer) PushStateToClient();
+        else
+        {
+            string itemName = item != null ? item.name : "";
+            SyncItemToSlotServerRpc(itemName, slotIndex);
+            RefreshUILocal();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    private void SyncItemToSlotServerRpc(string itemName, int slotIndex)
+    {
+        ItemData item = itemName != "" ? ItemRegistry.Get(itemName) : null;
+        if (slotIndex == 0)
+            bigInventorySlot = item;
+        else
+        {
+            int i = slotIndex - 1;
+            if (i >= 0 && i < smallItemInventory.Length)
+                smallItemInventory[i] = item;
+        }
+        // Server state is now consistent; client already updated locally.
     }
 
     // -------------------------------------------------------------------------
