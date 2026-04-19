@@ -1,4 +1,5 @@
 ﻿using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -28,12 +29,24 @@ public class ThrowableItem : MonoBehaviour
         itemComponent = GetComponent<Item>();
     }
 
+    void Start()
+    {
+        var nt = GetComponent<NetworkTransform>();
+        Debug.Log($"[ThrowableItem] '{gameObject.name}' | " +
+                  $"NetworkTransform: {nt != null} | " +
+                  $"Kinematic: {rb.isKinematic} | " +
+                  $"Mass: {rb.mass} | " +
+                  $"Layer: {gameObject.layer} ({LayerMask.LayerToName(gameObject.layer)}) | " +
+                  $"IsServer: {NetworkManager.Singleton.IsServer}");
+    }
+
     void FixedUpdate()
     {
         lastVelocity = rb.linearVelocity;
     }
 
-    public void Launch(Vector3 direction, ulong thrower)
+    [ClientRpc]
+    public void LaunchClientRpc(Vector3 direction, ulong thrower)
     {
         throwerClientId = thrower;
         hasHit = false;
@@ -87,8 +100,8 @@ public class ThrowableItem : MonoBehaviour
 
         Physics.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("Player"), true);
 
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
+        //rb.linearVelocity = Vector3.zero;
+        //rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
 
         itemComponent?.SetGrounded(true);

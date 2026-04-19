@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5666a3e40b6236f439509a843ef7c87f, type: 3}
-  m_Name: TetrisLBlock
+  m_Name: TetrisInverseSBlock
   m_EditorClassIdentifier: Assembly-CSharp::ItemTetrisSO
-  itemName: Test
-  itemData: {fileID: 11400000, guid: 15b34711357e4a149bf9011dd0897411, type: 2}
-  sprite: {fileID: 21300000, guid: 31304cfa8a1deb04f901914492acf7f8, type: 3}
-  width: 2
-  height: 3
+  itemName: InverseSTetrisBlock
+  itemData: {fileID: 11400000, guid: df3cac31d15343f489549d4492b74ecd, type: 2}
+  sprite: {fileID: 21300000, guid: fa03c1fc98995c846b5067b9e0422e9f, type: 3}
+  width: 3
+  height: 2
   cells:
   - {x: 0, y: 0}
   - {x: 1, y: 0}
-  - {x: 0, y: 1}
-  - {x: 0, y: 2}
+  - {x: 2, y: 1}
+  - {x: 1, y: 1}

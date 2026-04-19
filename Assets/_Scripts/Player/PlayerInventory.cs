@@ -179,12 +179,15 @@ public class PlayerInventory : NetworkBehaviour
     private void ThrowServerRpc(int slot, Vector3 spawnPos, Vector3 direction)
     {
         ItemData item = GetSelectedItem(slot);
-        if (item == null) return; // guard: item already gone on server side
+        if (item == null) return;
 
-        RemoveItem(slot); // ← fix: keep server inventory in sync before any future PushStateToClient
+        RemoveItem(slot);
 
         GameObject thrown = Instantiate(item.prefab, spawnPos, Quaternion.LookRotation(direction));
-        thrown.GetComponent<NetworkObject>().Spawn();
-        thrown.GetComponent<ThrowableItem>().Launch(direction, OwnerClientId);
+        NetworkObject netObj = thrown.GetComponent<NetworkObject>();
+        netObj.Spawn();
+
+        // Tell all clients to launch this object
+        thrown.GetComponent<ThrowableItem>().LaunchClientRpc(direction, OwnerClientId);
     }
 }

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42624c2cf9516b6449a93a68975daf02, type: 3}
+  m_Name: InverseLBlockTetrisData
+  m_EditorClassIdentifier: Assembly-CSharp::TetrisData
+  type: 1
+  largeItem: 1
+  sprite: {fileID: 21300000, guid: 76a47ed086a094e468321e17448bce1a, type: 3}
+  prefab: {fileID: 325596024784304517, guid: ecd9a528310d264468c70991fea3f969, type: 3}
+  tetrisSO: {fileID: 11400000, guid: 195d0c219342d754e8c95e97db6f63d9, type: 2}
