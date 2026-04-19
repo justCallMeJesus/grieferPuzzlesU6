@@ -15,6 +15,9 @@ using Unity.Netcode;
 ///  - The live count is determined each tick by scanning the scene for active
 ///    instances of any prefab in the list — this includes pre-placed scene objects
 ///    and correctly reacts to objects being destroyed or disabled at runtime.
+///  - Each spawn point remembers the item it spawned. A point is only considered
+///    free once its item is gone (picked up / destroyed / despawned). If all points
+///    are occupied, no item is spawned that tick even if the pool isn't full.
 ///
 /// SETUP:
 ///  1. Attach this script to a GameObject that also has a NetworkObject component.
@@ -68,6 +71,13 @@ public class RandomSpawner : NetworkBehaviour
     // Tracks only objects spawned by this spawner, so DespawnAll() works correctly.
     private readonly List<NetworkObject> _spawnedObjects = new();
 
+    // Maps each spawn point to the item currently sitting on it (null = free).
+    // A point becomes free automatically when its NetworkObject is destroyed/despawned.
+    private readonly Dictionary<Transform, NetworkObject> _pointOccupancy = new();
+
+    // Reusable list of free points rebuilt each tick — avoids per-tick allocation.
+    private readonly List<Transform> _freePoints = new();
+
     private Coroutine _spawnCoroutine;
     private int _lastSpawnPointIndex = -1;
 
@@ -78,6 +88,7 @@ public class RandomSpawner : NetworkBehaviour
         if (!IsServer) return;
 
         RebuildPrefabNameCache();
+        InitOccupancyMap();
 
         if (autoStart)
             StartSpawning();
@@ -127,6 +138,7 @@ public class RandomSpawner : NetworkBehaviour
                 obj.Despawn(destroy: true);
         }
         _spawnedObjects.Clear();
+        InitOccupancyMap(); // reset all points to free
     }
 
     /// <summary>
@@ -173,7 +185,7 @@ public class RandomSpawner : NetworkBehaviour
             return null;
         }
 
-        // ── Count all active scene instances of any listed prefab type ──
+        // ── Original pool check: scene-scan counts ALL live instances ──
         // FindObjectsByType only returns active objects, so disabled ones are
         // automatically excluded — no extra filtering needed.
         int activeCount = CountLiveSceneInstances();
@@ -181,9 +193,24 @@ public class RandomSpawner : NetworkBehaviour
         if (activeCount >= desiredPoolSize)
             return null;
 
-        Debug.Log($"[RandomSpawner] Pool at {activeCount}/{desiredPoolSize} — spawning.");
+        Debug.Log($"[RandomSpawner] Pool at {activeCount}/{desiredPoolSize} — checking free points.");
 
-        // ── Pick a completely random prefab, no filtering ──
+        // ── Collect free spawn points ──
+        // A point is free when its tracked NetworkObject is null, destroyed, or despawned.
+        _freePoints.Clear();
+        foreach (var kvp in _pointOccupancy)
+        {
+            if (kvp.Value == null || !kvp.Value.IsSpawned)
+                _freePoints.Add(kvp.Key);
+        }
+
+        if (_freePoints.Count == 0)
+        {
+            Debug.Log("[RandomSpawner] All spawn points occupied — skipping.");
+            return null;
+        }
+
+        // ── Pick a random prefab, no filtering ──
         int prefabIndex = Random.Range(0, prefabsToSpawn.Count);
         NetworkObject chosenPrefab = prefabsToSpawn[prefabIndex];
 
@@ -193,15 +220,8 @@ public class RandomSpawner : NetworkBehaviour
             return null;
         }
 
-        // ── Pick a spawn point ──
-        int spawnIndex = PickSpawnIndex();
-        Transform spawnPoint = spawnPoints[spawnIndex];
-
-        if (spawnPoint == null)
-        {
-            Debug.LogWarning($"[RandomSpawner] Spawn point at index {spawnIndex} is null.", this);
-            return null;
-        }
+        // ── Pick a free spawn point, optionally avoiding the last used one ──
+        Transform spawnPoint = PickFreeSpawnPoint();
 
         // ── Instantiate and network-spawn ──
         NetworkObject instance = Instantiate(
@@ -213,7 +233,8 @@ public class RandomSpawner : NetworkBehaviour
         instance.Spawn(destroyWithScene: true);
 
         _spawnedObjects.Add(instance);
-        _lastSpawnPointIndex = spawnIndex;
+        _pointOccupancy[spawnPoint] = instance;
+        _lastSpawnPointIndex = spawnPoints.IndexOf(spawnPoint);
 
         Debug.Log($"[RandomSpawner] Spawned '{chosenPrefab.name}' at '{spawnPoint.name}' " +
                   $"(NetworkObjectId: {instance.NetworkObjectId}). " +
@@ -263,23 +284,52 @@ public class RandomSpawner : NetworkBehaviour
         }
     }
 
-    private int PickSpawnIndex()
+    /// <summary>
+    /// Initialises the occupancy map from the spawnPoints list.
+    /// Existing entries with live items are preserved; new points start as free.
+    /// </summary>
+    private void InitOccupancyMap()
     {
-        if (!avoidRepeatSpawnPoint || spawnPoints.Count == 1)
-            return Random.Range(0, spawnPoints.Count);
+        if (spawnPoints == null) return;
 
-        int index;
+        // Remove stale entries for points no longer in the list.
+        var toRemove = new List<Transform>();
+        foreach (Transform key in _pointOccupancy.Keys)
+            if (!spawnPoints.Contains(key)) toRemove.Add(key);
+        foreach (Transform key in toRemove)
+            _pointOccupancy.Remove(key);
+
+        // Add any new points as free (don't overwrite live entries).
+        foreach (Transform sp in spawnPoints)
+            if (sp != null && !_pointOccupancy.ContainsKey(sp))
+                _pointOccupancy[sp] = null;
+    }
+
+    /// <summary>
+    /// Picks a random point from _freePoints, optionally avoiding the last used one.
+    /// _freePoints must be populated before calling this.
+    /// </summary>
+    private Transform PickFreeSpawnPoint()
+    {
+        if (!avoidRepeatSpawnPoint || _freePoints.Count == 1)
+            return _freePoints[Random.Range(0, _freePoints.Count)];
+
+        Transform last = _lastSpawnPointIndex >= 0 && _lastSpawnPointIndex < spawnPoints.Count
+            ? spawnPoints[_lastSpawnPointIndex]
+            : null;
+
+        Transform picked;
         int attempts = 0;
         const int maxAttempts = 20;
 
         do
         {
-            index = Random.Range(0, spawnPoints.Count);
+            picked = _freePoints[Random.Range(0, _freePoints.Count)];
             attempts++;
         }
-        while (index == _lastSpawnPointIndex && attempts < maxAttempts);
+        while (picked == last && attempts < maxAttempts);
 
-        return index;
+        return picked;
     }
 
     // ── Scene-view gizmos ──────────────────────────────────────────────────────
@@ -288,10 +338,18 @@ public class RandomSpawner : NetworkBehaviour
     {
         if (spawnPoints == null) return;
 
-        Gizmos.color = new Color(0f, 1f, 0.4f, 0.85f);
         foreach (Transform sp in spawnPoints)
         {
             if (sp == null) continue;
+
+            // Green = free, red = occupied (colour only meaningful in Play mode).
+            bool occupied = _pointOccupancy.TryGetValue(sp, out NetworkObject obj)
+                            && obj != null && obj.IsSpawned;
+
+            Gizmos.color = occupied
+                ? new Color(1f, 0.2f, 0.2f, 0.85f)
+                : new Color(0f, 1f, 0.4f, 0.85f);
+
             Gizmos.DrawWireSphere(sp.position, 0.4f);
             Gizmos.DrawLine(transform.position, sp.position);
         }

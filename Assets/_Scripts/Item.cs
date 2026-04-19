@@ -88,6 +88,7 @@ public class Item : NetworkBehaviour, IPickupable
         }
 
         isCollected.Value = true;
+        NetworkObject.Despawn(destroy: true);
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
@@ -103,5 +104,6 @@ public class Item : NetworkBehaviour, IPickupable
         }
 
         isCollected.Value = true;
+        NetworkObject.Despawn(destroy: true);
     }
 }

@@ -183,6 +183,9 @@ MonoBehaviour:
   upwardAngle: 10
   stunDuration: 2
   knockbackForce: 8
+  destroyOnPlayerHit: 1
+  groundedDespawnDelay: 0
+  throwerClientId: 18446744073709551615
 --- !u!65 &2213042076486791301
 BoxCollider:
   m_ObjectHideFlags: 0

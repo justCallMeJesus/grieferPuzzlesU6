@@ -126,23 +126,28 @@ public class Panel : NetworkBehaviour, IInteractable
 
     private void DoClose(PlayerManager player)
     {
-        // Steal-mode viewers just close locally — steal is committed on item drop, not on close
+        ulong localId = NetworkManager.Singleton.LocalClientId;
+
+        // Steal-mode viewers just close locally — steal is committed on item drop, not on close.
+        // Still need to release the server lock.
         if (isLocallyInStealMode)
         {
+            RequestCloseRpc(localId, null);
             CloseLocalPanel();
             return;
         }
 
-        // Only the owner persists changes; plain viewers just close locally
-        bool isOwner = NetworkManager.Singleton.LocalClientId == ownerId.Value;
+        bool isOwner = localId == ownerId.Value;
         if (isOwner)
         {
+            // Owner persists changes and releases the lock
             string json = inventoryTetris.Save();
-            RequestCloseRpc(NetworkManager.Singleton.LocalClientId, json);
+            RequestCloseRpc(localId, json);
         }
         else
         {
-            CloseLocalPanel();
+            // Non-owner: release the lock without saving anything
+            RequestCloseRpc(localId, null);
         }
     }
 
@@ -180,6 +185,15 @@ public class Panel : NetworkBehaviour, IInteractable
         }
 
         // ── Non-owner path ────────────────────────────────────────────────
+        // Block access while the owner (or anyone else) holds the write lock
+        if (currentUserId.Value != NOBODY)
+        {
+            Debug.Log($"[Panel] Non-owner {requesterId} denied: panel in use by {currentUserId.Value}.");
+            GrantAccessRpc("Panel is currently in use.", false, false, false,
+                RpcTarget.Single(requesterId, RpcTargetUse.Temp));
+            return;
+        }
+
         // Check whether the requester has killed the panel owner — steal mode
         bool canSteal = false;
         if (ownerId.Value != NOBODY)
@@ -189,7 +203,9 @@ public class Panel : NetworkBehaviour, IInteractable
                 canSteal = true;
         }
 
-        // No lock acquired for non-owners (read-only or steal-mode viewers)
+        // Acquire the lock for non-owners too — prevents the owner from entering while they're in
+        currentUserId.Value = requesterId;
+
         GrantAccessRpc(savedState.Value.ToString(), true, false, canSteal,
             RpcTarget.Single(requesterId, RpcTargetUse.Temp));
     }
@@ -204,8 +220,9 @@ public class Panel : NetworkBehaviour, IInteractable
             return;
         }
 
-        // Persist new state — no clients reload visuals from this (see OnSavedStateChanged)
-        savedState.Value = new FixedString4096Bytes(json);
+        // Only persist state when the closer is the owner (non-owners pass null)
+        if (!string.IsNullOrEmpty(json))
+            savedState.Value = new FixedString4096Bytes(json);
 
         // Release write lock — triggers OnCurrentUserChanged on all clients
         currentUserId.Value = NOBODY;
@@ -238,6 +255,9 @@ public class Panel : NetworkBehaviour, IInteractable
             thiefPM.RemoveKilledPlayer(ownerId.Value);
             Debug.Log($"[Panel] Removed {ownerId.Value} from client {thiefId}'s KilledPlayers.");
         }
+
+        // Release the write lock server-side
+        currentUserId.Value = NOBODY;
 
         // Force the thief's panel to close and revoke steal mode
         RevokeStealAccessRpc(RpcTarget.Single(thiefId, RpcTargetUse.Temp));
