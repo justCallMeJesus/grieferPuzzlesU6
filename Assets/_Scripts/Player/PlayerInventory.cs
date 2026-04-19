@@ -144,7 +144,6 @@ public class PlayerInventory : NetworkBehaviour
             if (i >= 0 && i < smallItemInventory.Length)
                 smallItemInventory[i] = null;
         }
-        // Server state is now consistent; client already updated locally.
     }
 
     public void SyncItemToSlot(ItemData item, int slotIndex)
@@ -157,12 +156,12 @@ public class PlayerInventory : NetworkBehaviour
             if (i >= 0 && i < smallItemInventory.Length)
                 smallItemInventory[i] = item;
         }
-        if (IsServer) PushStateToClient();
-        else
+        // Sync data to server without triggering RefreshAll — the drag-drop UI
+        // is already correct; a full refresh here would duplicate the draggable.
+        if (!IsServer)
         {
             string itemName = item != null ? item.name : "";
             SyncItemToSlotServerRpc(itemName, slotIndex);
-            RefreshUILocal();
         }
     }
 
@@ -178,7 +177,6 @@ public class PlayerInventory : NetworkBehaviour
             if (i >= 0 && i < smallItemInventory.Length)
                 smallItemInventory[i] = item;
         }
-        // Server state is now consistent; client already updated locally.
     }
 
     // -------------------------------------------------------------------------

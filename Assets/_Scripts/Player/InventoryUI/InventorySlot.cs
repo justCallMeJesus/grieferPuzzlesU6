@@ -38,7 +38,15 @@ public class InventorySlot : MonoBehaviour, IDropHandler
 
             InventorySlot originSlot = draggableItem.parentAfterDrag?
                                                      .GetComponent<InventorySlot>();
-            if (originSlot != null && originSlot != this)
+
+            // Dropped back onto the same slot — nothing changes, just restore parent.
+            if (originSlot == this)
+            {
+                draggableItem.parentAfterDrag = transform;
+                return;
+            }
+
+            if (originSlot != null)
                 playerInventory?.SyncItemToSlot(null, originSlot.slotIndex);
 
             draggableItem.parentAfterDrag = transform;
@@ -46,7 +54,7 @@ public class InventorySlot : MonoBehaviour, IDropHandler
             return;
         }
 
-        // World drop (IStorable) — no existing visual, so we create one.
+        // World drop (IStorable)  no existing visual, so we create one.
         IStorable droppable = dropped.GetComponent<IStorable>();
         if (droppable != null && droppable.GetItemData().largeItem == bigSlot)
         {
