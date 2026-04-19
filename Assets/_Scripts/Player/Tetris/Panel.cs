@@ -328,7 +328,7 @@ public class Panel : NetworkBehaviour, IInteractable
             handler.enabled = enabled;
     }
 
-    private void CloseLocalPanel()
+    public void CloseLocalPanel()
     {
         isLocallyOpen = false;
         isLocallyInStealMode = false;

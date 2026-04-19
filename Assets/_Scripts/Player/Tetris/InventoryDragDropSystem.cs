@@ -267,6 +267,9 @@ public class InventoryDragDropSystem : MonoBehaviour
         return null;
     }
 
+    /// <summary>Returns the InventoryTetris the current steal drag originated from.</summary>
+    public InventoryTetris GetStealSource() => sourceInventory;
+
     public void BeginDragNewItem(InventoryTetris inventory, PlacedItem item)
     {
         isNewItem = true;

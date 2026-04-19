@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class InventorySlot : MonoBehaviour, IDropHandler
@@ -46,14 +46,30 @@ public class InventorySlot : MonoBehaviour, IDropHandler
             return;
         }
 
-        // World drop (IStorable) � no existing visual, so we create one.
+        // World drop (IStorable) — no existing visual, so we create one.
         IStorable droppable = dropped.GetComponent<IStorable>();
         if (droppable != null && droppable.GetItemData().largeItem == bigSlot)
         {
             ItemData data = droppable.GetItemData();
             DraggableItem.Create(data, gameObject, playerInventory);
-            Destroy(dropped);
 
+            // If this item came from a steal-mode drag, commit the steal now.
+            // InventoryDragDropSystem drops into InventorySlot via Unity's event
+            // system before EndDrag resolves, so TryResolveStealDrop never sees it.
+            if (InventoryTetris.IsStealMode)
+            {
+                Panel stealPanel = InventoryTetris.StealSourcePanel;
+                InventoryTetris stealSource = InventoryDragDropSystem.Instance.GetStealSource();
+                if (stealPanel != null && stealSource != null)
+                {
+                    string updatedJson = stealSource.Save();
+                    ulong localId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+                    stealPanel.CommitStealRpc(localId, updatedJson);
+                    stealPanel.CloseLocalPanel();
+                }
+            }
+
+            Destroy(dropped);
             playerInventory?.SyncItemToSlot(data, slotIndex);
         }
     }
