@@ -44,7 +44,10 @@ public override void OnStartLocalPlayer()
         canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
     }
 
-    playerInventoryUI = Instantiate(playerInventoryUIPrefab, canvas.transform);
+    GameObject uiParent = GameObject.Find("TetrisStuffContainer");
+    uiParent.transform.SetParent(canvas.transform, false);
+
+    playerInventoryUI = Instantiate(playerInventoryUIPrefab, uiParent.transform);
     playerInventoryUI.playerManager = this;
     playerInventoryUI.Init(inventory);
 }

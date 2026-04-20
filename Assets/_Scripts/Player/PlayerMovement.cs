@@ -38,20 +38,32 @@ public class PlayerMovement : NetworkBehaviour
     {
         // Because this script is on the PlayerPrefab, we need to FIND the UI in the scene
         // You can't drag UI into a Prefab, so we find it by name or tag
-        GameObject bg = GameObject.Find("Image");
-        GameObject lobby = GameObject.Find("InLobbyUI");
 
-        if (bg != null) bg.SetActive(false);
-        if (lobby != null) lobby.SetActive(false);
+        GameObject MainContainer = GameObject.Find("ContainerPreGameUi");
 
-        Debug.Log("UI Hidden via Tank RPC");
+        if (MainContainer != null) MainContainer.SetActive(false);
+        
+        Debug.Log("UI Hidden via RPC");
     }
     private void Update()
     {
         if (!isLocalPlayer) return;
-        //Debug.Log("PlayerMovement Update");
+
+        // Test toggle with "i"
+        if (Keyboard.current.iKey.wasPressedThisFrame)
+        {
+            OnDeathSpectate();
+        }
+
+        // Test reset with "P" (or call this from your actual respawn logic)
+        if (Keyboard.current.pKey.wasPressedThisFrame)
+        {
+            OnRespawnCamera();
+        }
+
         currentMode.Tick(this);
     }
+
 
 
 
@@ -158,4 +170,45 @@ public class PlayerMovement : NetworkBehaviour
     {
         currentMode = freeMovement;
     }
+
+    public void OnDeathSpectate()
+    {
+        if (!isLocalPlayer || spawnedCamera == null) return;
+
+        // 1. Get the Cinemachine component from your spawned camera
+        var freelook = spawnedCamera.GetComponent<CinemachineCamera>();
+
+        // 2. Find all players in the scene
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+
+        foreach (GameObject p in players)
+        {
+            NetworkIdentity ni = p.GetComponent<NetworkIdentity>();
+
+            // 3. If it's a valid player and NOT us, swap the target
+            if (ni != null && ni.netId != netId)
+            {
+                freelook.Follow = p.transform;
+                freelook.LookAt = p.transform;
+                Debug.Log($"Cinemachine now following Player: {ni.netId}");
+                return;
+            }
+        }
+
+        Debug.LogWarning("No other players found to spectate!");
+    }
+
+    public void OnRespawnCamera()
+    {
+        if (!isLocalPlayer || spawnedCamera == null) return;
+
+        // Reset the camera back to our own transform
+        var freelook = spawnedCamera.GetComponent<CinemachineCamera>();
+        if (freelook != null)
+        {
+            freelook.Follow = this.transform;
+            freelook.LookAt = this.transform;
+        }
+    }
+
 }

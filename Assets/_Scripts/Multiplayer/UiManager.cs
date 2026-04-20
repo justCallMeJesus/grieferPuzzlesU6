@@ -2,8 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Steamworks;
 using Steamworks.Data;
-using Mirror;
-using TMPro;
+using UnityEngine.InputSystem;
 
 public class UiManager : MonoBehaviour
 {
@@ -16,7 +15,13 @@ public class UiManager : MonoBehaviour
     public GameObject mainMenuUI;
     public GameObject HostedLobbyUI;
     public GameObject RulesContainer;
+    public GameObject RulesContainerCopy; //This is an excact copy in the settings container, im just lazy lol
+    public GameObject PauseMenuUI;
+    public GameObject MainContainer;
+    public GameObject TetrisContainer;
+    public GameObject SettingsContainer;
 
+    private bool isPaused = false;
 
     // This is the variable that was missing
     public Lobby currentLobby;
@@ -48,6 +53,13 @@ public class UiManager : MonoBehaviour
     {
         // Vital for Facepunch events to fire
         SteamClient.RunCallbacks();
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            if (isPaused)
+                ClosePauseMenu();
+            else
+                OpenPauseMenu();
+        }
     }
 
     // --- STEAM CALLBACKS ---
@@ -106,6 +118,14 @@ public class UiManager : MonoBehaviour
         if (mainMenuUI != null) mainMenuUI.SetActive(true);
         if (LeaveButton != null) LeaveButton.SetActive(false);
         if (startGameButton != null) startGameButton.SetActive(false);
+        if (MainContainer != null) MainContainer.SetActive(true);
+
+        Transform inventoryTransform = TetrisContainer.transform.Find("PlayerInventory (Clone)");
+
+        if (inventoryTransform != null)
+        {
+            Destroy(inventoryTransform.gameObject);
+        }
     }
 
     // Some Ui stuff (hopefully every Change in Ui is in this script lol)
@@ -116,9 +136,9 @@ public class UiManager : MonoBehaviour
         Application.Quit();
 
         // This line stops the "Play" mode inside the Unity Editor so you can see it works
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
-        #endif
+#endif
 
         Debug.Log("Game is exiting...");
     }
@@ -126,10 +146,45 @@ public class UiManager : MonoBehaviour
     public void ShowRules()
     {
         if (RulesContainer != null) RulesContainer.SetActive(true);
+        if (RulesContainerCopy != null) RulesContainerCopy.SetActive(true);
     }
 
     public void HideRules()
     {
         if (RulesContainer != null) RulesContainer.SetActive(false);
+        if (RulesContainerCopy != null) RulesContainerCopy.SetActive(false);
+    }
+
+    public void JoinLobbyUi()
+    {
+        if (mainMenuUI != null) mainMenuUI.SetActive(false);
+        if (LeaveButton != null) LeaveButton.SetActive(true);
+        if (HostedLobbyUI != null) HostedLobbyUI.SetActive(true);
+    }
+
+    // Pause Menu Logic
+
+    private void OpenPauseMenu()
+    {
+        if (PauseMenuUI != null) PauseMenuUI.SetActive(true);
+        isPaused = true;
+
+        Debug.Log("Pause Menu Opened");
+    }
+    public void ClosePauseMenu()
+    {
+        if (PauseMenuUI != null) PauseMenuUI.SetActive(false); 
+        isPaused = false;
+        Debug.Log("Pause Menu Closed");
+    }
+
+    public void OpenSettings()
+    {
+        if (SettingsContainer != null) SettingsContainer.SetActive(true);
+    }
+
+    public void CloseSettings()
+    {
+        if (SettingsContainer != null) SettingsContainer.SetActive(false);
     }
 }

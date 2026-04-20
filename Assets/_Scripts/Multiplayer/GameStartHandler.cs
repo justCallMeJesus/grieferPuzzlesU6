@@ -60,20 +60,6 @@ public class GameStartHandler : NetworkBehaviour
     }
 
 
-
-
-    public override void OnStartServer()
-    {
-        base.OnStartServer();
-        //uiManager.OnMirrorStartServer();
-    }
-
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-        //uiManager.OnMirrorStartClient();
-    }
-
     public override void OnStopClient()
     {
         base.OnStopClient();

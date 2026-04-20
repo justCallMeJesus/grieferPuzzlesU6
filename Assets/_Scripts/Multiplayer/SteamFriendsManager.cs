@@ -248,12 +248,17 @@ public class SteamFriendsManager : MonoBehaviour
             Debug.Log($"Added lobby member {member.Name} to the Canvas list.");
             // 3. Set the data (Same paths as before)
             row.transform.Find("FriendName").GetComponent<TextMeshProUGUI>().text = member.Name;
+    
             var profilePic = row.transform.Find("FriendProfilePic").GetComponent<RawImage>();
             LoadFriendAvatar(member.Id, profilePic);
             Debug.Log(member.Id);
 
             // 4. Transform the "Invite" button into a "Kick" button
             var btn = row.transform.Find("InviteButton").GetComponent<Button>();
+            btn.gameObject.SetActive(false);
+
+            var btn_join = row.transform.Find("JoinButton").GetComponent<Button>();
+            btn_join.gameObject.SetActive(false);
             var btnText = btn.GetComponentInChildren<TextMeshProUGUI>();
 
             btnText.text = "KICK";
