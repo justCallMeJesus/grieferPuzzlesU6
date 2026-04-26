@@ -2,99 +2,75 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 
-// Dieses Fenster kannst du im Editor über "Tools/Copy BoxCollider To Children" öffnen
-public class CopyBoxColliderToChildren : EditorWindow
+public class CopyMeshColliderToChildren : EditorWindow
 {
-    GameObject source; // du kannst das noch im Inspector setzen, brauchst es aber nicht mehr direkt nutzen
+    GameObject source;
     bool includeInactive = true;
 
-    [MenuItem("Tools/Copy BoxCollider To Children")]
+    [MenuItem("Tools/Copy MeshCollider To Children")]
     static void Open()
     {
-        GetWindow<CopyBoxColliderToChildren>("Copy BoxCollider");
+        GetWindow<CopyMeshColliderToChildren>("Copy MeshCollider");
     }
 
     void OnGUI()
     {
-        source = (GameObject)EditorGUILayout.ObjectField("Source Object (optional)", source, typeof(GameObject), true);
+        source = (GameObject)EditorGUILayout.ObjectField("Source Object", source, typeof(GameObject), true);
         includeInactive = EditorGUILayout.Toggle("Include Inactive", includeInactive);
 
-        GUI.enabled = Selection.transforms.Length > 0;
-        if (GUILayout.Button("Apply to all selected objects' geometry_0"))
+        GUI.enabled = source != null;
+        if (GUILayout.Button("Apply to all geometry_0 under Source"))
         {
-            ApplyToSelectedGeometry0();
+            ApplyToAllGeometry0UnderSource();
         }
         GUI.enabled = true;
     }
 
-    // Wird aufgerufen, wenn du den Button klickst
-    void ApplyToSelectedGeometry0()
+    void ApplyToAllGeometry0UnderSource()
     {
-        // Alle aktuell ausgewählten Objekte iterieren
-        foreach (Transform selectedTransform in Selection.transforms)
+        if (source == null)
         {
-            Transform parent = selectedTransform;
+            Debug.LogWarning("Bitte zuerst big_walls als Source Object zuweisen.");
+            return;
+        }
 
-            // Wenn der User ausversehen ein geometry_0 auswählt, trotzdem auf den Parent schauen
-            if (parent.name.ToLower() == "geometry_0" && parent.parent != null)
-            {
-                parent = parent.parent;
-            }
+        Transform root = source.transform;
+        int count = 0;
 
-            // Child mit Namen "geometry_0" suchen (case‑insensitiv)
-            Transform child = parent.Find("geometry_0");
-            if (child == null)
+        foreach (Transform t in root.GetComponentsInChildren<Transform>(includeInactive))
+        {
+            if (t.name.Equals("geometry_0", System.StringComparison.OrdinalIgnoreCase))
             {
-                child = FindChildByNameIgnoreCase(parent, "geometry_0");
-            }
-
-            if (child != null)
-            {
-                // Auf GEOMETRY_0 den Collider anpassen
-                ApplyColliderToGeometryObject(child.gameObject);
+                ApplyMeshColliderToGeometryObject(t.gameObject);
+                count++;
             }
         }
 
-        // Szene als geändert markieren
         EditorSceneManager.MarkAllScenesDirty();
-        Debug.Log("BoxCollider values applied to geometry_0 children.");
+        Debug.Log("MeshCollider auf " + count + " geometry_0-Objekte angewendet.");
     }
 
-    // Hilfsfunktion: finde ein Child nach Namen case‑insensitive
-    Transform FindChildByNameIgnoreCase(Transform parent, string name)
+    void ApplyMeshColliderToGeometryObject(GameObject geometryObj)
     {
-        for (int i = 0; i < parent.childCount; i++)
+        MeshFilter mf = geometryObj.GetComponent<MeshFilter>();
+        if (mf == null)
         {
-            Transform child = parent.GetChild(i);
-            if (child.name.ToLower() == name.ToLower())
-            {
-                return child;
-            }
+            Debug.LogWarning("Kein MeshFilter gefunden auf: " + geometryObj.name);
+            return;
         }
-        return null;
-    }
 
-    // Hier wird der Collider auf dem geometry_0‑Objekt gesetzt
-    void ApplyColliderToGeometryObject(GameObject geometryObj)
-    {
-        BoxCollider col = geometryObj.GetComponent<BoxCollider>();
+        MeshCollider col = geometryObj.GetComponent<MeshCollider>();
         if (col == null)
         {
-            col = Undo.AddComponent<BoxCollider>(geometryObj);
+            col = Undo.AddComponent<MeshCollider>(geometryObj);
         }
 
-        // --- WICHTIG: Trage hier deine bekannten Werte ein ---
-        // Du hast das Beispiel:
-        //   center: (-0.1127603, 0.5947096, 0.06651554)
-        //   size:   (1.060974, 0.560808, 0.09755837)
-        Undo.RecordObject(col, "Set BoxCollider on geometry_0");
-
-        col.center = new Vector3(-0.1127603f, 0.5947096f, 0.06651554f);
-        col.size = new Vector3(1.060974f, 0.560808f, 0.09755837f);
+        Undo.RecordObject(col, "Set MeshCollider on geometry_0");
+        col.sharedMesh = mf.sharedMesh;
+        col.convex = false;
 
         EditorUtility.SetDirty(col);
 
-        // Falls es eine Prefab‑Instanz ist, Änderung recorden
         if (PrefabUtility.IsPartOfPrefabInstance(geometryObj))
         {
             PrefabUtility.RecordPrefabInstancePropertyModifications(col);
