@@ -21,10 +21,12 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         { ItemType.TetrisBlock, typeof(TetrisDraggableItem) },
     };
 
-    private void OnEnable()
+    private void Awake()
     {
+        // Use Awake instead of OnEnable so the image reference is fetched once
+        // at instantiation time and never re-fetched when SetActive(true) is called
+        // (e.g. when the tetris cancel path restores the item to its hotbar slot).
         image = GetComponent<Image>();
-        //image.sprite = itemData.sprite;
     }
 
     public virtual void OnBeginDrag(PointerEventData eventData)
@@ -50,23 +52,24 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     {
         GameObject go = new GameObject(itemData.type.ToString(), typeof(RectTransform));
 
+        // Parent the GO before adding any components so that if OnEnable fires
+        // during AddComponent, the transform already has a valid scene parent
+        // rather than being a floating root object (which caused the
+        // "Setting the parent of a transform which resides in a Prefab Asset"
+        // error when transform.root resolved to a prefab asset root).
+        go.transform.SetParent(parentSlot.transform, worldPositionStays: false);
+
         Image image = go.AddComponent<Image>();
         image.sprite = itemData.sprite;
 
         System.Type draggableType = draggableTypeMap.TryGetValue(itemData.type, out var t)
-        ? t
-        : typeof(DraggableItem);
-
+            ? t
+            : typeof(DraggableItem);
 
         DraggableItem draggable = (DraggableItem)go.AddComponent(draggableType);
         draggable.itemData = itemData;
-
-        draggable.transform.SetParent(parentSlot.transform);
-
         draggable.inventory = inventory;
 
         return draggable;
     }
-
-
 }
