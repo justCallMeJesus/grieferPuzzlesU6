@@ -10738,7 +10738,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1859523737}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b175930a2104224396fba36fb0cc3fa, type: 3}
+  m_Script: {fileID: 11500000, guid: 6ef1e05b44fdaf147b6af48657c2417a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mirror.FizzySteam.FizzyFacepunch
   Channels: 0200000001000000
