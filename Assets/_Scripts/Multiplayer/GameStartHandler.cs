@@ -11,6 +11,12 @@ public class GameStartHandler : NetworkBehaviour
     // IMPORTANT: Only the Host should be able to click this!
     public void RequestStartGame()
     {
+        if (!NetworkServer.active)
+        {
+            Debug.LogWarning("RequestStartGame called but server is not active yet. Is the host fully started?");
+            return;
+        }
+
         if (isServer)
         {
             StartGame();
@@ -33,7 +39,7 @@ public class GameStartHandler : NetworkBehaviour
 
         foreach (var conn in NetworkServer.connections.Values)
         {
-            // Skip connections that aren't ready yet (clients not fully joined)
+            // Skip connections that aren't ready yet
             if (!conn.isReady)
             {
                 Debug.LogWarning($"Connection {conn.connectionId} is not ready, skipping.");
@@ -47,7 +53,6 @@ public class GameStartHandler : NetworkBehaviour
                 continue;
             }
 
-            // Pick a spawn point
             Vector3 spawnPos = Vector3.zero;
             Quaternion spawnRot = Quaternion.identity;
 
@@ -57,15 +62,10 @@ public class GameStartHandler : NetworkBehaviour
                 Transform chosenSpawn = availableSpawns[index];
                 spawnPos = chosenSpawn.position;
                 spawnRot = chosenSpawn.rotation;
-
-                // Remove so the next player gets a different spot
                 availableSpawns.RemoveAt(index);
             }
 
-            // Instantiate at the chosen position
             GameObject playerTank = Instantiate(PlayerPrefab, spawnPos, spawnRot);
-
-            // Spawn and assign authority
             NetworkServer.AddPlayerForConnection(conn, playerTank);
 
             PlayerMovement playerScript = playerTank.GetComponent<PlayerMovement>();
