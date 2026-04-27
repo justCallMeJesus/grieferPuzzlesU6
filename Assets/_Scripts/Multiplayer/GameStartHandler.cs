@@ -6,7 +6,8 @@ public class GameStartHandler : NetworkBehaviour
     [Header("Prefabs & UI")]
     public GameObject PlayerPrefab;
     public UiManager uiManager;
-    // This is called by your UI Button (the "Start Game" button)
+
+    // Called by your UI Button (the "Start Game" button)
     // IMPORTANT: Only the Host should be able to click this!
     public void RequestStartGame()
     {
@@ -21,33 +22,50 @@ public class GameStartHandler : NetworkBehaviour
     {
         Debug.Log("Server: Starting Game...");
         Debug.Log($"Total connections on server: {NetworkServer.connections.Count}");
-        // Create a copy of the spawn points list so we can track which ones are used
-        // (Optional: removes the chance of two players spawning on the same spot)
+
+        // Log all connection states before spawning
+        foreach (var conn in NetworkServer.connections.Values)
+        {
+            Debug.Log($"Conn {conn.connectionId} | isReady: {conn.isReady} | hasPlayer: {conn.identity != null}");
+        }
+
         var availableSpawns = new System.Collections.Generic.List<Transform>(NetworkManager.startPositions);
 
         foreach (var conn in NetworkServer.connections.Values)
         {
-            Debug.Log($"Spawning player for Connection ID: {conn.connectionId}");
-            // 1. Pick a random spawn point
+            // Skip connections that aren't ready yet (clients not fully joined)
+            if (!conn.isReady)
+            {
+                Debug.LogWarning($"Connection {conn.connectionId} is not ready, skipping.");
+                continue;
+            }
+
+            // Skip connections that already have a player object
+            if (conn.identity != null)
+            {
+                Debug.LogWarning($"Connection {conn.connectionId} already has a player, skipping.");
+                continue;
+            }
+
+            // Pick a spawn point
             Vector3 spawnPos = Vector3.zero;
             Quaternion spawnRot = Quaternion.identity;
-            
+
             if (availableSpawns.Count > 0)
             {
                 int index = Random.Range(0, availableSpawns.Count);
                 Transform chosenSpawn = availableSpawns[index];
-
                 spawnPos = chosenSpawn.position;
                 spawnRot = chosenSpawn.rotation;
 
-                // Remove from list so the next player gets a different spot
+                // Remove so the next player gets a different spot
                 availableSpawns.RemoveAt(index);
             }
 
-            // 2. Instantiate at the chosen position
+            // Instantiate at the chosen position
             GameObject playerTank = Instantiate(PlayerPrefab, spawnPos, spawnRot);
 
-            // 3. Spawn and assign authority
+            // Spawn and assign authority
             NetworkServer.AddPlayerForConnection(conn, playerTank);
 
             PlayerMovement playerScript = playerTank.GetComponent<PlayerMovement>();
@@ -59,7 +77,6 @@ public class GameStartHandler : NetworkBehaviour
             Debug.Log($"Spawned Player at {spawnPos} for Connection ID: {conn.connectionId}");
         }
     }
-
 
     public override void OnStopClient()
     {
