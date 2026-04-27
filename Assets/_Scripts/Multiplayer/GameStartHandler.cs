@@ -20,17 +20,18 @@ public class GameStartHandler : NetworkBehaviour
     public void StartGame()
     {
         Debug.Log("Server: Starting Game...");
-
+        Debug.Log($"Total connections on server: {NetworkServer.connections.Count}");
         // Create a copy of the spawn points list so we can track which ones are used
         // (Optional: removes the chance of two players spawning on the same spot)
         var availableSpawns = new System.Collections.Generic.List<Transform>(NetworkManager.startPositions);
 
         foreach (var conn in NetworkServer.connections.Values)
         {
+            Debug.Log($"Spawning player for Connection ID: {conn.connectionId}");
             // 1. Pick a random spawn point
             Vector3 spawnPos = Vector3.zero;
             Quaternion spawnRot = Quaternion.identity;
-
+            
             if (availableSpawns.Count > 0)
             {
                 int index = Random.Range(0, availableSpawns.Count);

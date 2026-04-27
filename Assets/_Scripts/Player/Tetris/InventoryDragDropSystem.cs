@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Mirror; // Use Mirror instead of Netcode
+using Mirror;
 
 public class InventoryDragDropSystem : MonoBehaviour
 {
@@ -29,7 +29,6 @@ public class InventoryDragDropSystem : MonoBehaviour
     {
         if (!isDragging) return;
 
-        // New Input System syntax
         if (Keyboard.current.rKey.wasPressedThisFrame)
             currentDir = ItemTetrisSO.GetNextDir(currentDir);
 
@@ -68,10 +67,8 @@ public class InventoryDragDropSystem : MonoBehaviour
         else
         {
             PlacedItem result = source.TryPlaceItem(item.itemSO, origin, dir);
-            if (result != null)
-                item.DestroySelf();
-            else
-                item.DestroySelf();
+            if (result != null) item.DestroySelf();
+            else item.DestroySelf();
         }
 
         OnDragEnded?.Invoke(false);
@@ -172,12 +169,10 @@ public class InventoryDragDropSystem : MonoBehaviour
                 item.DestroySelf();
                 if (stealPanel != null)
                 {
-                    // MIRROR CONVERSION: Use connectionId and CmdCommitSteal
+                    // FIX: Removed the old int localId argument — Panel.CmdCommitSteal now
+                    // reads the sender id server-side automatically via Mirror
                     string updatedJson = source.Save();
-                    int localId = NetworkClient.connection.connectionId;
-
-                    // Call the Command we created in the Panel script
-                    stealPanel.CmdCommitSteal(localId, updatedJson);
+                    stealPanel.CmdCommitSteal(updatedJson);
                     Debug.Log($"[InventoryDragDropSystem] Steal committed via Mirror Command.");
                 }
                 placed = true;
@@ -231,28 +226,24 @@ public class InventoryDragDropSystem : MonoBehaviour
     {
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             inv.GetItemContainer(),
-            Mouse.current.position.ReadValue(), // Updated for New Input System
+            Mouse.current.position.ReadValue(),
             null,
             out Vector2 local);
         float cs = inv.GetCellSize();
         return new Vector2Int(Mathf.FloorToInt(local.x / cs), Mathf.FloorToInt(local.y / cs));
     }
 
-
     private InventoryTetris GetInventoryUnderMouse()
     {
-        // Use ReadValue() for Unity 6 / New Input System consistency
         Vector2 mouse = Mouse.current.position.ReadValue();
 
         foreach (var inv in inventories)
         {
-            // Ensure the inventory is active before checking
             if (!inv.gameObject.activeInHierarchy) continue;
 
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 inv.GetItemContainer(), mouse, null, out Vector2 local);
 
-            // Convert local position to grid coordinates to see if mouse is inside
             if (inv.IsValidGridPosition(inv.GetGridPosition(local)))
                 return inv;
         }
@@ -263,21 +254,13 @@ public class InventoryDragDropSystem : MonoBehaviour
 
     public void BeginDragNewItem(InventoryTetris inventory, PlacedItem item)
     {
-        // This is used when spawning an item directly into the cursor (e.g., from a shop or pickup)
         isNewItem = true;
-
         sourceInventory = inventory;
         draggingItem = item;
-
-        // Since it's new, it doesn't have an old position to return to
         originOnPickup = Vector2Int.zero;
         dirOnPickup = ItemTetrisSO.Dir.Down;
         currentDir = ItemTetrisSO.Dir.Down;
-
         isDragging = true;
-
-        // Ensure the dragged item stays on top of other UI elements
         draggingItem.transform.SetAsLastSibling();
     }
-
 }

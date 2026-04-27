@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using Mirror;
+
 public class InventorySlot : MonoBehaviour, IDropHandler
 {
     [SerializeField] private bool bigSlot = false;
@@ -11,9 +12,6 @@ public class InventorySlot : MonoBehaviour, IDropHandler
 
     private void Start()
     {
-        // Walk up to the PlayerInventoryUI that owns this slot.
-        // Because every player now has their own isolated Canvas, GetComponentInParent
-        // is guaranteed to find the correct UI and therefore the correct PlayerManager.
         playerInventoryUI = GetComponentInParent<PlayerInventoryUI>();
 
         if (playerInventoryUI == null)
@@ -39,7 +37,6 @@ public class InventorySlot : MonoBehaviour, IDropHandler
             InventorySlot originSlot = draggableItem.parentAfterDrag?
                                                      .GetComponent<InventorySlot>();
 
-            // Dropped back onto the same slot — nothing changes, just restore parent.
             if (originSlot == this)
             {
                 draggableItem.parentAfterDrag = transform;
@@ -54,25 +51,23 @@ public class InventorySlot : MonoBehaviour, IDropHandler
             return;
         }
 
-        // World drop (IStorable)  no existing visual, so we create one.
+        // World drop (IStorable)
         IStorable droppable = dropped.GetComponent<IStorable>();
         if (droppable != null && droppable.GetItemData().largeItem == bigSlot)
         {
             ItemData data = droppable.GetItemData();
             DraggableItem.Create(data, gameObject, playerInventory);
 
-            // If this item came from a steal-mode drag, commit the steal now.
-            // InventoryDragDropSystem drops into InventorySlot via Unity's event
-            // system before EndDrag resolves, so TryResolveStealDrop never sees it.
             if (InventoryTetris.IsStealMode)
             {
                 Panel stealPanel = InventoryTetris.StealSourcePanel;
                 InventoryTetris stealSource = InventoryDragDropSystem.Instance.GetStealSource();
                 if (stealPanel != null && stealSource != null)
                 {
+                    // FIX: Removed the old int localId argument — Panel.CmdCommitSteal now
+                    // reads the sender id server-side automatically via Mirror
                     string updatedJson = stealSource.Save();
-                    ulong localId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
-                    stealPanel.CmdCommitSteal((int)localId, updatedJson);
+                    stealPanel.CmdCommitSteal(updatedJson);
                     stealPanel.CloseLocalPanel();
                 }
             }

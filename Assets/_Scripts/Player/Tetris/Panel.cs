@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-// Wir nutzen NetworkBehaviour für Mirror
 public class Panel : NetworkBehaviour, IInteractable
 {
     public GameObject GameObject => gameObject;
@@ -12,11 +11,7 @@ public class Panel : NetworkBehaviour, IInteractable
     [SerializeField] private GameObject inventoryPanel;
     [SerializeField] private InventoryTetris inventoryTetris;
 
-    // -- Sentinel --
-    // In Mirror ist der Standard-Wert für "Kein Client" meist -1 (da connectionId ein int ist)
     private const int NOBODY = -1;
-
-    // -- Networked State (Mirror [SyncVar]) --
 
     [SyncVar(hook = nameof(OnSavedStateChanged))]
     private string savedState = "";
@@ -27,7 +22,6 @@ public class Panel : NetworkBehaviour, IInteractable
     [SyncVar(hook = nameof(OnOwnerChanged))]
     private int ownerId = NOBODY;
 
-    // -- Local state --
     private bool isLocallyOpen = false;
     private bool isLocallyInStealMode = false;
 
@@ -36,7 +30,6 @@ public class Panel : NetworkBehaviour, IInteractable
     public override void OnStartClient()
     {
         base.OnStartClient();
-        // Initialisierung des Inventory-Events
         if (inventoryTetris != null)
             inventoryTetris.OnGridFull += HandleGridFull;
     }
@@ -48,18 +41,13 @@ public class Panel : NetworkBehaviour, IInteractable
             inventoryTetris.OnGridFull -= HandleGridFull;
     }
 
-
-    // -- IInteractable Implementation --
+    // -- IInteractable --
 
     public bool CanInteract() => true;
 
     public void OnInteract(PlayerManager player)
     {
-        // Check local player
         if (!player.isLocalPlayer) return;
-
-        // FIX: We do NOT pass any ID here. 
-        // Mirror fills it in automatically on the server side.
         CmdRequestOpen();
     }
 
@@ -67,13 +55,11 @@ public class Panel : NetworkBehaviour, IInteractable
     {
         if (!player.isLocalPlayer) return;
 
-        // Get your current state (however you've implemented your JSON saving)
-        string currentJson = ""; // Replace this with your actual save data logic
+        // Use your actual serialization method here
+        string currentJson = inventoryTetris != null ? inventoryTetris.Save() : "";
 
-        // CALL THE COMMAND HERE
         CmdRequestClose(currentJson);
 
-        // Locally close your UI
         isLocallyOpen = false;
         if (UIPanel != null) UIPanel.SetActive(false);
     }
@@ -83,7 +69,6 @@ public class Panel : NetworkBehaviour, IInteractable
     [Command(requiresAuthority = false)]
     private void CmdRequestOpen(NetworkConnectionToClient sender = null)
     {
-        // Mirror automatically populates 'sender' with the person who clicked 'F'
         int requesterId = sender.connectionId;
 
         Debug.Log($"[Panel] CmdRequestOpen received from client {requesterId}.");
@@ -100,7 +85,6 @@ public class Panel : NetworkBehaviour, IInteractable
         {
             if (currentUserId != NOBODY && currentUserId != requesterId)
             {
-                // FIX: Use 'sender' instead of connectionToClient
                 TargetGrantAccess(sender, "Panel is currently in use.", false, false, false);
                 return;
             }
@@ -110,14 +94,13 @@ public class Panel : NetworkBehaviour, IInteractable
             return;
         }
 
-        // -- Non-owner Path --
+        // -- Non-owner path --
         if (currentUserId != NOBODY && currentUserId != requesterId)
         {
             TargetGrantAccess(sender, "Panel is currently in use.", false, false, false);
             return;
         }
 
-        // Steal-Mode Logic
         bool canSteal = false;
         if (ownerId != NOBODY)
         {
@@ -130,12 +113,9 @@ public class Panel : NetworkBehaviour, IInteractable
         TargetGrantAccess(sender, savedState, true, false, canSteal);
     }
 
-
-
     [Command(requiresAuthority = false)]
     private void CmdRequestClose(string json, NetworkConnectionToClient sender = null)
     {
-        // Mirror identifies the sender automatically
         int requesterId = sender.connectionId;
 
         if (currentUserId != requesterId)
@@ -144,43 +124,38 @@ public class Panel : NetworkBehaviour, IInteractable
             return;
         }
 
-        // Save the data sent from the client
         if (!string.IsNullOrEmpty(json))
-        {
             savedState = json;
-        }
 
-        // Free the panel for the next person
         currentUserId = NOBODY;
         Debug.Log($"[Panel] Closed by {requesterId}. Panel is now free.");
     }
 
-
     [Command(requiresAuthority = false)]
-    public void CmdCommitSteal(int thiefId, string updatedPanelJson, NetworkConnectionToClient sender = null)
+    public void CmdCommitSteal(string updatedPanelJson, NetworkConnectionToClient sender = null)
     {
-        if (ownerId == NOBODY || thiefId == ownerId)
+        // FIX: Use sender.connectionId — never trust a client-supplied ID
+        int requesterId = sender.connectionId;
+
+        if (ownerId == NOBODY || requesterId == ownerId)
         {
-            Debug.LogWarning($"[Panel] CommitSteal from {thiefId} rejected.");
+            Debug.LogWarning($"[Panel] CommitSteal from {requesterId} rejected.");
             return;
         }
 
         savedState = updatedPanelJson;
-        Debug.Log($"[Panel] Client {thiefId} stole from panel owned by {(ulong)ownerId}.");
+        Debug.Log($"[Panel] Client {requesterId} stole from panel owned by {(ulong)ownerId}.");
 
-        PlayerManager thiefPM = GetPlayerManagerByConnectionId(thiefId);
+        PlayerManager thiefPM = GetPlayerManagerByConnectionId(requesterId);
         if (thiefPM != null)
-        {
             thiefPM.RemoveKilledPlayer((ulong)ownerId);
-        }
 
         currentUserId = NOBODY;
 
-        // Force the thief to close UI
         TargetRevokeStealAccess(sender);
     }
 
-    // --- Targeted Client Rpcs (Mirror equivalent of Targeted RPCs) ---
+    // -- TargetRpcs --
 
     [TargetRpc]
     private void TargetGrantAccess(NetworkConnection target, string jsonOrReason, bool granted, bool canEdit, bool canSteal)
@@ -206,7 +181,6 @@ public class Panel : NetworkBehaviour, IInteractable
         inventoryPanel.SetActive(true);
         inventoryTetris.SetPanelIsOpen(true);
 
-        // Replace with your local player acquisition logic
         PlayerManager localPlayer = NetworkClient.localPlayer?.GetComponent<PlayerManager>();
         if (localPlayer != null)
         {
@@ -215,32 +189,31 @@ public class Panel : NetworkBehaviour, IInteractable
         }
     }
 
-
     [TargetRpc]
     private void TargetRevokeStealAccess(NetworkConnection target)
     {
         Debug.Log("[Panel] Steal committed — closing panel and revoking access.");
         CloseLocalPanel();
 
-        // Clear the interaction reference locally
         PlayerManager player = GetLocalPlayerManager();
         if (player != null && player.interaction != null)
             player.interaction.currentlyInteractingObject = null;
     }
 
-    // --- SyncVar Hooks (Callbacks) ---
+    // -- SyncVar Hooks --
 
-    // Mirror Hooks require (oldValue, newValue) parameters
     private void OnSavedStateChanged(string oldState, string newState)
     {
-        // Intentionally empty per your logic
+        // Intentionally empty
     }
 
     private void OnCurrentUserChanged(int oldUser, int newUser)
     {
-        // If the lock was just released (set to NOBODY) and I was the one holding it
-        if (newUser == NOBODY 
-            && oldUser == (int)NetworkClient.connection.connectionId 
+        // FIX: Guard against null connection (can happen on server or during disconnect)
+        if (NetworkClient.connection == null) return;
+
+        if (newUser == NOBODY
+            && oldUser == NetworkClient.connection.connectionId
             && isLocallyOpen)
         {
             CloseLocalPanel();
@@ -253,7 +226,7 @@ public class Panel : NetworkBehaviour, IInteractable
         Debug.Log($"[Panel] Ownership claimed by client {label}.");
     }
 
-    // --- Private Helpers ---
+    // -- Private Helpers --
 
     private void SetDragHandlersEnabled(bool enabled)
     {
@@ -261,8 +234,6 @@ public class Panel : NetworkBehaviour, IInteractable
         var container = inventoryTetris.GetItemContainer();
         if (container == null) return;
 
-        // Note: In Mirror, you might need to ensure these handlers are 
-        // also not fighting with NetworkIdentity authority if they move objects
         foreach (var handler in container.GetComponentsInChildren<InventoryDragHandler>(true))
             handler.enabled = enabled;
     }
@@ -272,10 +243,10 @@ public class Panel : NetworkBehaviour, IInteractable
         isLocallyOpen = false;
         isLocallyInStealMode = false;
 
-        SetDragHandlersEnabled(true);
+        // FIX: Disable drag handlers on close, not enable them
+        SetDragHandlersEnabled(false);
         inventoryTetris.SetLocalPlayerEditor(false);
         inventoryTetris.SetStealMode(false, null);
-
         inventoryTetris.ClearAll();
         inventoryPanel.SetActive(false);
         inventoryTetris.SetPanelIsOpen(false);
@@ -289,9 +260,6 @@ public class Panel : NetworkBehaviour, IInteractable
         Debug.Log("[Panel] Grid fully filled!");
     }
 
-    /// <summary>
-    /// Mirror Helper: Gets the local player sitting at this computer.
-    /// </summary>
     private PlayerManager GetLocalPlayerManager()
     {
         if (NetworkClient.localPlayer != null)
@@ -299,25 +267,17 @@ public class Panel : NetworkBehaviour, IInteractable
         return null;
     }
 
-    /// <summary>
-    /// Mirror Server-side helper: finds a PlayerManager by connectionId.
-    /// </summary>
     private PlayerManager GetPlayerManagerByConnectionId(int connId)
     {
-        // Change NetworkConnection to NetworkConnectionToClient
         if (NetworkServer.connections.TryGetValue(connId, out NetworkConnectionToClient conn))
         {
-            // conn.identity is the player object associated with this connection
             if (conn.identity != null)
-            {
                 return conn.identity.GetComponent<PlayerManager>();
-            }
         }
         return null;
     }
 
-
-    // --- Public Accessors ---
+    // -- Public Accessors --
 
     public int GetOwnerId() => ownerId;
     public bool IsClaimed() => ownerId != NOBODY;
