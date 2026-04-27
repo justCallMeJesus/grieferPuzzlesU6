@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TetrisLBlock
   m_EditorClassIdentifier: Assembly-CSharp::ItemTetrisSO
   itemName: Test
-  itemData: {fileID: 11400000, guid: 15b34711357e4a149bf9011dd0897411, type: 2}
+  itemData: {fileID: 11400000, guid: c7fb8186716cae44887d5eb0f8719c71, type: 2}
   sprite: {fileID: 21300000, guid: 31304cfa8a1deb04f901914492acf7f8, type: 3}
   width: 2
   height: 3
