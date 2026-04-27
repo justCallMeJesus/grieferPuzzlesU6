@@ -104,8 +104,8 @@ GameObject:
   - component: {fileID: 783328655103731687}
   - component: {fileID: 2213042076486791301}
   - component: {fileID: 3770672912537110957}
-  - component: {fileID: 5645901704275140184}
   - component: {fileID: 2795292631402844618}
+  - component: {fileID: -6217853912443957372}
   m_Layer: 7
   m_Name: Banana
   m_TagString: Untagged
@@ -166,8 +166,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93165c762cd7fd84fa5faab4f4140aed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Item
-  ShowTopMostFoldoutHeaderGroup: 1
-  ItemData: {fileID: 11400000, guid: 4fac0724403b11f4d867cc08e51fc17c, type: 2}
+  syncMode: 0
+  syncInterval: 0.1
+  ItemData: {fileID: 11400000, guid: dd11cf2c8cd5f2c45a1fa56bfb61fcff, type: 2}
 --- !u!114 &783328655103731687
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,10 +181,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec286555256c5044fabc3d1fd26fc12f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThrowableItem
+  syncMode: 0
+  syncInterval: 0.1
   throwForce: 12.82
   upwardAngle: 10
   stunDuration: 2
   knockbackForce: 8
+  destroyOnPlayerHit: 1
+  groundedDespawnDelay: 15
+  flightTimeoutDuration: 10
+  blinkWarningDuration: 3
+  blinkInterval: 0.15
+  throwerConnectionId: -1
 --- !u!65 &2213042076486791301
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -232,52 +241,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &5645901704275140184
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3518657916991147774}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AutoOwnerAuthorityTickOffset: 1
-  PositionInterpolationType: 0
-  RotationInterpolationType: 0
-  ScaleInterpolationType: 0
-  PositionLerpSmoothing: 1
-  PositionMaxInterpolationTime: 0.1
-  RotationLerpSmoothing: 1
-  RotationMaxInterpolationTime: 0.1
-  ScaleLerpSmoothing: 1
-  ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 0
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 0
 --- !u!114 &2795292631402844618
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -295,3 +258,37 @@ MonoBehaviour:
   visible: 0
   m_AssetId: e643239f5b3ada3488c987aca8809a3d
   hasSpawned: 0
+--- !u!114 &-6217853912443957372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3518657916991147774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f74aedd71d9a4f55b3ce499326d45fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransform
+  syncMode: 0
+  syncInterval: 0.1
+  clientAuthority: 0
+  sendInterval: 0.05
+  syncPosition: 1
+  syncRotation: 1
+  syncScale: 0
+  interpolatePosition: 1
+  interpolateRotation: 1
+  interpolateScale: 0
+  bufferTimeMultiplier: 1
+  bufferSizeLimit: 64
+  catchupThreshold: 4
+  catchupMultiplier: 0.1
+  onlySyncOnChange: 1
+  bufferResetMultiplier: 5
+  positionSensitivity: 0.01
+  rotationSensitivity: 0.01
+  scaleSensitivity: 0.01
+  showGizmos: 0
+  showOverlay: 0
+  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
