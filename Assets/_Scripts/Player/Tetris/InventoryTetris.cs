@@ -356,8 +356,16 @@ public class InventoryTetris : MonoBehaviour
 
     private ItemTetrisSO GetSOByName(string soName)
     {
+        if (itemSODatabase == null)
+        {
+            Debug.LogError("[InventoryTetris] itemSODatabase is not assigned in the Inspector!");
+            return null;
+        }
         foreach (var so in itemSODatabase)
+        {
+            if (so == null) continue; // skip empty slots
             if (so.name == soName) return so;
+        }
         return null;
     }
 
