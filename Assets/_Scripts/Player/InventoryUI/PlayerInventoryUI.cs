@@ -11,8 +11,8 @@ public class PlayerInventoryUI : MonoBehaviour
 
     private void RefreshSlot(GameObject slot, ItemData item)
     {
-        foreach (Transform child in slot.transform)
-            DestroyImmediate(child.gameObject);
+        for (int i = slot.transform.childCount - 1; i >= 0; i--)
+            Destroy(slot.transform.GetChild(i).gameObject);
 
         if (item != null)
             DraggableItem.Create(item, slot, playerManager.inventory);
