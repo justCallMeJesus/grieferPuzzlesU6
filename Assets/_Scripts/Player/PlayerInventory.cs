@@ -36,6 +36,11 @@ public class PlayerInventory : NetworkBehaviour
         slot3Action.action.performed += _ => SelectSlot(2);
         slot4Action.action.performed += _ => SelectSlot(3);
         throwAction.action.performed += _ => OnThrow();
+
+        if (!NetworkClient.ready)
+        {
+            NetworkClient.Ready();
+        }
     }
 
     private void OnDisable()
