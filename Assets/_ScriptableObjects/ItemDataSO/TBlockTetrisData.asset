@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42624c2cf9516b6449a93a68975daf02, type: 3}
+  m_Name: TBlockTetrisData
+  m_EditorClassIdentifier: Assembly-CSharp::TetrisData
+  type: 1
+  largeItem: 1
+  sprite: {fileID: 21300000, guid: e0fb66966c89e8241ac5cef85b7deeae, type: 3}
+  prefab: {fileID: 1165039230313409972, guid: 6827ebba482e60f4a9347d81996eb898, type: 3}
+  tetrisSO: {fileID: 11400000, guid: b2b8f4a873edbe144a8ce0210faac1c2, type: 2}

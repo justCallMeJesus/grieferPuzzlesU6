@@ -1,6 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
-
+using Mirror;
 public class InventorySlot : MonoBehaviour, IDropHandler
 {
     [SerializeField] private bool bigSlot = false;
@@ -38,7 +38,15 @@ public class InventorySlot : MonoBehaviour, IDropHandler
 
             InventorySlot originSlot = draggableItem.parentAfterDrag?
                                                      .GetComponent<InventorySlot>();
-            if (originSlot != null && originSlot != this)
+
+            // Dropped back onto the same slot — nothing changes, just restore parent.
+            if (originSlot == this)
+            {
+                draggableItem.parentAfterDrag = transform;
+                return;
+            }
+
+            if (originSlot != null)
                 playerInventory?.SyncItemToSlot(null, originSlot.slotIndex);
 
             draggableItem.parentAfterDrag = transform;
@@ -46,14 +54,30 @@ public class InventorySlot : MonoBehaviour, IDropHandler
             return;
         }
 
-        // World drop (IStorable) � no existing visual, so we create one.
+        // World drop (IStorable)  no existing visual, so we create one.
         IStorable droppable = dropped.GetComponent<IStorable>();
         if (droppable != null && droppable.GetItemData().largeItem == bigSlot)
         {
             ItemData data = droppable.GetItemData();
             DraggableItem.Create(data, gameObject, playerInventory);
-            Destroy(dropped);
 
+            // If this item came from a steal-mode drag, commit the steal now.
+            // InventoryDragDropSystem drops into InventorySlot via Unity's event
+            // system before EndDrag resolves, so TryResolveStealDrop never sees it.
+            if (InventoryTetris.IsStealMode)
+            {
+                Panel stealPanel = InventoryTetris.StealSourcePanel;
+                InventoryTetris stealSource = InventoryDragDropSystem.Instance.GetStealSource();
+                if (stealPanel != null && stealSource != null)
+                {
+                    string updatedJson = stealSource.Save();
+                    ulong localId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+                    stealPanel.CmdCommitSteal((int)localId, updatedJson);
+                    stealPanel.CloseLocalPanel();
+                }
+            }
+
+            Destroy(dropped);
             playerInventory?.SyncItemToSlot(data, slotIndex);
         }
     }

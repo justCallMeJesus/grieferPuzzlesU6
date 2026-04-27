@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5666a3e40b6236f439509a843ef7c87f, type: 3}
+  m_Name: Tetris4x1Block
+  m_EditorClassIdentifier: Assembly-CSharp::ItemTetrisSO
+  itemName: 4x1Block
+  itemData: {fileID: 11400000, guid: 5bb24c0d43584f148a327dbb21fc5ab9, type: 2}
+  sprite: {fileID: 21300000, guid: 1911c90d7a4c9b240aed52c3c64ceaef, type: 3}
+  width: 1
+  height: 4
+  cells: []

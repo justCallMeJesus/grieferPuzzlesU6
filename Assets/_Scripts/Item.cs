@@ -1,104 +1,109 @@
-using Unity.Netcode;
-using UnityEngine;
+﻿using UnityEngine;
+using Mirror;
 
 public class Item : NetworkBehaviour, IPickupable
 {
     public ItemData ItemData;
     public GameObject GameObject => this.gameObject;
 
-    // [AI] Syncs collected state across all clients, including late joiners
-    private NetworkVariable<bool> isCollected = new NetworkVariable<bool>(
-        false,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server
-    );
+    // --- SyncVars (Mirror equivalent of NetworkVariable) ---
 
-    // [AI] Called when this object is spawned on the network (including late joiners)
-    public override void OnNetworkSpawn()
+    [SyncVar(hook = nameof(OnCollectedChanged))]
+    private bool isCollected = false;
+
+    [SyncVar]
+    private bool isGrounded = true;
+
+    // Run when the object is initialized on clients
+    public override void OnStartClient()
     {
-        // [AI] Subscribe to future changes
-        isCollected.OnValueChanged += OnCollectedChanged;
-        // [AI] Apply current state immediately (handles late joiners)
-        gameObject.SetActive(!isCollected.Value);
+        base.OnStartClient();
+        // Set initial visibility based on state
+        gameObject.SetActive(!isCollected);
     }
 
-    // [AI] Called on every client whenever isCollected changes
-    private void OnCollectedChanged(bool previous, bool current)
+    private void OnCollectedChanged(bool oldVal, bool newVal)
     {
-        gameObject.SetActive(!current);
+        gameObject.SetActive(!newVal);
     }
 
-    // Called when a player interacts with this item
-    public void OnPickup(PlayerInventory player)
+    // ── Grounded state ────────────────────────────────────────────────────────
+
+    public void SetGrounded(bool grounded)
     {
-        if (!ItemData.largeItem)
+        // In Mirror, if we are the server, we set it directly.
+        // If client, we send a Command.
+        if (isServer)
         {
-            if (!player.HasSmallSpace()) { return; }
-
-            RequestPickup(player);
-            RequestDestroy();
+            isGrounded = grounded;
         }
         else
         {
-            if (!player.HasBigSpace()) { return; }
-
-            RequestPickupLarge(player);
-            RequestDestroy();
+            CmdSetGrounded(grounded);
         }
-        
-    }
-     
-    // Initiates the networked removal of this item
-    public void RequestDestroy()
-    {
-        DestroyRpc();
     }
 
-    // [AI] Runs on the server � marks item as collected and hides it
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void DestroyRpc()
+    [Command(requiresAuthority = false)]
+    private void CmdSetGrounded(bool grounded)
     {
-        // [AI] Setting this to true syncs to all current and future clients,
-        // triggering OnCollectedChanged which hides the object on each client
-        isCollected.Value = true;
-        gameObject.SetActive(false);
+        isGrounded = grounded;
     }
 
-    public void RequestPickup(PlayerInventory player)
-    {
-        PickupRpc(player.NetworkObject);
-    }
+    // ── Pickup ────────────────────────────────────────────────────────────────
 
-    public void RequestPickupLarge(PlayerInventory player)
+    public void OnPickup(PlayerInventory player)
     {
-        PickupLargeRpc(player.NetworkObject);
-    }
+        // Client-side early exit to prevent spamming the server
+        if (isCollected || !isGrounded) return;
 
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void PickupRpc(NetworkObjectReference playerRef)
-    {
-        if (isCollected.Value) return; // prevent double pickup
-
-        if (playerRef.TryGet(out NetworkObject playerNetObj))
+        if (!ItemData.largeItem)
         {
-            PlayerInventory inventory = playerNetObj.GetComponent<PlayerInventory>();
-            inventory.StoreSmallItem(ItemData);
+            if (!player.HasSmallSpace()) return;
+            CmdPickup(player.gameObject);
         }
-
-        isCollected.Value = true;
+        else
+        {
+            if (!player.HasBigSpace()) return;
+            CmdPickupLarge(player.gameObject);
+        }
     }
 
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void PickupLargeRpc(NetworkObjectReference playerRef)
+    // External callers
+    public void RequestPickup(PlayerInventory player) => CmdPickup(player.gameObject);
+    public void RequestPickupLarge(PlayerInventory player) => CmdPickupLarge(player.gameObject);
+
+    [Command(requiresAuthority = false)]
+    private void CmdPickup(GameObject playerObj)
     {
-        if (isCollected.Value) return;
+        if (isCollected || !isGrounded) return;
 
-        if (playerRef.TryGet(out NetworkObject playerNetObj))
+        if (playerObj != null)
         {
-            PlayerInventory inventory = playerNetObj.GetComponent<PlayerInventory>();
-            inventory.StoreBigItem(ItemData);
+            PlayerInventory inventory = playerObj.GetComponent<PlayerInventory>();
+            if (inventory != null)
+            {
+                inventory.StoreSmallItem(ItemData);
+                isCollected = true;
+                // Mirror uses NetworkServer.Destroy to remove networked objects
+                NetworkServer.Destroy(gameObject);
+            }
         }
+    }
 
-        isCollected.Value = true;
+    [Command(requiresAuthority = false)]
+    private void CmdPickupLarge(GameObject playerObj)
+    {
+        if (isCollected || !isGrounded) return;
+
+        if (playerObj != null)
+        {
+            PlayerInventory inventory = playerObj.GetComponent<PlayerInventory>();
+            if (inventory != null)
+            {
+                inventory.StoreBigItem(ItemData);
+                isCollected = true;
+                NetworkServer.Destroy(gameObject);
+            }
+        }
     }
 }

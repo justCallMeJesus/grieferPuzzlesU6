@@ -1,9 +1,10 @@
+using Mirror;
+using System.Linq;
 using Unity.Cinemachine;
-
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
-using Mirror;
+
 public class PlayerMovement : NetworkBehaviour
 {
     public enum PlayerMovementState
@@ -33,16 +34,17 @@ public class PlayerMovement : NetworkBehaviour
     {
         currentMode = freeMovement;
     }
+
     [ClientRpc]
     public void RpcHideUI()
     {
         // Because this script is on the PlayerPrefab, we need to FIND the UI in the scene
         // You can't drag UI into a Prefab, so we find it by name or tag
 
-        GameObject MainContainer = GameObject.Find("ContainerPreGameUi");
+        GameObject MainContainer = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(g => g.name == "ContainerPreGameUi");
 
         if (MainContainer != null) MainContainer.SetActive(false);
-        
+
         Debug.Log("UI Hidden via RPC");
     }
     private void Update()
@@ -63,8 +65,6 @@ public class PlayerMovement : NetworkBehaviour
 
         currentMode.Tick(this);
     }
-
-
 
 
     public interface IMovementMode
@@ -139,26 +139,22 @@ public class PlayerMovement : NetworkBehaviour
 
     public override void OnStartLocalPlayer()
     {
-        // base.OnStartLocalPlayer() is optional but good practice
-        base.OnStartLocalPlayer();
+        if (!isLocalPlayer) return;
 
-        // Instantiate and setup camera
         spawnedCamera = Instantiate(freeLookPrefab);
 
         var freelook = spawnedCamera.GetComponent<CinemachineCamera>();
-        if (freelook != null)
+        if(freelook != null)
         {
             freelook.Follow = this.transform;
             freelook.LookAt = this.transform;
         }
-    }
 
+    }
     public override void OnStopClient()
     {
         if (spawnedCamera != null)
             Destroy(spawnedCamera);
-
-        base.OnStopClient();
     }
 
     public void DisableMovement()
@@ -170,6 +166,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         currentMode = freeMovement;
     }
+
 
     public void OnDeathSpectate()
     {
@@ -210,5 +207,4 @@ public class PlayerMovement : NetworkBehaviour
             freelook.LookAt = this.transform;
         }
     }
-
 }

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5666a3e40b6236f439509a843ef7c87f, type: 3}
+  m_Name: TetrisTBlock
+  m_EditorClassIdentifier: Assembly-CSharp::ItemTetrisSO
+  itemName: TTetrisBlock
+  itemData: {fileID: 11400000, guid: 45667fb297069594ebe71c6532f99656, type: 2}
+  sprite: {fileID: 21300000, guid: 04b29810f0bdb07469778da27e1ba685, type: 3}
+  width: 3
+  height: 2
+  cells:
+  - {x: 0, y: 0}
+  - {x: 1, y: 0}
+  - {x: 2, y: 0}
+  - {x: 1, y: 1}

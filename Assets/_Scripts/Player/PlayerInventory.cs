@@ -1,7 +1,8 @@
+﻿using System.Collections.Generic;
 using System.Linq;
-using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Mirror;
 
 public class PlayerInventory : NetworkBehaviour
 {
@@ -11,21 +12,25 @@ public class PlayerInventory : NetworkBehaviour
     [SerializeField] private InputActionReference slot3Action;
     [SerializeField] private InputActionReference slot4Action;
 
+    [Header("Inventory Data")]
     [SerializeField] private ItemData[] smallItemInventory = new ItemData[3];
     [SerializeField] private ItemData bigInventorySlot;
 
     private PlayerManager manager;
     public Transform playerThrowPoint;
-
     private int selectedSlot = -1;
 
-    public override void OnNetworkSpawn()
+    public override void OnStartLocalPlayer()
     {
         manager = GetComponent<PlayerManager>();
-    }
 
-    private void OnEnable()
-    {
+        // Enable and Subscribe to Actions
+        slot1Action.action.Enable();
+        slot2Action.action.Enable();
+        slot3Action.action.Enable();
+        slot4Action.action.Enable();
+        throwAction.action.Enable();
+
         slot1Action.action.performed += _ => SelectSlot(0);
         slot2Action.action.performed += _ => SelectSlot(1);
         slot3Action.action.performed += _ => SelectSlot(2);
@@ -35,6 +40,8 @@ public class PlayerInventory : NetworkBehaviour
 
     private void OnDisable()
     {
+        if (!isLocalPlayer) return;
+
         slot1Action.action.performed -= _ => SelectSlot(0);
         slot2Action.action.performed -= _ => SelectSlot(1);
         slot3Action.action.performed -= _ => SelectSlot(2);
@@ -43,41 +50,40 @@ public class PlayerInventory : NetworkBehaviour
     }
 
     // -------------------------------------------------------------------------
-    // UI refresh
+    // Sync Logic
     // -------------------------------------------------------------------------
 
     private void RefreshUILocal()
     {
-        if (!IsOwner) return;
+        if (!isLocalPlayer) return;
         manager?.playerInventoryUI?.RefreshAll(this);
     }
 
-    // Sends full inventory state from server to the owning client.
-    // string[] can't be sent over NGO RPCs, so we send 3 slots as separate strings.
+    [Server]
     private void PushStateToClient()
     {
         string big = bigInventorySlot != null ? bigInventorySlot.name : "";
         string sm0 = smallItemInventory[0] != null ? smallItemInventory[0].name : "";
         string sm1 = smallItemInventory[1] != null ? smallItemInventory[1].name : "";
         string sm2 = smallItemInventory[2] != null ? smallItemInventory[2].name : "";
-        SyncInventoryClientRpc(big, sm0, sm1, sm2);
+
+        // TargetRpc ensures only the owner gets the update
+        TargetSyncInventory(connectionToClient, big, sm0, sm1, sm2);
     }
 
-    [ClientRpc]
-    private void SyncInventoryClientRpc(string bigName, string small0, string small1, string small2)
+    [TargetRpc]
+    private void TargetSyncInventory(NetworkConnection target, string bigName, string small0, string small1, string small2)
     {
-        if (!IsOwner) return;
+        bigInventorySlot = !string.IsNullOrEmpty(bigName) ? ItemRegistry.Get(bigName) : null;
+        smallItemInventory[0] = !string.IsNullOrEmpty(small0) ? ItemRegistry.Get(small0) : null;
+        smallItemInventory[1] = !string.IsNullOrEmpty(small1) ? ItemRegistry.Get(small1) : null;
+        smallItemInventory[2] = !string.IsNullOrEmpty(small2) ? ItemRegistry.Get(small2) : null;
 
-        bigInventorySlot = bigName != "" ? ItemRegistry.Get(bigName) : null;
-        smallItemInventory[0] = small0 != "" ? ItemRegistry.Get(small0) : null;
-        smallItemInventory[1] = small1 != "" ? ItemRegistry.Get(small1) : null;
-        smallItemInventory[2] = small2 != "" ? ItemRegistry.Get(small2) : null;
-
-        manager?.playerInventoryUI?.RefreshAll(this);
+        RefreshUILocal();
     }
 
     // -------------------------------------------------------------------------
-    // Inventory queries
+    // Inventory Queries
     // -------------------------------------------------------------------------
 
     public bool HasSmallSpace() => smallItemInventory.Any(slot => slot == null);
@@ -91,13 +97,13 @@ public class PlayerInventory : NetworkBehaviour
     }
 
     // -------------------------------------------------------------------------
-    // Inventory mutations
+    // Inventory Mutations
     // -------------------------------------------------------------------------
 
     public void StoreBigItem(ItemData item)
     {
         bigInventorySlot = item;
-        if (IsServer) PushStateToClient();
+        if (isServer) PushStateToClient();
         else RefreshUILocal();
     }
 
@@ -108,7 +114,7 @@ public class PlayerInventory : NetworkBehaviour
             if (smallItemInventory[i] == null)
             {
                 smallItemInventory[i] = item;
-                if (IsServer) PushStateToClient();
+                if (isServer) PushStateToClient();
                 else RefreshUILocal();
                 return;
             }
@@ -117,70 +123,102 @@ public class PlayerInventory : NetworkBehaviour
 
     public void RemoveItem(int slot)
     {
-        if (slot == 0)
-            bigInventorySlot = null;
+        if (isServer)
+        {
+            InternalRemoveItem(slot);
+            PushStateToClient();
+        }
+        else
+        {
+            CmdRemoveItem(slot);
+            InternalRemoveItem(slot); // Prediction
+            RefreshUILocal();
+        }
+    }
+
+    [Command]
+    private void CmdRemoveItem(int slot)
+    {
+        InternalRemoveItem(slot);
+        PushStateToClient();
+    }
+
+    private void InternalRemoveItem(int slot)
+    {
+        if (slot == 0) bigInventorySlot = null;
         else
         {
             int i = slot - 1;
-            if (i >= 0 && i < smallItemInventory.Length)
-                smallItemInventory[i] = null;
+            if (i >= 0 && i < smallItemInventory.Length) smallItemInventory[i] = null;
         }
-        if (IsServer) PushStateToClient();
-        else RefreshUILocal();
     }
 
     public void SyncItemToSlot(ItemData item, int slotIndex)
     {
-        if (slotIndex == 0)
-            bigInventorySlot = item;
+        InternalSyncToSlot(item, slotIndex);
+        if (!isServer)
+        {
+            string itemName = item != null ? item.name : "";
+            CmdSyncItemToSlot(itemName, slotIndex);
+        }
+    }
+
+    [Command]
+    private void CmdSyncItemToSlot(string itemName, int slotIndex)
+    {
+        ItemData item = !string.IsNullOrEmpty(itemName) ? ItemRegistry.Get(itemName) : null;
+        InternalSyncToSlot(item, slotIndex);
+    }
+
+    private void InternalSyncToSlot(ItemData item, int slotIndex)
+    {
+        if (slotIndex == 0) bigInventorySlot = item;
         else
         {
             int i = slotIndex - 1;
-            if (i >= 0 && i < smallItemInventory.Length)
-                smallItemInventory[i] = item;
+            if (i >= 0 && i < smallItemInventory.Length) smallItemInventory[i] = item;
         }
     }
 
     // -------------------------------------------------------------------------
-    // Slot selection
+    // Slot Selection & Throwing
     // -------------------------------------------------------------------------
-
-    public void SetSelectedSlot(int slot)
-    {
-        selectedSlot = slot;
-    }
 
     private void SelectSlot(int slot)
     {
-        if (!IsOwner) return;
-        if (selectedSlot == slot) { selectedSlot = -1; SetSelectedSlot(-1); return; }
-        selectedSlot = slot;
-        SetSelectedSlot(slot);
+        if (!isLocalPlayer) return;
+        selectedSlot = (selectedSlot == slot) ? -1 : slot;
+        RefreshUILocal();
     }
-
-    // -------------------------------------------------------------------------
-    // Throwing
-    // -------------------------------------------------------------------------
 
     private void OnThrow()
     {
-        if (!IsOwner) return;
-        if (selectedSlot == -1) return;
+        if (!isLocalPlayer || selectedSlot == -1) return;
         ItemData item = GetSelectedItem(selectedSlot);
         if (item == null) return;
 
-        ThrowServerRpc(selectedSlot, playerThrowPoint.position, transform.forward);
-        RemoveItem(selectedSlot);
+        CmdThrow(selectedSlot, playerThrowPoint.position, transform.forward);
         selectedSlot = -1;
-        SetSelectedSlot(-1);
+        RefreshUILocal();
     }
 
-    [ServerRpc]
-    private void ThrowServerRpc(int slot, Vector3 spawnPos, Vector3 direction)
+    [Command]
+    private void CmdThrow(int slot, Vector3 spawnPos, Vector3 direction)
     {
-        GameObject thrown = Instantiate(GetSelectedItem(slot).prefab, spawnPos,
-                                        Quaternion.LookRotation(direction));
-        thrown.GetComponent<NetworkObject>().Spawn();
-        thrown.GetComponent<ThrowableItem>().Launch(direction);
+        ItemData item = GetSelectedItem(slot);
+        if (item == null) return;
+
+        InternalRemoveItem(slot);
+
+        GameObject thrown = Instantiate(item.prefab, spawnPos, Quaternion.LookRotation(direction));
+
+        // Mirror standard spawn
+        NetworkServer.Spawn(thrown);
+
+        // Tell all clients to launch the physics
+        if (thrown.TryGetComponent(out ThrowableItem throwable))
+        {
+            throwable.RpcLaunch(direction, connectionToClient.connectionId);
+        }
     }
 }
