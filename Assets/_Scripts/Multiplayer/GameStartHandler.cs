@@ -19,46 +19,39 @@ public class GameStartHandler : NetworkBehaviour
     [Server]
     public void StartGame()
     {
-        Debug.Log("Server: Starting Game...");
-        Debug.Log($"Total connections on server: {NetworkServer.connections.Count}");
-        // Create a copy of the spawn points list so we can track which ones are used
-        // (Optional: removes the chance of two players spawning on the same spot)
-        var availableSpawns = new System.Collections.Generic.List<Transform>(NetworkManager.startPositions);
+        // Use numPlayers for a more accurate count of active participants
+        Debug.Log($"Starting game with {NetworkServer.numPlayers} players.");
 
-        foreach (var conn in NetworkServer.connections.Values)
+        var availableSpawns = new List<Transform>(NetworkManager.startPositions);
+
+        // Iterating through values is safer in Mirror to avoid index errors
+        foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
         {
-            Debug.Log($"Spawning player for Connection ID: {conn.connectionId}");
-            // 1. Pick a random spawn point
+            if (conn == null) continue;
+
+            // 1. Pick Spawn Point
             Vector3 spawnPos = Vector3.zero;
             Quaternion spawnRot = Quaternion.identity;
-            
+
             if (availableSpawns.Count > 0)
             {
                 int index = Random.Range(0, availableSpawns.Count);
                 Transform chosenSpawn = availableSpawns[index];
-
                 spawnPos = chosenSpawn.position;
                 spawnRot = chosenSpawn.rotation;
-
-                // Remove from list so the next player gets a different spot
                 availableSpawns.RemoveAt(index);
             }
 
-            // 2. Instantiate at the chosen position
+            // 2. Spawn and replace the "Lobby" player with the "Game" player
             GameObject playerTank = Instantiate(PlayerPrefab, spawnPos, spawnRot);
 
-            // 3. Spawn and assign authority
-            NetworkServer.AddPlayerForConnection(conn, playerTank);
+            // This is the CRITICAL Mirror function for transitioning from Lobby to Game
+            NetworkServer.ReplacePlayerForConnection(conn, playerTank);
 
-            PlayerMovement playerScript = playerTank.GetComponent<PlayerMovement>();
-            if (playerScript != null)
-            {
-                playerScript.RpcHideUI();
-            }
-
-            Debug.Log($"Spawned Player at {spawnPos} for Connection ID: {conn.connectionId}");
+            playerTank.GetComponent<PlayerMovement>()?.RpcHideUI();
         }
     }
+
 
 
     public override void OnStopClient()
