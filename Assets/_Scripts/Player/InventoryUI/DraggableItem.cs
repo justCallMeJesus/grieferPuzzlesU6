@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -48,25 +47,29 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public static DraggableItem Create(ItemData itemData, GameObject parentSlot, PlayerInventory inventory)
     {
+        // Create the GO without parenting yet — parenting a prefab asset transform is what
+        // triggers the "Setting the parent of a transform which resides in a Prefab Asset" error.
         GameObject go = new GameObject(itemData.type.ToString(), typeof(RectTransform));
 
-        Image image = go.AddComponent<Image>();
-        image.sprite = itemData.sprite;
-
+        // Assign itemData BEFORE AddComponent so OnEnable has valid data if it fires early.
         System.Type draggableType = draggableTypeMap.TryGetValue(itemData.type, out var t)
-        ? t
-        : typeof(DraggableItem);
-
+            ? t
+            : typeof(DraggableItem);
 
         DraggableItem draggable = (DraggableItem)go.AddComponent(draggableType);
         draggable.itemData = itemData;
-
-        draggable.transform.SetParent(parentSlot.transform);
-
         draggable.inventory = inventory;
+
+        // Image is added by RequireComponent automatically alongside the draggable.
+        // Set the sprite now that itemData is assigned.
+        Image image = go.GetComponent<Image>();
+        if (image != null)
+            image.sprite = itemData.sprite;
+
+        // Parent last — this is what was causing the prefab asset error when parentSlot
+        // was accidentally a prefab reference instead of a scene instance.
+        draggable.transform.SetParent(parentSlot.transform, false);
 
         return draggable;
     }
-
-
 }

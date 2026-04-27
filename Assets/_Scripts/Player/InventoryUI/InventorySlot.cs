@@ -10,6 +10,9 @@ public class InventorySlot : MonoBehaviour, IDropHandler
     private PlayerInventory playerInventory;
     private PlayerInventoryUI playerInventoryUI;
 
+    // In InventorySlot.cs, add these two properties:
+    public bool IsBigSlot => bigSlot;
+    public int SlotIndex => slotIndex;
     private void Start()
     {
         playerInventoryUI = GetComponentInParent<PlayerInventoryUI>();

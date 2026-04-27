@@ -20,33 +20,48 @@ public class PlayerInventory : NetworkBehaviour
     public Transform playerThrowPoint;
     private int selectedSlot = -1;
 
+    // Store delegates so OnDisable can actually remove them.
+    // Lambdas create new instances every time — you CANNOT unsubscribe a lambda
+    // by writing a new one. This was causing duplicate subscriptions on every
+    // enable/disable cycle, making RefreshUILocal fire N times per keypress.
+    private System.Action<InputAction.CallbackContext> _onSlot1;
+    private System.Action<InputAction.CallbackContext> _onSlot2;
+    private System.Action<InputAction.CallbackContext> _onSlot3;
+    private System.Action<InputAction.CallbackContext> _onSlot4;
+    private System.Action<InputAction.CallbackContext> _onThrow;
+
     public override void OnStartLocalPlayer()
     {
         manager = GetComponent<PlayerManager>();
 
-        // Enable and Subscribe to Actions
+        _onSlot1 = _ => SelectSlot(0);
+        _onSlot2 = _ => SelectSlot(1);
+        _onSlot3 = _ => SelectSlot(2);
+        _onSlot4 = _ => SelectSlot(3);
+        _onThrow = _ => OnThrow();
+
         slot1Action.action.Enable();
         slot2Action.action.Enable();
         slot3Action.action.Enable();
         slot4Action.action.Enable();
         throwAction.action.Enable();
 
-        slot1Action.action.performed += _ => SelectSlot(0);
-        slot2Action.action.performed += _ => SelectSlot(1);
-        slot3Action.action.performed += _ => SelectSlot(2);
-        slot4Action.action.performed += _ => SelectSlot(3);
-        throwAction.action.performed += _ => OnThrow();
+        slot1Action.action.performed += _onSlot1;
+        slot2Action.action.performed += _onSlot2;
+        slot3Action.action.performed += _onSlot3;
+        slot4Action.action.performed += _onSlot4;
+        throwAction.action.performed += _onThrow;
     }
 
     private void OnDisable()
     {
         if (!isLocalPlayer) return;
 
-        slot1Action.action.performed -= _ => SelectSlot(0);
-        slot2Action.action.performed -= _ => SelectSlot(1);
-        slot3Action.action.performed -= _ => SelectSlot(2);
-        slot4Action.action.performed -= _ => SelectSlot(3);
-        throwAction.action.performed -= _ => OnThrow();
+        if (_onSlot1 != null) slot1Action.action.performed -= _onSlot1;
+        if (_onSlot2 != null) slot2Action.action.performed -= _onSlot2;
+        if (_onSlot3 != null) slot3Action.action.performed -= _onSlot3;
+        if (_onSlot4 != null) slot4Action.action.performed -= _onSlot4;
+        if (_onThrow != null) throwAction.action.performed -= _onThrow;
     }
 
     // -------------------------------------------------------------------------
@@ -67,7 +82,6 @@ public class PlayerInventory : NetworkBehaviour
         string sm1 = smallItemInventory[1] != null ? smallItemInventory[1].name : "";
         string sm2 = smallItemInventory[2] != null ? smallItemInventory[2].name : "";
 
-        // TargetRpc ensures only the owner gets the update
         TargetSyncInventory(connectionToClient, big, sm0, sm1, sm2);
     }
 
@@ -211,11 +225,8 @@ public class PlayerInventory : NetworkBehaviour
         InternalRemoveItem(slot);
 
         GameObject thrown = Instantiate(item.prefab, spawnPos, Quaternion.LookRotation(direction));
-
-        // Mirror standard spawn
         NetworkServer.Spawn(thrown);
 
-        // Tell all clients to launch the physics
         if (thrown.TryGetComponent(out ThrowableItem throwable))
         {
             throwable.RpcLaunch(direction, connectionToClient.connectionId);
