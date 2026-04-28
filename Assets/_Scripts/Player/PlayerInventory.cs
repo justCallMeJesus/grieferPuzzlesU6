@@ -21,9 +21,6 @@ public class PlayerInventory : NetworkBehaviour
     private int selectedSlot = -1;
 
     // Store delegates so OnDisable can actually remove them.
-    // Lambdas create new instances every time — you CANNOT unsubscribe a lambda
-    // by writing a new one. This was causing duplicate subscriptions on every
-    // enable/disable cycle, making RefreshUILocal fire N times per keypress.
     private System.Action<InputAction.CallbackContext> _onSlot1;
     private System.Action<InputAction.CallbackContext> _onSlot2;
     private System.Action<InputAction.CallbackContext> _onSlot3;
@@ -211,22 +208,40 @@ public class PlayerInventory : NetworkBehaviour
         ItemData item = GetSelectedItem(selectedSlot);
         if (item == null) return;
 
-        // Don't reset selectedSlot or UI here — wait for the server to confirm
-        // via TargetSyncInventory so client state always mirrors server state.
-        CmdThrow(selectedSlot, playerThrowPoint.position, transform.forward);
+        // Send throw direction only — server derives spawn position from its
+        // own authoritative transform, so a client can't spoof the position.
+        CmdThrow(selectedSlot, transform.forward);
     }
 
     [Command]
-    private void CmdThrow(int slot, Vector3 spawnPos, Vector3 direction)
+    private void CmdThrow(int slot, Vector3 direction)
     {
+        // FIX 1: Guard — player object not ready yet (late join race condition).
+        // This is what causes "Spawned object not found [netId=X]" warnings:
+        // the Command arrives before OnStartServer has fully initialised this
+        // NetworkBehaviour on the server side.
+        if (connectionToClient == null) return;
+
         ItemData item = GetSelectedItem(slot);
-        if (item == null) return; // Server-side guard — rejects stale/duplicate requests
+        if (item == null || item.prefab == null) return;
 
         InternalRemoveItem(slot);
-        PushStateToClient(); // Sync removal back to client — fixes item staying in inventory
+        PushStateToClient();
+
+        // FIX 2: Derive spawn position server-side so clients can't spoof it.
+        // Fall back to player root if playerThrowPoint isn't synced to server.
+        Vector3 spawnPos = playerThrowPoint != null
+            ? playerThrowPoint.position
+            : transform.position + transform.forward * 0.5f + Vector3.up * 0.5f;
 
         GameObject thrown = Instantiate(item.prefab, spawnPos, Quaternion.LookRotation(direction));
-        NetworkServer.Spawn(thrown);
+
+        // FIX 3: Pass connectionToClient so the thrown object is spawned WITH
+        // client authority on the throwing client. Without this, Mirror spawns
+        // the object with no owner, and any [Command] on ThrowableItem (or a
+        // future one you add) will fail with the exact "Spawned object not found"
+        // warning you're seeing, because the client has no authority over it.
+        NetworkServer.Spawn(thrown, connectionToClient);
 
         if (thrown.TryGetComponent(out ThrowableItem throwable))
         {
