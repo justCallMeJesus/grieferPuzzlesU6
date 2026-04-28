@@ -18,9 +18,16 @@ public class PlayerInventory : NetworkBehaviour
 
     private PlayerManager manager;
     public Transform playerThrowPoint;
+
+    // selectedSlot: -1 = none, 0 = big slot, 1-3 = small slots
     private int selectedSlot = -1;
 
-    // Store delegates so OnDisable can actually remove them.
+    // FIX: Track whether we are mid-throw to prevent double-firing.
+    // OnThrow() is on the input performed callback which can fire faster
+    // than a server round-trip, so without this the player can burn through
+    // inventory items in one frame.
+    private bool throwPending = false;
+
     private System.Action<InputAction.CallbackContext> _onSlot1;
     private System.Action<InputAction.CallbackContext> _onSlot2;
     private System.Action<InputAction.CallbackContext> _onSlot3;
@@ -90,6 +97,17 @@ public class PlayerInventory : NetworkBehaviour
         smallItemInventory[1] = !string.IsNullOrEmpty(small1) ? ItemRegistry.Get(small1) : null;
         smallItemInventory[2] = !string.IsNullOrEmpty(small2) ? ItemRegistry.Get(small2) : null;
 
+        // FIX: After the server syncs inventory back (e.g. after a throw removes
+        // the item), validate selectedSlot. If that slot is now empty, deselect.
+        // Previously this was left dirty, so the NEXT throw attempt would call
+        // GetSelectedItem(selectedSlot) → null → early return → nothing happens.
+        if (selectedSlot != -1 && GetSelectedItem(selectedSlot) == null)
+            selectedSlot = -1;
+
+        // FIX: Clear throwPending here — server has confirmed the state,
+        // so the client is free to throw again.
+        throwPending = false;
+
         RefreshUILocal();
     }
 
@@ -106,6 +124,9 @@ public class PlayerInventory : NetworkBehaviour
         int i = slot - 1;
         return (i >= 0 && i < smallItemInventory.Length) ? smallItemInventory[i] : null;
     }
+
+    // Returns the currently selected slot index (read-only, for UI use)
+    public int SelectedSlot => selectedSlot;
 
     // -------------------------------------------------------------------------
     // Inventory Mutations
@@ -204,43 +225,52 @@ public class PlayerInventory : NetworkBehaviour
 
     private void OnThrow()
     {
-        if (!isLocalPlayer || selectedSlot == -1) return;
+        if (!isLocalPlayer) return;
+
+        // FIX: Block throw if one is already in flight. Without this, spamming
+        // throw burns through inventory because each press sends a CmdThrow
+        // before TargetSyncInventory comes back to clear the slot locally.
+        if (throwPending) return;
+
+        if (selectedSlot == -1) return;
+
         ItemData item = GetSelectedItem(selectedSlot);
         if (item == null) return;
 
-        // Send throw direction only — server derives spawn position from its
-        // own authoritative transform, so a client can't spoof the position.
-        CmdThrow(selectedSlot, transform.forward);
+        throwPending = true;
+
+        // Optimistic local removal so UI feels instant.
+        // TargetSyncInventory will correct any mismatch.
+        int slotToThrow = selectedSlot;
+        selectedSlot = -1;
+        InternalRemoveItem(slotToThrow);
+        RefreshUILocal();
+
+        CmdThrow(slotToThrow, transform.forward);
     }
 
     [Command]
     private void CmdThrow(int slot, Vector3 direction)
     {
-        // FIX 1: Guard — player object not ready yet (late join race condition).
-        // This is what causes "Spawned object not found [netId=X]" warnings:
-        // the Command arrives before OnStartServer has fully initialised this
-        // NetworkBehaviour on the server side.
         if (connectionToClient == null) return;
 
         ItemData item = GetSelectedItem(slot);
-        if (item == null || item.prefab == null) return;
+        if (item == null || item.prefab == null)
+        {
+            // Server rejected the throw (stale state) — re-sync client so it
+            // can recover and throw again rather than getting stuck.
+            PushStateToClient();
+            return;
+        }
 
         InternalRemoveItem(slot);
         PushStateToClient();
 
-        // FIX 2: Derive spawn position server-side so clients can't spoof it.
-        // Fall back to player root if playerThrowPoint isn't synced to server.
         Vector3 spawnPos = playerThrowPoint != null
             ? playerThrowPoint.position
             : transform.position + transform.forward * 0.5f + Vector3.up * 0.5f;
 
         GameObject thrown = Instantiate(item.prefab, spawnPos, Quaternion.LookRotation(direction));
-
-        // FIX 3: Pass connectionToClient so the thrown object is spawned WITH
-        // client authority on the throwing client. Without this, Mirror spawns
-        // the object with no owner, and any [Command] on ThrowableItem (or a
-        // future one you add) will fail with the exact "Spawned object not found"
-        // warning you're seeing, because the client has no authority over it.
         NetworkServer.Spawn(thrown, connectionToClient);
 
         if (thrown.TryGetComponent(out ThrowableItem throwable))
