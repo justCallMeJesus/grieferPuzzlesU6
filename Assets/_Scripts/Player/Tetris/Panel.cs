@@ -28,6 +28,12 @@ public class Panel : NetworkBehaviour, IInteractable
     [SyncVar(hook = nameof(OnOwnerChanged))]
     private int ownerId = NOBODY;
 
+    // The owner's netId — stored separately because KilledPlayers is keyed
+    // by netId (from ThrowableItem), while ownerId is a connectionId.
+    // These are different ID spaces and must never be compared against each other.
+    [SyncVar]
+    private uint ownerNetId = 0;
+
     private bool isLocallyOpen = false;
     private bool isLocallyInStealMode = false;
 
@@ -88,9 +94,10 @@ public class Panel : NetworkBehaviour, IInteractable
 
         if (ownerId == NOBODY)
         {
-            // First ever opener becomes owner
+            // First ever opener becomes owner — record both ids
             ownerId = requesterId;
-            Debug.Log($"[Panel] Client {requesterId} claimed ownership.");
+            ownerNetId = sender.identity != null ? sender.identity.netId : 0;
+            Debug.Log($"[Panel] Client {requesterId} (netId {ownerNetId}) claimed ownership.");
         }
 
         bool requesterIsOwner = (ownerId == requesterId);
@@ -105,7 +112,7 @@ public class Panel : NetworkBehaviour, IInteractable
         // -- Non-owner path --
         bool canSteal = false;
         PlayerManager requesterPM = GetPlayerManagerByConnectionId(requesterId);
-        if (requesterPM != null && requesterPM.KilledPlayers.Contains((ulong)ownerId))
+        if (requesterPM != null && ownerNetId != 0 && requesterPM.KilledPlayers.Contains((ulong)ownerNetId))
             canSteal = true;
 
         // Non-owners who cannot steal only get read access
@@ -156,7 +163,7 @@ public class Panel : NetworkBehaviour, IInteractable
 
         // Verify the requester actually has steal rights still
         PlayerManager requesterPM = GetPlayerManagerByConnectionId(requesterId);
-        if (requesterPM == null || !requesterPM.KilledPlayers.Contains((ulong)ownerId))
+        if (requesterPM == null || ownerNetId == 0 || !requesterPM.KilledPlayers.Contains((ulong)ownerNetId))
         {
             Debug.LogWarning($"[Panel] CommitSteal from {requesterId} rejected — no steal rights.");
             TargetRevokeStealAccess(sender);
@@ -164,11 +171,11 @@ public class Panel : NetworkBehaviour, IInteractable
         }
 
         savedState = updatedPanelJson;
-        Debug.Log($"[Panel] Client {requesterId} stole from panel owned by {(ulong)ownerId}.");
+        Debug.Log($"[Panel] Client {requesterId} stole from panel owned by {ownerId} (netId {ownerNetId}).");
 
         PlayerManager thiefPM = GetPlayerManagerByConnectionId(requesterId);
         if (thiefPM != null)
-            thiefPM.RemoveKilledPlayer((ulong)ownerId);
+            thiefPM.RemoveKilledPlayer((ulong)ownerNetId);
 
         ownerId = requesterId;
         currentUserId = NOBODY;
