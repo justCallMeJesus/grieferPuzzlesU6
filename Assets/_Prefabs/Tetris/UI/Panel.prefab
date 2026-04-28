@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 2199160223687304691}
   - component: {fileID: 3489982888947820808}
   - component: {fileID: 7400590714076232787}
+  - component: {fileID: 8199975344738404394}
+  - component: {fileID: 8323193321950283929}
   m_Layer: 0
   m_Name: Panel
   m_TagString: Untagged
@@ -21,21 +23,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7847223719813723150
-Transform:
+--- !u!224 &7847223719813723150
+RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1410183646124180084}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.5, y: 2, z: 14.5}
+  m_LocalRotation: {x: 0, y: -0.3579606, z: 0, w: 0.93373674}
+  m_LocalPosition: {x: 0, y: 0, z: 7.009}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -41.95, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 13.03, y: 0.95}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!33 &602903464034241884
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -126,7 +132,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3104740444
+  GlobalObjectIdHash: 755037060
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -151,7 +157,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 968633ed33f816443aa5a07dbc311741, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TetrisPanel
-  ShowTopMostFoldoutHeaderGroup: 1
+  syncMode: 0
+  syncInterval: 0.1
   UIPanel: {fileID: 0}
   inventoryPanel: {fileID: 0}
   inventoryTetris: {fileID: 0}
+--- !u!114 &8199975344738404394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410183646124180084}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  serverOnly: 0
+  visible: 0
+  m_AssetId: d174020801eaa5448b708549fcf11741
+  hasSpawned: 0
+--- !u!222 &8323193321950283929
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410183646124180084}
+  m_CullTransparentMesh: 1
