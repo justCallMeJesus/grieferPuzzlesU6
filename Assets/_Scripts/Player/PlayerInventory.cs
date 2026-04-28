@@ -22,7 +22,7 @@ public class PlayerInventory : NetworkBehaviour
     // selectedSlot: -1 = none, 0 = big slot, 1-3 = small slots
     private int selectedSlot = -1;
 
-    // FIX: Track whether we are mid-throw to prevent double-firing.
+    // Track whether we are mid-throw to prevent double-firing.
     // OnThrow() is on the input performed callback which can fire faster
     // than a server round-trip, so without this the player can burn through
     // inventory items in one frame.
@@ -97,14 +97,12 @@ public class PlayerInventory : NetworkBehaviour
         smallItemInventory[1] = !string.IsNullOrEmpty(small1) ? ItemRegistry.Get(small1) : null;
         smallItemInventory[2] = !string.IsNullOrEmpty(small2) ? ItemRegistry.Get(small2) : null;
 
-        // FIX: After the server syncs inventory back (e.g. after a throw removes
+        // After the server syncs inventory back (e.g. after a throw removes
         // the item), validate selectedSlot. If that slot is now empty, deselect.
-        // Previously this was left dirty, so the NEXT throw attempt would call
-        // GetSelectedItem(selectedSlot) → null → early return → nothing happens.
         if (selectedSlot != -1 && GetSelectedItem(selectedSlot) == null)
             selectedSlot = -1;
 
-        // FIX: Clear throwPending here — server has confirmed the state,
+        // Clear throwPending here — server has confirmed the state,
         // so the client is free to throw again.
         throwPending = false;
 
@@ -227,7 +225,7 @@ public class PlayerInventory : NetworkBehaviour
     {
         if (!isLocalPlayer) return;
 
-        // FIX: Block throw if one is already in flight. Without this, spamming
+        // Block throw if one is already in flight. Without this, spamming
         // throw burns through inventory because each press sends a CmdThrow
         // before TargetSyncInventory comes back to clear the slot locally.
         if (throwPending) return;
@@ -239,12 +237,18 @@ public class PlayerInventory : NetworkBehaviour
 
         throwPending = true;
 
-        // Optimistic local removal so UI feels instant.
-        // TargetSyncInventory will correct any mismatch.
         int slotToThrow = selectedSlot;
         selectedSlot = -1;
-        InternalRemoveItem(slotToThrow);
-        RefreshUILocal();
+
+        // FIX: Only do optimistic local removal on a pure client.
+        // On host, isServer is true and the Command runs on the same component
+        // instance — so removing the item here would wipe it before CmdThrow
+        // can read it, causing the "Spawned object not found" error.
+        if (!isServer)
+        {
+            InternalRemoveItem(slotToThrow);
+            RefreshUILocal();
+        }
 
         CmdThrow(slotToThrow, transform.forward);
     }
