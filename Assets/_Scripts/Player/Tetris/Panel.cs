@@ -173,11 +173,14 @@ public class Panel : NetworkBehaviour, IInteractable
         savedState = updatedPanelJson;
         Debug.Log($"[Panel] Client {requesterId} stole from panel owned by {ownerId} (netId {ownerNetId}).");
 
+        // Remove steal rights so the thief can only view the panel on future opens.
+        // Do NOT transfer ownership — ownerId stays with the original owner so the
+        // thief falls into the non-owner (read-only) path on any subsequent interaction.
         PlayerManager thiefPM = GetPlayerManagerByConnectionId(requesterId);
         if (thiefPM != null)
             thiefPM.RemoveKilledPlayer((ulong)ownerNetId);
 
-        ownerId = requesterId;
+        // Clear the thief's active session slots so the panel is free again.
         currentUserId = NOBODY;
         readOnlyUserId = NOBODY;
 
