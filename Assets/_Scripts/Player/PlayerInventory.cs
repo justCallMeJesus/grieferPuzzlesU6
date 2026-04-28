@@ -23,10 +23,15 @@ public class PlayerInventory : NetworkBehaviour
     private int selectedSlot = -1;
 
     // Track whether we are mid-throw to prevent double-firing.
-    // OnThrow() is on the input performed callback which can fire faster
-    // than a server round-trip, so without this the player can burn through
-    // inventory items in one frame.
     private bool throwPending = false;
+
+    // FIX: Track whether this player is fully ready to send Commands.
+    // FizzySteam does not guarantee message ordering, so Commands sent
+    // immediately after spawn can arrive before the server has registered
+    // the NetworkIdentity, producing "Spawned object not found" warnings.
+    // We set this true in OnStartAuthority (fires after server is ready for us)
+    // instead of relying solely on OnStartLocalPlayer.
+    private bool isReadyToSendCommands = false;
 
     private System.Action<InputAction.CallbackContext> _onSlot1;
     private System.Action<InputAction.CallbackContext> _onSlot2;
@@ -57,6 +62,13 @@ public class PlayerInventory : NetworkBehaviour
         throwAction.action.performed += _onThrow;
     }
 
+    // OnStartAuthority fires on the client after the server has fully spawned
+    // and acknowledged this object. Safe to send Commands from this point.
+    public override void OnStartAuthority()
+    {
+        isReadyToSendCommands = true;
+    }
+
     private void OnDisable()
     {
         if (!isLocalPlayer) return;
@@ -66,6 +78,8 @@ public class PlayerInventory : NetworkBehaviour
         if (_onSlot3 != null) slot3Action.action.performed -= _onSlot3;
         if (_onSlot4 != null) slot4Action.action.performed -= _onSlot4;
         if (_onThrow != null) throwAction.action.performed -= _onThrow;
+
+        isReadyToSendCommands = false;
     }
 
     // -------------------------------------------------------------------------
@@ -97,13 +111,9 @@ public class PlayerInventory : NetworkBehaviour
         smallItemInventory[1] = !string.IsNullOrEmpty(small1) ? ItemRegistry.Get(small1) : null;
         smallItemInventory[2] = !string.IsNullOrEmpty(small2) ? ItemRegistry.Get(small2) : null;
 
-        // After the server syncs inventory back (e.g. after a throw removes
-        // the item), validate selectedSlot. If that slot is now empty, deselect.
         if (selectedSlot != -1 && GetSelectedItem(selectedSlot) == null)
             selectedSlot = -1;
 
-        // Clear throwPending here — server has confirmed the state,
-        // so the client is free to throw again.
         throwPending = false;
 
         RefreshUILocal();
@@ -123,7 +133,6 @@ public class PlayerInventory : NetworkBehaviour
         return (i >= 0 && i < smallItemInventory.Length) ? smallItemInventory[i] : null;
     }
 
-    // Returns the currently selected slot index (read-only, for UI use)
     public int SelectedSlot => selectedSlot;
 
     // -------------------------------------------------------------------------
@@ -225,11 +234,12 @@ public class PlayerInventory : NetworkBehaviour
     {
         if (!isLocalPlayer) return;
 
-        // Block throw if one is already in flight. Without this, spamming
-        // throw burns through inventory because each press sends a CmdThrow
-        // before TargetSyncInventory comes back to clear the slot locally.
-        if (throwPending) return;
+        // FIX: Don't send Commands until the server has fully acknowledged
+        // this object. Prevents "Spawned object not found" on FizzySteam
+        // when a joined client throws very quickly after spawning.
+        if (!isReadyToSendCommands) return;
 
+        if (throwPending) return;
         if (selectedSlot == -1) return;
 
         ItemData item = GetSelectedItem(selectedSlot);
@@ -240,10 +250,9 @@ public class PlayerInventory : NetworkBehaviour
         int slotToThrow = selectedSlot;
         selectedSlot = -1;
 
-        // FIX: Only do optimistic local removal on a pure client.
-        // On host, isServer is true and the Command runs on the same component
-        // instance — so removing the item here would wipe it before CmdThrow
-        // can read it, causing the "Spawned object not found" error.
+        // Only do optimistic local removal on a pure client.
+        // On host, the Command runs on the same component instance so removing
+        // here would wipe the item before CmdThrow can read it.
         if (!isServer)
         {
             InternalRemoveItem(slotToThrow);
@@ -261,8 +270,7 @@ public class PlayerInventory : NetworkBehaviour
         ItemData item = GetSelectedItem(slot);
         if (item == null || item.prefab == null)
         {
-            // Server rejected the throw (stale state) — re-sync client so it
-            // can recover and throw again rather than getting stuck.
+            // Server rejected throw — re-sync so client can recover.
             PushStateToClient();
             return;
         }
