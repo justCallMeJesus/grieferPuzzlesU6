@@ -55,13 +55,13 @@ public class Panel : NetworkBehaviour, IInteractable
     {
         if (!player.isLocalPlayer) return;
 
-        // Use your actual serialization method here
         string currentJson = inventoryTetris != null ? inventoryTetris.Save() : "";
 
         CmdRequestClose(currentJson);
 
         isLocallyOpen = false;
         if (UIPanel != null) UIPanel.SetActive(false);
+        if (inventoryPanel != null) inventoryPanel.SetActive(false);
     }
 
     // -- Server Commands --
@@ -73,8 +73,16 @@ public class Panel : NetworkBehaviour, IInteractable
 
         Debug.Log($"[Panel] CmdRequestOpen received from client {requesterId}.");
 
+        // If panel is in use by someone else, deny immediately
+        if (currentUserId != NOBODY && currentUserId != requesterId)
+        {
+            TargetGrantAccess(sender, "Panel is currently in use.", false, false, false);
+            return;
+        }
+
         if (ownerId == NOBODY)
         {
+            // First ever opener becomes owner
             ownerId = requesterId;
             Debug.Log($"[Panel] Client {requesterId} claimed ownership.");
         }
@@ -83,34 +91,27 @@ public class Panel : NetworkBehaviour, IInteractable
 
         if (requesterIsOwner)
         {
-            if (currentUserId != NOBODY && currentUserId != requesterId)
-            {
-                TargetGrantAccess(sender, "Panel is currently in use.", false, false, false);
-                return;
-            }
-
             currentUserId = requesterId;
             TargetGrantAccess(sender, savedState, true, true, false);
             return;
         }
 
         // -- Non-owner path --
-        if (currentUserId != NOBODY && currentUserId != requesterId)
+        bool canSteal = false;
+        PlayerManager requesterPM = GetPlayerManagerByConnectionId(requesterId);
+        if (requesterPM != null && requesterPM.KilledPlayers.Contains((ulong)ownerId))
+            canSteal = true;
+
+        // Non-owners who cannot steal only get read access (don't lock currentUserId)
+        if (!canSteal)
         {
-            TargetGrantAccess(sender, "Panel is currently in use.", false, false, false);
+            // Grant read-only without occupying the slot
+            TargetGrantAccess(sender, savedState, true, false, false);
             return;
         }
 
-        bool canSteal = false;
-        if (ownerId != NOBODY)
-        {
-            PlayerManager requesterPM = GetPlayerManagerByConnectionId(requesterId);
-            if (requesterPM != null && requesterPM.KilledPlayers.Contains((ulong)ownerId))
-                canSteal = true;
-        }
-
         currentUserId = requesterId;
-        TargetGrantAccess(sender, savedState, true, false, canSteal);
+        TargetGrantAccess(sender, savedState, true, false, true);
     }
 
     [Command(requiresAuthority = false)]
@@ -134,12 +135,20 @@ public class Panel : NetworkBehaviour, IInteractable
     [Command(requiresAuthority = false)]
     public void CmdCommitSteal(string updatedPanelJson, NetworkConnectionToClient sender = null)
     {
-        // FIX: Use sender.connectionId — never trust a client-supplied ID
         int requesterId = sender.connectionId;
 
         if (ownerId == NOBODY || requesterId == ownerId)
         {
             Debug.LogWarning($"[Panel] CommitSteal from {requesterId} rejected.");
+            return;
+        }
+
+        // Verify the requester actually has steal rights still
+        PlayerManager requesterPM = GetPlayerManagerByConnectionId(requesterId);
+        if (requesterPM == null || !requesterPM.KilledPlayers.Contains((ulong)ownerId))
+        {
+            Debug.LogWarning($"[Panel] CommitSteal from {requesterId} rejected — no steal rights.");
+            TargetRevokeStealAccess(sender);
             return;
         }
 
@@ -150,6 +159,7 @@ public class Panel : NetworkBehaviour, IInteractable
         if (thiefPM != null)
             thiefPM.RemoveKilledPlayer((ulong)ownerId);
 
+        ownerId = requesterId;
         currentUserId = NOBODY;
 
         TargetRevokeStealAccess(sender);
@@ -178,6 +188,7 @@ public class Panel : NetworkBehaviour, IInteractable
 
         SetDragHandlersEnabled(canEdit || canSteal);
 
+        if (UIPanel != null) UIPanel.SetActive(true);
         inventoryPanel.SetActive(true);
         inventoryTetris.SetPanelIsOpen(true);
 
@@ -202,14 +213,10 @@ public class Panel : NetworkBehaviour, IInteractable
 
     // -- SyncVar Hooks --
 
-    private void OnSavedStateChanged(string oldState, string newState)
-    {
-        // Intentionally empty
-    }
+    private void OnSavedStateChanged(string oldState, string newState) { }
 
     private void OnCurrentUserChanged(int oldUser, int newUser)
     {
-        // FIX: Guard against null connection (can happen on server or during disconnect)
         if (NetworkClient.connection == null) return;
 
         if (newUser == NOBODY
@@ -243,12 +250,12 @@ public class Panel : NetworkBehaviour, IInteractable
         isLocallyOpen = false;
         isLocallyInStealMode = false;
 
-        // FIX: Disable drag handlers on close, not enable them
         SetDragHandlersEnabled(false);
         inventoryTetris.SetLocalPlayerEditor(false);
         inventoryTetris.SetStealMode(false, null);
         inventoryTetris.ClearAll();
         inventoryPanel.SetActive(false);
+        if (UIPanel != null) UIPanel.SetActive(false);
         inventoryTetris.SetPanelIsOpen(false);
 
         PlayerManager player = GetLocalPlayerManager();
