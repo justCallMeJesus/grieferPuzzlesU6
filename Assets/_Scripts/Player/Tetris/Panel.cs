@@ -59,9 +59,7 @@ public class Panel : NetworkBehaviour, IInteractable
 
         CmdRequestClose(currentJson);
 
-        isLocallyOpen = false;
-        if (UIPanel != null) UIPanel.SetActive(false);
-        if (inventoryPanel != null) inventoryPanel.SetActive(false);
+        CloseLocalPanel(); // handles unfreeze, UI teardown, drag handlers — everything
     }
 
     // -- Server Commands --
@@ -219,6 +217,7 @@ public class Panel : NetworkBehaviour, IInteractable
     {
         if (NetworkClient.connection == null) return;
 
+        // Only force-close if the server removed us without us initiating it
         if (newUser == NOBODY
             && oldUser == NetworkClient.connection.connectionId
             && isLocallyOpen)
