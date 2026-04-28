@@ -3888,7 +3888,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8888187239496040769, guid: 0ebb75217c323a14ea79bf683fc09794, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 8888187239496040769, guid: 0ebb75217c323a14ea79bf683fc09794, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6454,7 +6454,7 @@ Transform:
   m_GameObject: {fileID: 868456151}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.72, y: -17.76, z: 7.61}
+  m_LocalPosition: {x: 3.72, y: 0, z: 7.61}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10640,7 +10640,7 @@ Transform:
   m_GameObject: {fileID: 1831377848}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 8.23, y: -20.5, z: 7.93}
+  m_LocalPosition: {x: 8.23, y: 0, z: 7.93}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10840,7 +10840,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1859523737}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ef1e05b44fdaf147b6af48657c2417a, type: 3}
+  m_Script: {fileID: 11500000, guid: 7b175930a2104224396fba36fb0cc3fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mirror.FizzySteam.FizzyFacepunch
   Channels: 0200000001000000
@@ -11482,6 +11482,7 @@ MonoBehaviour:
   syncInterval: 0.1
   PlayerPrefab: {fileID: 4476075104031600432, guid: febb531ef4c4b684b893405188a8a94c, type: 3}
   uiManager: {fileID: 455168788}
+  readyWaitTimeout: 10
 --- !u!114 &1978725906
 MonoBehaviour:
   m_ObjectHideFlags: 0

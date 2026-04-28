@@ -3,7 +3,6 @@ using System.Linq;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Playables;
 
 public class PlayerMovement : NetworkBehaviour
 {
@@ -14,58 +13,38 @@ public class PlayerMovement : NetworkBehaviour
     }
 
     [HideInInspector] public PlayerMovementState state;
-    // input access fields
     [SerializeField] private InputActionReference move;
     public InputActionReference Move => move;
     [SerializeField] public GameObject freeLookPrefab;
     private GameObject spawnedCamera;
+
+    [Header("Animation")]
+    [SerializeField] private Animator anim; // Drag your Animator here in the Inspector
 
     [Header("Free Movement Parameters")]
     public float speed = 4f;
     [SerializeField] public LayerMask collisionIgnoreMask;
 
     IMovementMode currentMode;
-
     IMovementMode freeMovement = new FreeMovement();
     IMovementMode noMovement = new NoMovement();
-
 
     private void Awake()
     {
         currentMode = freeMovement;
+        // Safety check: if you forgot to drag it in, try to find it on this object
+        if (anim == null) anim = GetComponent<Animator>();
     }
 
-    [ClientRpc]
-    public void RpcHideUI()
-    {
-        // Because this script is on the PlayerPrefab, we need to FIND the UI in the scene
-        // You can't drag UI into a Prefab, so we find it by name or tag
-
-        GameObject MainContainer = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(g => g.name == "ContainerPreGameUi");
-
-        if (MainContainer != null) MainContainer.SetActive(false);
-
-        Debug.Log("UI Hidden via RPC");
-    }
     private void Update()
     {
         if (!isLocalPlayer) return;
 
-        // Test toggle with "i"
-        if (Keyboard.current.iKey.wasPressedThisFrame)
-        {
-            OnDeathSpectate();
-        }
-
-        // Test reset with "P" (or call this from your actual respawn logic)
-        if (Keyboard.current.pKey.wasPressedThisFrame)
-        {
-            OnRespawnCamera();
-        }
+        if (Keyboard.current.iKey.wasPressedThisFrame) OnDeathSpectate();
+        if (Keyboard.current.pKey.wasPressedThisFrame) OnRespawnCamera();
 
         currentMode.Tick(this);
     }
-
 
     public interface IMovementMode
     {
@@ -76,52 +55,44 @@ public class PlayerMovement : NetworkBehaviour
     {
         public void Tick(PlayerMovement player)
         {
-            // move player normally
-            // get GameInput info for movement direction
             Vector2 inputVector = player.Move.action.ReadValue<Vector2>().normalized;
             Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
 
-            //moveDir = Quaternion.AngleAxis(player.freeLook.HorizontalAxis.Value, Vector3.up) * moveDir;
+            // --- ANIMATION LOGIC START ---
+            // We use the magnitude of the input to drive the "Speed" float
+            if (player.anim != null)
+            {
+                player.anim.SetFloat("Speed", inputVector.magnitude);
+            }
+            // --- ANIMATION LOGIC END ---
 
-            // player speed
             float moveDistance = player.speed * Time.deltaTime;
-
-            // determine player movebility
             float playerRadius = 0.3f;
             float playerHeight = 1f;
-            bool canMove = !Physics.CapsuleCast(player.transform.position + Vector3.up * 0.5f, player.transform.position + Vector3.up * playerHeight, playerRadius, moveDir, out RaycastHit hit, moveDistance, ~player.collisionIgnoreMask);
 
-            // Player rotation
+            bool canMove = !Physics.CapsuleCast(player.transform.position + Vector3.up * 0.5f,
+                player.transform.position + Vector3.up * playerHeight, playerRadius, moveDir,
+                out RaycastHit hit, moveDistance, ~player.collisionIgnoreMask);
+
             float rotateSpeed = 25f;
             if (moveDir != Vector3.zero)
             {
                 player.transform.forward = Vector3.Slerp(player.transform.forward, moveDir, Time.deltaTime * rotateSpeed);
-
             }
-
 
             if (!canMove)
             {
-                // cannot move towards moveDir
                 Vector3 moveDirX = new Vector3(moveDir.x, 0, 0);
                 canMove = !Physics.CapsuleCast(player.transform.position, player.transform.position + Vector3.up * playerHeight, playerRadius, moveDirX, moveDistance);
-                if (canMove)
-                {
-                    // can move only on the X
-                    moveDir = moveDirX;
-                }
+                if (canMove) moveDir = moveDirX;
                 else
                 {
-                    // cannot move on X, attempt only Z movement
                     Vector3 moveDirZ = new Vector3(0, 0, moveDir.z);
                     canMove = !Physics.CapsuleCast(player.transform.position, player.transform.position + Vector3.up * playerHeight, playerRadius, moveDirZ, moveDistance);
-                    if (canMove)
-                    {
-                        moveDir = moveDirZ;
-                    }
-
+                    if (canMove) moveDir = moveDirZ;
                 }
             }
+
             if (canMove)
             {
                 player.transform.position += moveDir * moveDistance;
@@ -133,73 +104,59 @@ public class PlayerMovement : NetworkBehaviour
     {
         public void Tick(PlayerMovement player)
         {
-            return;
+            // Set speed to 0 when movement is disabled
+            if (player.anim != null) player.anim.SetFloat("Speed", 0f);
         }
+    }
+
+    // ... (Rest of your RpcHideUI, OnStartLocalPlayer, Spectate methods remain the same)
+    [ClientRpc]
+    public void RpcHideUI()
+    {
+        GameObject MainContainer = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(g => g.name == "ContainerPreGameUi");
+        if (MainContainer != null) MainContainer.SetActive(false);
     }
 
     public override void OnStartLocalPlayer()
     {
         if (!isLocalPlayer) return;
-
         spawnedCamera = Instantiate(freeLookPrefab);
-
         var freelook = spawnedCamera.GetComponent<CinemachineCamera>();
-        if(freelook != null)
+        if (freelook != null)
         {
             freelook.Follow = this.transform;
             freelook.LookAt = this.transform;
         }
-
     }
+
     public override void OnStopClient()
     {
-        if (spawnedCamera != null)
-            Destroy(spawnedCamera);
+        if (spawnedCamera != null) Destroy(spawnedCamera);
     }
 
-    public void DisableMovement()
-    {
-        currentMode = noMovement;
-    }
-
-    public void EnableMovement()
-    {
-        currentMode = freeMovement;
-    }
-
+    public void DisableMovement() => currentMode = noMovement;
+    public void EnableMovement() => currentMode = freeMovement;
 
     public void OnDeathSpectate()
     {
         if (!isLocalPlayer || spawnedCamera == null) return;
-
-        // 1. Get the Cinemachine component from your spawned camera
         var freelook = spawnedCamera.GetComponent<CinemachineCamera>();
-
-        // 2. Find all players in the scene
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-
         foreach (GameObject p in players)
         {
             NetworkIdentity ni = p.GetComponent<NetworkIdentity>();
-
-            // 3. If it's a valid player and NOT us, swap the target
             if (ni != null && ni.netId != netId)
             {
                 freelook.Follow = p.transform;
                 freelook.LookAt = p.transform;
-                Debug.Log($"Cinemachine now following Player: {ni.netId}");
                 return;
             }
         }
-
-        Debug.LogWarning("No other players found to spectate!");
     }
 
     public void OnRespawnCamera()
     {
         if (!isLocalPlayer || spawnedCamera == null) return;
-
-        // Reset the camera back to our own transform
         var freelook = spawnedCamera.GetComponent<CinemachineCamera>();
         if (freelook != null)
         {
