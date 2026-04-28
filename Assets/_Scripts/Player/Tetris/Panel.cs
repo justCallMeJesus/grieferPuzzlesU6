@@ -19,6 +19,12 @@ public class Panel : NetworkBehaviour, IInteractable
     [SyncVar(hook = nameof(OnCurrentUserChanged))]
     private int currentUserId = NOBODY;
 
+    // Tracks a non-owner who has the panel open in read-only mode.
+    // Kept separate from currentUserId so that read-only viewers still
+    // occupy the panel and block everyone else (including the owner).
+    [SyncVar(hook = nameof(OnReadOnlyUserChanged))]
+    private int readOnlyUserId = NOBODY;
+
     [SyncVar(hook = nameof(OnOwnerChanged))]
     private int ownerId = NOBODY;
 
@@ -71,8 +77,10 @@ public class Panel : NetworkBehaviour, IInteractable
 
         Debug.Log($"[Panel] CmdRequestOpen received from client {requesterId}.");
 
-        // If panel is in use by someone else, deny immediately
-        if (currentUserId != NOBODY && currentUserId != requesterId)
+        // If panel is in use (edit or read-only) by someone else, deny immediately
+        bool panelOccupied = (currentUserId != NOBODY && currentUserId != requesterId)
+                          || (readOnlyUserId != NOBODY && readOnlyUserId != requesterId);
+        if (panelOccupied)
         {
             TargetGrantAccess(sender, "Panel is currently in use.", false, false, false);
             return;
@@ -100,10 +108,10 @@ public class Panel : NetworkBehaviour, IInteractable
         if (requesterPM != null && requesterPM.KilledPlayers.Contains((ulong)ownerId))
             canSteal = true;
 
-        // Non-owners who cannot steal only get read access (don't lock currentUserId)
+        // Non-owners who cannot steal only get read access
         if (!canSteal)
         {
-            // Grant read-only without occupying the slot
+            readOnlyUserId = requesterId;
             TargetGrantAccess(sender, savedState, true, false, false);
             return;
         }
@@ -117,16 +125,21 @@ public class Panel : NetworkBehaviour, IInteractable
     {
         int requesterId = sender.connectionId;
 
-        if (currentUserId != requesterId)
+        if (currentUserId != requesterId && readOnlyUserId != requesterId)
         {
-            Debug.LogWarning($"[Panel] Close from {requesterId} ignored (current user is {currentUserId}).");
+            Debug.LogWarning($"[Panel] Close from {requesterId} ignored (current user is {currentUserId}, read-only user is {readOnlyUserId}).");
             return;
         }
 
         if (!string.IsNullOrEmpty(json))
             savedState = json;
 
-        currentUserId = NOBODY;
+        if (currentUserId == requesterId)
+            currentUserId = NOBODY;
+
+        if (readOnlyUserId == requesterId)
+            readOnlyUserId = NOBODY;
+
         Debug.Log($"[Panel] Closed by {requesterId}. Panel is now free.");
     }
 
@@ -159,6 +172,7 @@ public class Panel : NetworkBehaviour, IInteractable
 
         ownerId = requesterId;
         currentUserId = NOBODY;
+        readOnlyUserId = NOBODY;
 
         TargetRevokeStealAccess(sender);
     }
@@ -218,6 +232,19 @@ public class Panel : NetworkBehaviour, IInteractable
         if (NetworkClient.connection == null) return;
 
         // Only force-close if the server removed us without us initiating it
+        if (newUser == NOBODY
+            && oldUser == NetworkClient.connection.connectionId
+            && isLocallyOpen)
+        {
+            CloseLocalPanel();
+        }
+    }
+
+    private void OnReadOnlyUserChanged(int oldUser, int newUser)
+    {
+        if (NetworkClient.connection == null) return;
+
+        // Force-close if the server cleared our read-only slot
         if (newUser == NOBODY
             && oldUser == NetworkClient.connection.connectionId
             && isLocallyOpen)
@@ -287,5 +314,5 @@ public class Panel : NetworkBehaviour, IInteractable
 
     public int GetOwnerId() => ownerId;
     public bool IsClaimed() => ownerId != NOBODY;
-    public bool IsInUse() => currentUserId != NOBODY;
+    public bool IsInUse() => currentUserId != NOBODY || readOnlyUserId != NOBODY;
 }
