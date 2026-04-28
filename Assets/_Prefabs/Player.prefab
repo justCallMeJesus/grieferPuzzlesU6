@@ -111,7 +111,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2380677231
+  GlobalObjectIdHash: 401588469
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -141,6 +141,7 @@ MonoBehaviour:
   state: 0
   move: {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   freeLookPrefab: {fileID: 8442894187739528673, guid: c88b51311532fc944aede764a15bdc1f, type: 3}
+  anim: {fileID: 0}
   speed: 4
   collisionIgnoreMask:
     serializedVersion: 2
