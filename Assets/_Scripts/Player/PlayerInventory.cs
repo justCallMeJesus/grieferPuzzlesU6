@@ -229,7 +229,7 @@ public class PlayerInventory : NetworkBehaviour
 
         if (thrown.TryGetComponent(out ThrowableItem throwable))
         {
-            throwable.RpcLaunch(direction, connectionToClient.connectionId);
+            throwable.RpcLaunch(direction, connectionToClient.connectionId, netId);
         }
     }
 }
