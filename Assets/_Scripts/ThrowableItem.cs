@@ -20,7 +20,6 @@ public class ThrowableItem : NetworkBehaviour
     public float blinkWarningDuration = 3f;
     public float blinkInterval = 0.15f;
 
-    // Mirror nutzt int für connectionIds (Standard -1 für "keiner")
     [HideInInspector] public int throwerConnectionId = -1;
 
     private Rigidbody rb;
@@ -33,24 +32,28 @@ public class ThrowableItem : NetworkBehaviour
     private Coroutine flightTimeoutCoroutine;
 
     private Renderer[] renderers;
-    private Item itemComponent; // Falls du deine Item-Klasse auch in Mirror hast
+    private Item itemComponent;
+    private Collider thisCollider;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         itemComponent = GetComponent<Item>();
         renderers = GetComponentsInChildren<Renderer>();
+        thisCollider = GetComponent<Collider>();
     }
 
     void FixedUpdate()
     {
-        // rb.linearVelocity ist Unity 6 Standard
         lastVelocity = rb.linearVelocity;
     }
 
-    // Launch wird vom Server aufgerufen und an alle Clients gesendet
+    /// <summary>
+    /// Call this on the server before calling RpcLaunch.
+    /// throwerNetId = the netId of the player who threw this item.
+    /// </summary>
     [ClientRpc]
-    public void RpcLaunch(Vector3 direction, int throwerId)
+    public void RpcLaunch(Vector3 direction, int throwerId, uint throwerNetId)
     {
         throwerConnectionId = throwerId;
         hasHit = false;
@@ -59,14 +62,19 @@ public class ThrowableItem : NetworkBehaviour
         StopActiveCoroutines();
         SetRenderersVisible(true);
 
-        // Server startet den Sicherheits-Timeout (off-map)
         if (isServer && flightTimeoutDuration > 0f)
             flightTimeoutCoroutine = StartCoroutine(FlightTimeoutCoroutine());
 
         itemComponent?.SetGrounded(false);
 
-        // Kollision mit Spielern erlauben (kurzzeitig)
-        Physics.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("Player"), false);
+        // Physically ignore the thrower's collider so the item can't
+        // deflect off them or register a self-hit on any client.
+        if (NetworkClient.spawned.TryGetValue(throwerNetId, out NetworkIdentity throwerIdentity))
+        {
+            Collider throwerCol = throwerIdentity.GetComponent<Collider>();
+            if (throwerCol != null && thisCollider != null)
+                Physics.IgnoreCollision(thisCollider, throwerCol, true);
+        }
 
         Vector3 throwDir = direction + Vector3.up * Mathf.Tan(upwardAngle * Mathf.Deg2Rad);
         rb.AddForce(throwDir.normalized * throwForce, ForceMode.Impulse);
@@ -74,25 +82,19 @@ public class ThrowableItem : NetworkBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        // Nur der Server berechnet Treffer-Logik in Mirror
+        // Only the server resolves hit logic.
         if (!isServer || hasHit) return;
 
         if (collision.gameObject.TryGetComponent(out PlayerManager hitPlayer))
         {
-            Debug.Log($"[ThrowableItem] Player {hitPlayer.netId} was hit by thrower {throwerConnectionId}");
-
-            // Prüfen ob man sich selbst getroffen hat (über connectionId)
-            bool isSelfHit = (hitPlayer.connectionToClient != null && hitPlayer.connectionToClient.connectionId == throwerConnectionId);
+            // Self-hit guard (server-side, belt-and-suspenders).
+            bool isSelfHit = hitPlayer.connectionToClient != null
+                && hitPlayer.connectionToClient.connectionId == throwerConnectionId;
 
             if (!isSelfHit && throwerConnectionId != -1)
             {
-                // Helper-Funktion um PlayerManager des Werfers zu finden
                 PlayerManager throwerManager = GetPlayerByConnId(throwerConnectionId);
-                if (throwerManager != null)
-                {
-                    // Wir nutzen netId oder connectionId zur Registrierung
-                    throwerManager.RegisterKill(hitPlayer.netId);
-                }
+                throwerManager?.RegisterKill(hitPlayer.netId);
             }
 
             if (destroyOnPlayerHit)
@@ -101,9 +103,9 @@ public class ThrowableItem : NetworkBehaviour
             return;
         }
 
-        // Wenn es kein Spieler war, ist es der Boden/Wand
+        // Hit ground / wall — item is now at rest.
         hasHit = true;
-        RpcOnLanded(); // Clients informieren
+        RpcOnLanded();
 
         if (flightTimeoutCoroutine != null) StopCoroutine(flightTimeoutCoroutine);
 
@@ -117,8 +119,18 @@ public class ThrowableItem : NetworkBehaviour
     [ClientRpc]
     private void RpcOnLanded()
     {
-        // Physische Anpassung auf allen Clients
-        Physics.IgnoreLayerCollision(gameObject.layer, LayerMask.NameToLayer("Player"), true);
+        // Per-object: ignore collision with every player that currently exists.
+        // This does NOT affect any other throwable in the scene.
+        if (thisCollider != null)
+        {
+            foreach (var player in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))
+            {
+                Collider playerCol = player.GetComponent<Collider>();
+                if (playerCol != null)
+                    Physics.IgnoreCollision(thisCollider, playerCol, true);
+            }
+        }
+
         rb.isKinematic = true;
         itemComponent?.SetGrounded(true);
     }
@@ -177,13 +189,10 @@ public class ThrowableItem : NetworkBehaviour
         if (flightTimeoutCoroutine != null) StopCoroutine(flightTimeoutCoroutine);
     }
 
-    // Hilfsmethode für Mirror
     private PlayerManager GetPlayerByConnId(int connId)
     {
         if (NetworkServer.connections.TryGetValue(connId, out NetworkConnectionToClient conn))
-        {
             return conn.identity.GetComponent<PlayerManager>();
-        }
         return null;
     }
 }

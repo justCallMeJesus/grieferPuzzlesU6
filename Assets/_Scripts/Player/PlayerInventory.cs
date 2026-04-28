@@ -18,12 +18,21 @@ public class PlayerInventory : NetworkBehaviour
 
     private PlayerManager manager;
     public Transform playerThrowPoint;
+
+    // selectedSlot: -1 = none, 0 = big slot, 1-3 = small slots
     private int selectedSlot = -1;
 
-    // Store delegates so OnDisable can actually remove them.
-    // Lambdas create new instances every time — you CANNOT unsubscribe a lambda
-    // by writing a new one. This was causing duplicate subscriptions on every
-    // enable/disable cycle, making RefreshUILocal fire N times per keypress.
+    // Track whether we are mid-throw to prevent double-firing.
+    private bool throwPending = false;
+
+    // FIX: Track whether this player is fully ready to send Commands.
+    // FizzySteam does not guarantee message ordering, so Commands sent
+    // immediately after spawn can arrive before the server has registered
+    // the NetworkIdentity, producing "Spawned object not found" warnings.
+    // We set this true in OnStartAuthority (fires after server is ready for us)
+    // instead of relying solely on OnStartLocalPlayer.
+    private bool isReadyToSendCommands = false;
+
     private System.Action<InputAction.CallbackContext> _onSlot1;
     private System.Action<InputAction.CallbackContext> _onSlot2;
     private System.Action<InputAction.CallbackContext> _onSlot3;
@@ -53,6 +62,13 @@ public class PlayerInventory : NetworkBehaviour
         throwAction.action.performed += _onThrow;
     }
 
+    // OnStartAuthority fires on the client after the server has fully spawned
+    // and acknowledged this object. Safe to send Commands from this point.
+    public override void OnStartAuthority()
+    {
+        isReadyToSendCommands = true;
+    }
+
     private void OnDisable()
     {
         if (!isLocalPlayer) return;
@@ -62,6 +78,8 @@ public class PlayerInventory : NetworkBehaviour
         if (_onSlot3 != null) slot3Action.action.performed -= _onSlot3;
         if (_onSlot4 != null) slot4Action.action.performed -= _onSlot4;
         if (_onThrow != null) throwAction.action.performed -= _onThrow;
+
+        isReadyToSendCommands = false;
     }
 
     // -------------------------------------------------------------------------
@@ -93,6 +111,11 @@ public class PlayerInventory : NetworkBehaviour
         smallItemInventory[1] = !string.IsNullOrEmpty(small1) ? ItemRegistry.Get(small1) : null;
         smallItemInventory[2] = !string.IsNullOrEmpty(small2) ? ItemRegistry.Get(small2) : null;
 
+        if (selectedSlot != -1 && GetSelectedItem(selectedSlot) == null)
+            selectedSlot = -1;
+
+        throwPending = false;
+
         RefreshUILocal();
     }
 
@@ -109,6 +132,8 @@ public class PlayerInventory : NetworkBehaviour
         int i = slot - 1;
         return (i >= 0 && i < smallItemInventory.Length) ? smallItemInventory[i] : null;
     }
+
+    public int SelectedSlot => selectedSlot;
 
     // -------------------------------------------------------------------------
     // Inventory Mutations
@@ -207,29 +232,62 @@ public class PlayerInventory : NetworkBehaviour
 
     private void OnThrow()
     {
-        if (!isLocalPlayer || selectedSlot == -1) return;
+        if (!isLocalPlayer) return;
+
+        // FIX: Don't send Commands until the server has fully acknowledged
+        // this object. Prevents "Spawned object not found" on FizzySteam
+        // when a joined client throws very quickly after spawning.
+        if (!isReadyToSendCommands) return;
+
+        if (throwPending) return;
+        if (selectedSlot == -1) return;
+
         ItemData item = GetSelectedItem(selectedSlot);
         if (item == null) return;
 
-        CmdThrow(selectedSlot, playerThrowPoint.position, transform.forward);
+        throwPending = true;
+
+        int slotToThrow = selectedSlot;
         selectedSlot = -1;
-        RefreshUILocal();
+
+        // Only do optimistic local removal on a pure client.
+        // On host, the Command runs on the same component instance so removing
+        // here would wipe the item before CmdThrow can read it.
+        if (!isServer)
+        {
+            InternalRemoveItem(slotToThrow);
+            RefreshUILocal();
+        }
+
+        CmdThrow(slotToThrow, transform.forward);
     }
 
     [Command]
-    private void CmdThrow(int slot, Vector3 spawnPos, Vector3 direction)
+    private void CmdThrow(int slot, Vector3 direction)
     {
+        if (connectionToClient == null) return;
+
         ItemData item = GetSelectedItem(slot);
-        if (item == null) return;
+        if (item == null || item.prefab == null)
+        {
+            // Server rejected throw — re-sync so client can recover.
+            PushStateToClient();
+            return;
+        }
 
         InternalRemoveItem(slot);
+        PushStateToClient();
+
+        Vector3 spawnPos = playerThrowPoint != null
+            ? playerThrowPoint.position
+            : transform.position + transform.forward * 0.5f + Vector3.up * 0.5f;
 
         GameObject thrown = Instantiate(item.prefab, spawnPos, Quaternion.LookRotation(direction));
-        NetworkServer.Spawn(thrown);
+        NetworkServer.Spawn(thrown, connectionToClient);
 
         if (thrown.TryGetComponent(out ThrowableItem throwable))
         {
-            throwable.RpcLaunch(direction, connectionToClient.connectionId);
+            throwable.RpcLaunch(direction, connectionToClient.connectionId, netId);
         }
     }
 }

@@ -68,10 +68,9 @@ public class PlayerManager : NetworkBehaviour
             Debug.LogWarning("[PlayerManager] RegisterKill must only be called on the server.");
             return;
         }
-        var Test = "XXXXX";
         KilledPlayers.Add(killedClientId); // HashSet: no-op if already present
         TotalKillCount++;
-        Debug.Log($"[PlayerManager] Client {Test} killed client {killedClientId}. Unique victims: {KilledPlayers.Count}, Total kills: {TotalKillCount}");
+        Debug.Log($"[PlayerManager] Client {netId} killed client {killedClientId}. Unique victims: {KilledPlayers.Count}, Total kills: {TotalKillCount}");
 
         // Notify the owning client so they can react (e.g. update kill feed UI)
         NotifyKillClientRpc(killedClientId);
