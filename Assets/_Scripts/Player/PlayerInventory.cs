@@ -211,18 +211,19 @@ public class PlayerInventory : NetworkBehaviour
         ItemData item = GetSelectedItem(selectedSlot);
         if (item == null) return;
 
+        // Don't reset selectedSlot or UI here — wait for the server to confirm
+        // via TargetSyncInventory so client state always mirrors server state.
         CmdThrow(selectedSlot, playerThrowPoint.position, transform.forward);
-        selectedSlot = -1;
-        RefreshUILocal();
     }
 
     [Command]
     private void CmdThrow(int slot, Vector3 spawnPos, Vector3 direction)
     {
         ItemData item = GetSelectedItem(slot);
-        if (item == null) return;
+        if (item == null) return; // Server-side guard — rejects stale/duplicate requests
 
         InternalRemoveItem(slot);
+        PushStateToClient(); // Sync removal back to client — fixes item staying in inventory
 
         GameObject thrown = Instantiate(item.prefab, spawnPos, Quaternion.LookRotation(direction));
         NetworkServer.Spawn(thrown);
