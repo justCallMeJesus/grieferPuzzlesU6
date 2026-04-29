@@ -1,7 +1,8 @@
 using Mirror;
-using UnityEngine;
+using Steamworks;
 using System.Collections;
-using System.Collections.Generic;
+using System.Linq; // Required for OrderBy
+using UnityEngine;
 
 public class GameStartHandler : NetworkBehaviour
 {
@@ -66,61 +67,61 @@ public class GameStartHandler : NetworkBehaviour
         StartGame();
     }
 
+
     [Server]
     public void StartGame()
     {
-        Debug.Log("Server: Starting Game...");
-        Debug.Log($"Total connections: {NetworkServer.connections.Count}");
+        var sortedSpawns = NetworkManager.startPositions.OrderBy(s => s.name).ToList();
+        int playerIndex = 0;
 
         foreach (var conn in NetworkServer.connections.Values)
         {
-            Debug.Log($"Conn {conn.connectionId} | isReady: {conn.isReady} | hasPlayer: {conn.identity != null}");
-        }
+            if (!conn.isReady || conn.identity != null) continue;
 
-        var availableSpawns = new List<Transform>(NetworkManager.startPositions);
-
-        foreach (var conn in NetworkServer.connections.Values)
-        {
-            if (!conn.isReady)
-            {
-                Debug.LogWarning($"Connection {conn.connectionId} still not ready at game start, skipping.");
-                continue;
-            }
-
-            if (conn.identity != null)
-            {
-                Debug.LogWarning($"Connection {conn.connectionId} already has a player, skipping.");
-                continue;
-            }
-
-            Vector3 spawnPos = Vector3.zero;
-            Quaternion spawnRot = Quaternion.identity;
-
-            if (availableSpawns.Count > 0)
-            {
-                int index = Random.Range(0, availableSpawns.Count);
-                Transform chosenSpawn = availableSpawns[index];
-                spawnPos = chosenSpawn.position;
-                spawnRot = chosenSpawn.rotation;
-                availableSpawns.RemoveAt(index);
-            }
-
-            GameObject playerTank = Instantiate(PlayerPrefab, spawnPos, spawnRot);
+            Transform chosenSpawn = sortedSpawns[playerIndex % sortedSpawns.Count];
+            GameObject playerTank = Instantiate(PlayerPrefab, chosenSpawn.position, chosenSpawn.rotation);
             NetworkServer.AddPlayerForConnection(conn, playerTank);
 
+            // 1. Set Steam Identity and Color
+            string pName;
+            try
+            {
+                pName = new Friend((ulong)conn.connectionId).Name;
+                if (string.IsNullOrEmpty(pName) || pName == "[unknown]")
+                    pName = "Player " + (playerIndex + 1);
+            }
+            catch
+            {
+                Debug.LogWarning($"Failed to get Steam name for connection {conn.connectionId}. Using default name.");
+                
+                pName = "Player " + (playerIndex + 1);
+            }
+
+            PlayerColor identity = playerTank.GetComponent<PlayerColor>();
+            if (identity != null)
+            {
+                identity.SetPlayerIdentity(playerIndex, pName);
+            }
+
+            // 2. HIDE THE UI (This is the missing part)
             PlayerMovement playerScript = playerTank.GetComponent<PlayerMovement>();
             if (playerScript != null)
             {
                 playerScript.RpcHideUI();
             }
 
-            Debug.Log($"Spawned player at {spawnPos} for Connection {conn.connectionId}");
+            playerIndex++;
         }
     }
 
+
+
+
+
+
     public override void OnStopClient()
-    {
-        base.OnStopClient();
-        uiManager.OnMirrorStop();
-    }
+        {
+            base.OnStopClient();
+            uiManager.OnMirrorStop();
+        }
 }
