@@ -69,7 +69,15 @@ public class ThrowableItem : NetworkBehaviour
 
         // Physically ignore the thrower's collider so the item can't
         // deflect off them or register a self-hit on any client.
-        if (NetworkClient.spawned.TryGetValue(throwerNetId, out NetworkIdentity throwerIdentity))
+        // NetworkClient.spawned is empty on a dedicated server, so we must
+        // also check NetworkServer.spawned (populated on host and server).
+        NetworkIdentity throwerIdentity = null;
+        if (NetworkServer.spawned.TryGetValue(throwerNetId, out NetworkIdentity serverIdentity))
+            throwerIdentity = serverIdentity;
+        else if (NetworkClient.spawned.TryGetValue(throwerNetId, out NetworkIdentity clientIdentity))
+            throwerIdentity = clientIdentity;
+
+        if (throwerIdentity != null)
         {
             Collider throwerCol = throwerIdentity.GetComponent<Collider>();
             if (throwerCol != null && thisCollider != null)
