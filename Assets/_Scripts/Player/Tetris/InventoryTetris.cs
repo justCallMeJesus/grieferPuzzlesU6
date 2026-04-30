@@ -28,6 +28,11 @@ public class InventoryTetris : MonoBehaviour
     /// </summary>
     public event Action OnGridFull;
 
+    /// <summary>
+    /// Fired once when an item is removed from a previously full grid.
+    /// </summary>
+    public event Action OnGridNoLongerFull;
+
     // ── Inspector ─────────────────────────────────────────────────────────
 
     [Header("Grid settings")]
@@ -232,8 +237,10 @@ public class InventoryTetris : MonoBehaviour
         foreach (var cell in cellsToClear)
             grid.GetGridObject(cell).Clear();
 
+        bool wasFull = gridFullEventFired;
         gridFullEventFired = false;
         OnItemRemoved?.Invoke(item);
+        if (wasFull) OnGridNoLongerFull?.Invoke();
         return item;
     }
 
@@ -393,8 +400,10 @@ public class InventoryTetris : MonoBehaviour
         foreach (var cell in cellsToClear)
             grid.GetGridObject(cell).Clear();
 
+        bool wasFull = gridFullEventFired;
         gridFullEventFired = false;
         OnItemRemoved?.Invoke(item);
+        if (wasFull) OnGridNoLongerFull?.Invoke();
     }
 
     public PlacedItem SpawnItemAtMouse(ItemTetrisSO itemSO)

@@ -713,7 +713,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 7.009
+      value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
       propertyPath: m_LocalRotation.w
@@ -730,6 +730,10 @@ PrefabInstance:
     - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -110
       objectReference: {fileID: 0}
     - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -755,6 +759,17 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 302970061}
   m_SourcePrefab: {fileID: 100100000, guid: d174020801eaa5448b708549fcf11741, type: 3}
+--- !u!114 &58649702 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7400590714076232787, guid: d174020801eaa5448b708549fcf11741, type: 3}
+  m_PrefabInstance: {fileID: 58649701}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 302970053}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 968633ed33f816443aa5a07dbc311741, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TetrisPanel
 --- !u!1 &61811454
 GameObject:
   m_ObjectHideFlags: 0
@@ -18983,6 +18998,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1610674545}
   - component: {fileID: 1610674544}
+  - component: {fileID: 1610674546}
   m_Layer: 0
   m_Name: SpawnPositionBlue
   m_TagString: Untagged
@@ -19017,6 +19033,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 913221072}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1610674546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1610674543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c35e088a76d2a2841b1f210ff9f059c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnpoint
+  panel: {fileID: 58649702}
 --- !u!1 &1617753518
 GameObject:
   m_ObjectHideFlags: 0
@@ -22055,7 +22084,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1859523737}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 00543df3afb42b541a0336c798f4afb1, type: 3}
+  m_Script: {fileID: 11500000, guid: 6ef1e05b44fdaf147b6af48657c2417a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mirror.FizzySteam.FizzyFacepunch
   Channels: 0200000001000000

@@ -79,7 +79,10 @@ public class GameStartHandler : NetworkBehaviour
             if (!conn.isReady || conn.identity != null) continue;
 
             Transform chosenSpawn = sortedSpawns[playerIndex % sortedSpawns.Count];
+            PlayerSpawnpoint playerSpawnpoint = chosenSpawn.GetComponent<PlayerSpawnpoint>();
             GameObject playerTank = Instantiate(PlayerPrefab, chosenSpawn.position, chosenSpawn.rotation);
+            PlayerManager player = playerTank.GetComponent<PlayerManager>();
+            playerSpawnpoint.panel.SetOwner(player);
             NetworkServer.AddPlayerForConnection(conn, playerTank);
 
             // 1. Set Steam Identity and Color
