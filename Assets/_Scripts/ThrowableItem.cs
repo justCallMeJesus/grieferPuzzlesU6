@@ -41,6 +41,7 @@ public class ThrowableItem : NetworkBehaviour
         itemComponent = GetComponent<Item>();
         renderers = GetComponentsInChildren<Renderer>();
         thisCollider = GetComponent<Collider>();
+        SetRenderersVisible(false);
     }
 
     void FixedUpdate()
