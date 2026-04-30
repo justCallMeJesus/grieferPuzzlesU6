@@ -6351,14 +6351,14 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0.1
   prefabsToSpawn:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 3580833662035054333, guid: 14c5624b753f88a48b48c0f77686c8c9, type: 3}
+  - {fileID: 3580833662035054333, guid: 2623997bbeb07be40b497ea1cc698c8c, type: 3}
+  - {fileID: 3580833662035054333, guid: a1fdc6e9ef92fed4a9675e97f3bc5ef9, type: 3}
+  - {fileID: 1115568661958708351, guid: 733fbf8a469bb8c468c1d78185c5dcb4, type: 3}
+  - {fileID: 2674610291692133068, guid: ecd9a528310d264468c70991fea3f969, type: 3}
+  - {fileID: 3580833662035054333, guid: 3915a2fadc8a4254daae1b77d20a1c6a, type: 3}
+  - {fileID: 3580833662035054333, guid: 60814c238c4f46b4587f58dcfc06242c, type: 3}
+  - {fileID: 3580833662035054333, guid: 6827ebba482e60f4a9347d81996eb898, type: 3}
   spawnPoints:
   - {fileID: 1176517766}
   - {fileID: 619463271}

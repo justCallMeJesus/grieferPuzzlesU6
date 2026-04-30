@@ -37,20 +37,15 @@ public class PlayerManager : NetworkBehaviour
             return;
         }
 
-        // Mirror uses 'netId' or 'connectionToClient.connectionId' instead of 'OwnerClientId'
-        Canvas canvas = FindAnyObjectByType<Canvas>();
-
-        if (canvas == null)
+        // Find the container — it should already be on the canvas in the scene
+        GameObject uiParent = GameObject.Find("TetrisStuffContainer");
+        if (uiParent == null)
         {
-            GameObject canvasGO = new GameObject($"PlayerCanvas_{netId}");
-            canvas = canvasGO.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasGO.AddComponent<UnityEngine.UI.CanvasScaler>();
-            canvasGO.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+            Debug.LogError("[PlayerManager] TetrisStuffContainer not found in scene!");
+            return;
         }
 
-        GameObject uiParent = GameObject.Find("TetrisStuffContainer");
-        uiParent.transform.SetParent(canvas.transform, false);
+        // Don't reparent it — it should already be under the Canvas in your scene hierarchy
 
         playerInventoryUI = Instantiate(playerInventoryUIPrefab, uiParent.transform);
         playerInventoryUI.playerManager = this;
