@@ -1,49 +1,59 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Unity.Netcode;
+using Mirror;
 
 /// <summary>
-/// Server-authoritative random spawner for Unity Netcode for GameObjects (NGO).
+/// Server-authoritative random spawner for Mirror + FizzySteamworks (Facepunch) transport.
 ///
 /// KEY CONCEPTS:
-///  - Only the SERVER runs the spawn loop and calls NetworkObject.Spawn().
-///  - NGO automatically replicates spawned NetworkObjects to all connected clients,
-///    including clients who join late (they receive all currently-spawned objects).
-///  - Prefabs MUST be registered in the NetworkManager's "Network Prefabs" list.
-///  - Despawning is also server-authoritative via DespawnAll().
-///  - The live count is determined each tick by scanning the scene for active
-///    instances of any prefab in the list — this includes pre-placed scene objects
-///    and correctly reacts to objects being destroyed or disabled at runtime.
-///  - Each spawn point remembers the item it spawned. A point is only considered
-///    free once its item is gone (picked up / destroyed / despawned). If all points
-///    are occupied, no item is spawned that tick even if the pool isn't full.
+///  - Only the SERVER runs the spawn loop and calls NetworkServer.Spawn().
+///  - Mirror automatically replicates spawned NetworkIdentity objects to all
+///    connected clients, including late joiners (via the spawn handler system).
+///  - Prefabs MUST be registered in NetworkManager's "Registered Spawnable Prefabs"
+///    list (or via NetworkClient.RegisterPrefab at runtime).
+///  - Despawning is server-authoritative via NetworkServer.Destroy() / Unspawn().
+///  - Live count is determined each tick by scanning the scene for active instances
+///    of any prefab in the list.
+///  - Each spawn point tracks the item it spawned; a point is free once its object
+///    is destroyed or despawned.
 ///
 /// SETUP:
-///  1. Attach this script to a GameObject that also has a NetworkObject component.
+///  1. Attach this script to a GameObject that also has a NetworkIdentity component.
 ///  2. In the Inspector, fill "Prefabs To Spawn" with your prefab references.
-///     ⚠ Each prefab MUST have a NetworkObject component AND be added to
-///       NetworkManager → NetworkConfig → Network Prefabs.
+///     ⚠ Each prefab MUST have a NetworkIdentity component AND be registered in
+///       NetworkManager → Registered Spawnable Prefabs.
 ///  3. Fill "Spawn Points" with scene Transforms (empty GameObjects work great).
-///  4. Set "Desired Pool Size" — the spawner tops up whenever the live scene count
-///     of all listed prefab types combined falls below this number.
-///  5. Set "Spawn Cooldown" and options as desired.
-///  6. Place the GameObject in the scene before the host/server starts.
+///  4. Set "Desired Pool Size", "Spawn Cooldown", and options as desired.
+///  5. Place the GameObject in the scene before the host/server starts.
+///
+/// MIRROR vs NGO DIFFERENCES:
+///  - NetworkBehaviour  →  NetworkBehaviour (Mirror namespace, not NGO)
+///  - NetworkObject     →  NetworkIdentity
+///  - IsServer          →  isServer
+///  - OnNetworkSpawn()  →  OnStartServer()
+///  - OnNetworkDespawn()→  OnStopServer()
+///  - obj.Spawn()       →  NetworkServer.Spawn(obj)
+///  - obj.Despawn()     →  NetworkServer.Destroy(obj)
+///  - obj.IsSpawned     →  obj.netId != 0  (non-zero netId means spawned)
+///  - FindObjectsByType →  FindObjectsOfType (Unity standard)
 /// </summary>
-[RequireComponent(typeof(NetworkObject))]
+[RequireComponent(typeof(NetworkIdentity))]
 public class RandomSpawner : NetworkBehaviour
 {
     // ── Inspector ──────────────────────────────────────────────────────────────
 
     [Header("Spawn Configuration")]
-    [Tooltip("Prefabs to randomly pick from. Each MUST be registered in NetworkManager's Network Prefabs list and have a NetworkObject component.")]
-    public List<NetworkObject> prefabsToSpawn = new List<NetworkObject>();
+    [Tooltip("Prefabs to randomly pick from. Each MUST be registered in NetworkManager's " +
+             "Registered Spawnable Prefabs list and have a NetworkIdentity component.")]
+    public List<NetworkIdentity> prefabsToSpawn = new List<NetworkIdentity>();
 
     [Tooltip("Scene Transforms used as possible spawn locations.")]
     public List<Transform> spawnPoints = new List<Transform>();
 
     [Header("Pool")]
-    [Tooltip("Total active scene instances to maintain across all prefab types combined. The spawner scans the scene each tick and tops up with a random prefab whenever the count drops below this value.")]
+    [Tooltip("Total active scene instances to maintain across all prefab types combined. " +
+             "The spawner scans the scene each tick and tops up whenever the count is below this value.")]
     [Min(0)]
     public int desiredPoolSize = 5;
 
@@ -66,27 +76,26 @@ public class RandomSpawner : NetworkBehaviour
     // ── Runtime state (server-only) ────────────────────────────────────────────
 
     // Cached set of prefab names for fast scene-scan matching.
-    private readonly HashSet<string> _prefabNames = new();
+    private readonly HashSet<string> _prefabNames = new HashSet<string>();
 
     // Tracks only objects spawned by this spawner, so DespawnAll() works correctly.
-    private readonly List<NetworkObject> _spawnedObjects = new();
+    private readonly List<NetworkIdentity> _spawnedObjects = new List<NetworkIdentity>();
 
-    // Maps each spawn point to the item currently sitting on it (null = free).
-    // A point becomes free automatically when its NetworkObject is destroyed/despawned.
-    private readonly Dictionary<Transform, NetworkObject> _pointOccupancy = new();
+    // Maps each spawn point to the item currently on it (null = free).
+    private readonly Dictionary<Transform, NetworkIdentity> _pointOccupancy =
+        new Dictionary<Transform, NetworkIdentity>();
 
-    // Reusable list of free points rebuilt each tick — avoids per-tick allocation.
-    private readonly List<Transform> _freePoints = new();
+    // Reusable list of free points rebuilt each tick.
+    private readonly List<Transform> _freePoints = new List<Transform>();
 
     private Coroutine _spawnCoroutine;
     private int _lastSpawnPointIndex = -1;
 
-    // ── NGO lifecycle ──────────────────────────────────────────────────────────
+    // ── Mirror lifecycle ───────────────────────────────────────────────────────
 
-    public override void OnNetworkSpawn()
+    // Mirror equivalent of NGO's OnNetworkSpawn() for the server.
+    public override void OnStartServer()
     {
-        if (!IsServer) return;
-
         RebuildPrefabNameCache();
         InitOccupancyMap();
 
@@ -94,9 +103,9 @@ public class RandomSpawner : NetworkBehaviour
             StartSpawning();
     }
 
-    public override void OnNetworkDespawn()
+    // Mirror equivalent of NGO's OnNetworkDespawn() for the server.
+    public override void OnStopServer()
     {
-        if (!IsServer) return;
         StopSpawning();
     }
 
@@ -105,7 +114,8 @@ public class RandomSpawner : NetworkBehaviour
     /// <summary>Starts the automatic spawn loop. Server only.</summary>
     public void StartSpawning()
     {
-        if (!IsServer)
+        // Mirror uses isServer (lowercase) instead of NGO's IsServer.
+        if (!isServer)
         {
             Debug.LogWarning("[RandomSpawner] StartSpawning() must be called on the server.", this);
             return;
@@ -130,24 +140,27 @@ public class RandomSpawner : NetworkBehaviour
     /// <summary>Despawns and destroys all objects spawned by this spawner. Server only.</summary>
     public void DespawnAll()
     {
-        if (!IsServer) return;
+        if (!isServer) return;
 
-        foreach (NetworkObject obj in _spawnedObjects)
+        foreach (NetworkIdentity obj in _spawnedObjects)
         {
-            if (obj != null && obj.IsSpawned)
-                obj.Despawn(destroy: true);
+            // In Mirror, check netId != 0 to confirm the object is currently spawned.
+            // NetworkServer.Destroy() despawns AND destroys the GameObject on all clients.
+            if (obj != null && obj.netId != 0)
+                NetworkServer.Destroy(obj.gameObject);
         }
+
         _spawnedObjects.Clear();
         InitOccupancyMap(); // reset all points to free
     }
 
     /// <summary>
     /// Manually triggers a single spawn check outside the loop. Server only.
-    /// Returns the spawned NetworkObject, or null if the pool is already at target.
+    /// Returns the spawned NetworkIdentity, or null if the pool is already at target.
     /// </summary>
-    public NetworkObject SpawnOnce()
+    public NetworkIdentity SpawnOnce()
     {
-        if (!IsServer)
+        if (!isServer)
         {
             Debug.LogWarning("[RandomSpawner] SpawnOnce() must be called on the server.", this);
             return null;
@@ -170,7 +183,7 @@ public class RandomSpawner : NetworkBehaviour
         }
     }
 
-    private NetworkObject TrySpawn()
+    private NetworkIdentity TrySpawn()
     {
         // ── Validate lists ──
         if (prefabsToSpawn == null || prefabsToSpawn.Count == 0)
@@ -185,9 +198,7 @@ public class RandomSpawner : NetworkBehaviour
             return null;
         }
 
-        // ── Original pool check: scene-scan counts ALL live instances ──
-        // FindObjectsByType only returns active objects, so disabled ones are
-        // automatically excluded — no extra filtering needed.
+        // ── Pool check ──
         int activeCount = CountLiveSceneInstances();
 
         if (activeCount >= desiredPoolSize)
@@ -196,11 +207,13 @@ public class RandomSpawner : NetworkBehaviour
         Debug.Log($"[RandomSpawner] Pool at {activeCount}/{desiredPoolSize} — checking free points.");
 
         // ── Collect free spawn points ──
-        // A point is free when its tracked NetworkObject is null, destroyed, or despawned.
+        // A point is free when its tracked NetworkIdentity is null, destroyed,
+        // or no longer spawned (netId == 0).
         _freePoints.Clear();
         foreach (var kvp in _pointOccupancy)
         {
-            if (kvp.Value == null || !kvp.Value.IsSpawned)
+            bool occupied = kvp.Value != null && kvp.Value.netId != 0;
+            if (!occupied)
                 _freePoints.Add(kvp.Key);
         }
 
@@ -210,9 +223,9 @@ public class RandomSpawner : NetworkBehaviour
             return null;
         }
 
-        // ── Pick a random prefab, no filtering ──
+        // ── Pick a random prefab ──
         int prefabIndex = Random.Range(0, prefabsToSpawn.Count);
-        NetworkObject chosenPrefab = prefabsToSpawn[prefabIndex];
+        NetworkIdentity chosenPrefab = prefabsToSpawn[prefabIndex];
 
         if (chosenPrefab == null)
         {
@@ -220,45 +233,48 @@ public class RandomSpawner : NetworkBehaviour
             return null;
         }
 
-        // ── Pick a free spawn point, optionally avoiding the last used one ──
+        // ── Pick a free spawn point ──
         Transform spawnPoint = PickFreeSpawnPoint();
 
-        // ── Instantiate and network-spawn ──
-        NetworkObject instance = Instantiate(
+        // ── Instantiate ──
+        NetworkIdentity instance = Instantiate(
             chosenPrefab,
             spawnPoint.position,
             spawnPoint.rotation
         );
 
-        instance.Spawn(destroyWithScene: true);
+        // ── Network-spawn via Mirror ──
+        // NetworkServer.Spawn() replicates the object to all clients (including
+        // late joiners via Mirror's spawn handler). Equivalent to NGO's obj.Spawn().
+        NetworkServer.Spawn(instance.gameObject);
 
         _spawnedObjects.Add(instance);
         _pointOccupancy[spawnPoint] = instance;
         _lastSpawnPointIndex = spawnPoints.IndexOf(spawnPoint);
 
         Debug.Log($"[RandomSpawner] Spawned '{chosenPrefab.name}' at '{spawnPoint.name}' " +
-                  $"(NetworkObjectId: {instance.NetworkObjectId}). " +
+                  $"(netId: {instance.netId}). " +
                   $"Pool: {CountLiveSceneInstances()}/{desiredPoolSize}");
 
         return instance;
     }
 
     /// <summary>
-    /// Scans the scene for active NetworkObjects whose name matches any prefab in
-    /// the list. Unity appends "(Clone)" to instantiated objects, so we strip it
-    /// before comparing against the cached prefab names.
-    /// FindObjectsByType with FindObjectsInactive.Exclude only returns active objects,
-    /// so destroyed or disabled instances are never counted.
+    /// Scans the scene for active NetworkIdentity objects whose name matches any
+    /// prefab in the list. Unity appends "(Clone)" to instantiated objects, so we
+    /// strip it before comparing against the cached prefab names.
+    /// Only active (non-destroyed) objects are returned by FindObjectsOfType.
     /// </summary>
     private int CountLiveSceneInstances()
     {
         int count = 0;
-        NetworkObject[] allNetworkObjects = FindObjectsByType<NetworkObject>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        );
 
-        foreach (NetworkObject obj in allNetworkObjects)
+        // Mirror doesn't have FindObjectsByType; use Unity's FindObjectsOfType.
+        // includeInactive: false mirrors the behaviour of NGO's FindObjectsInactive.Exclude.
+        NetworkIdentity[] allNetworkIdentities =
+            FindObjectsOfType<NetworkIdentity>(includeInactive: false);
+
+        foreach (NetworkIdentity obj in allNetworkIdentities)
         {
             string cleanName = obj.name.Replace("(Clone)", "").Trim();
             if (_prefabNames.Contains(cleanName))
@@ -270,14 +286,13 @@ public class RandomSpawner : NetworkBehaviour
 
     /// <summary>
     /// Rebuilds the HashSet of prefab names used for scene-scan matching.
-    /// Called on spawn and before starting the loop so Inspector changes are picked up.
     /// </summary>
     private void RebuildPrefabNameCache()
     {
         _prefabNames.Clear();
         if (prefabsToSpawn == null) return;
 
-        foreach (NetworkObject prefab in prefabsToSpawn)
+        foreach (NetworkIdentity prefab in prefabsToSpawn)
         {
             if (prefab != null)
                 _prefabNames.Add(prefab.name);
@@ -299,7 +314,7 @@ public class RandomSpawner : NetworkBehaviour
         foreach (Transform key in toRemove)
             _pointOccupancy.Remove(key);
 
-        // Add any new points as free (don't overwrite live entries).
+        // Add new points as free (don't overwrite live entries).
         foreach (Transform sp in spawnPoints)
             if (sp != null && !_pointOccupancy.ContainsKey(sp))
                 _pointOccupancy[sp] = null;
@@ -343,8 +358,8 @@ public class RandomSpawner : NetworkBehaviour
             if (sp == null) continue;
 
             // Green = free, red = occupied (colour only meaningful in Play mode).
-            bool occupied = _pointOccupancy.TryGetValue(sp, out NetworkObject obj)
-                            && obj != null && obj.IsSpawned;
+            bool occupied = _pointOccupancy.TryGetValue(sp, out NetworkIdentity obj)
+                            && obj != null && obj.netId != 0;
 
             Gizmos.color = occupied
                 ? new Color(1f, 0.2f, 0.2f, 0.85f)
