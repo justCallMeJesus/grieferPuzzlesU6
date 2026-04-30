@@ -16547,6 +16547,136 @@ Transform:
   m_Children: []
   m_Father: {fileID: 913221072}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1378516024
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1410183646124180084, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_Name
+      value: Panel (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3489982888947820808, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1324985134
+      objectReference: {fileID: 0}
+    - target: {fileID: 7400590714076232787, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: inventoryPanel
+      value: 
+      objectReference: {fileID: 1620126120}
+    - target: {fileID: 7400590714076232787, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: inventoryTetris
+      value: 
+      objectReference: {fileID: 1044318739}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 62
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.93373674
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.3579606
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -63.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -41.95
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8199975344738404394, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: sceneId
+      value: 145673973
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1410183646124180084, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1378516026}
+  m_SourcePrefab: {fileID: 100100000, guid: d174020801eaa5448b708549fcf11741, type: 3}
+--- !u!1 &1378516025 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1410183646124180084, guid: d174020801eaa5448b708549fcf11741, type: 3}
+  m_PrefabInstance: {fileID: 1378516024}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1378516026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1378516025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f74aedd71d9a4f55b3ce499326d45fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransform
+  syncMode: 0
+  syncInterval: 0.1
+  clientAuthority: 0
+  sendInterval: 0.05
+  syncPosition: 1
+  syncRotation: 1
+  syncScale: 0
+  interpolatePosition: 1
+  interpolateRotation: 1
+  interpolateScale: 0
+  bufferTimeMultiplier: 1
+  bufferSizeLimit: 64
+  catchupThreshold: 4
+  catchupMultiplier: 0.1
+  onlySyncOnChange: 1
+  bufferResetMultiplier: 5
+  positionSensitivity: 0.01
+  rotationSensitivity: 0.01
+  scaleSensitivity: 0.01
+  showGizmos: 0
+  showOverlay: 0
+  overlayColor: {r: 0, g: 0, b: 0, a: 1}
+--- !u!114 &1378516027 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7400590714076232787, guid: d174020801eaa5448b708549fcf11741, type: 3}
+  m_PrefabInstance: {fileID: 1378516024}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1378516025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 968633ed33f816443aa5a07dbc311741, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TetrisPanel
 --- !u!1 &1384874152
 GameObject:
   m_ObjectHideFlags: 0
@@ -24435,6 +24565,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2022432769}
   - component: {fileID: 2022432768}
+  - component: {fileID: 2022432770}
   m_Layer: 0
   m_Name: SpawnPositionGreen
   m_TagString: Untagged
@@ -24469,6 +24600,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 913221072}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2022432770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2022432767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c35e088a76d2a2841b1f210ff9f059c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnpoint
+  panel: {fileID: 1378516027}
 --- !u!1 &2041777213
 GameObject:
   m_ObjectHideFlags: 0
@@ -26342,4 +26486,5 @@ SceneRoots:
   - {fileID: 913221072}
   - {fileID: 1701209762}
   - {fileID: 58649701}
+  - {fileID: 1378516024}
   - {fileID: 490112822}
