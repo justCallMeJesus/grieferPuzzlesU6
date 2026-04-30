@@ -1,4 +1,4 @@
-using Mirror;
+ï»¿using Mirror;
 using Steamworks;
 using System.Collections;
 using System.Linq; // Required for OrderBy
@@ -62,7 +62,7 @@ public class GameStartHandler : NetworkBehaviour
             yield return new WaitForSeconds(0.5f);
         }
 
-        // Timeout reached — start anyway and skip genuinely unready connections.
+        // Timeout reached ï¿½ start anyway and skip genuinely unready connections.
         Debug.LogWarning($"Timed out waiting for all clients after {readyWaitTimeout}s. Starting with ready players only.");
         StartGame();
     }
@@ -82,8 +82,8 @@ public class GameStartHandler : NetworkBehaviour
             PlayerSpawnpoint playerSpawnpoint = chosenSpawn.GetComponent<PlayerSpawnpoint>();
             GameObject playerTank = Instantiate(PlayerPrefab, chosenSpawn.position, chosenSpawn.rotation);
             PlayerManager player = playerTank.GetComponent<PlayerManager>();
-            playerSpawnpoint.panel.SetOwner(player);
             NetworkServer.AddPlayerForConnection(conn, playerTank);
+            playerSpawnpoint.panel.SetOwner(player, conn);
 
             // 1. Set Steam Identity and Color
             string pName;
@@ -96,7 +96,7 @@ public class GameStartHandler : NetworkBehaviour
             catch
             {
                 Debug.LogWarning($"Failed to get Steam name for connection {conn.connectionId}. Using default name.");
-                
+
                 pName = "Player " + (playerIndex + 1);
             }
 
@@ -123,8 +123,8 @@ public class GameStartHandler : NetworkBehaviour
 
 
     public override void OnStopClient()
-        {
-            base.OnStopClient();
-            uiManager.OnMirrorStop();
-        }
+    {
+        base.OnStopClient();
+        uiManager.OnMirrorStop();
+    }
 }

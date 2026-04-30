@@ -348,9 +348,9 @@ public class Panel : NetworkBehaviour, IInteractable
     public bool IsInUse() => currentUserId != NOBODY || readOnlyUserId != NOBODY;
 
     [Server]
-    public void SetOwner(PlayerManager player)
+    public void SetOwner(PlayerManager player, NetworkConnectionToClient conn)
     {
-        if (player == null)
+        if (player == null || conn == null)
         {
             ownerId = NOBODY;
             ownerNetId = 0;
@@ -365,7 +365,7 @@ public class Panel : NetworkBehaviour, IInteractable
             return;
         }
 
-        ownerId = identity.connectionToClient.connectionId;
+        ownerId = conn.connectionId;
         ownerNetId = identity.netId;
         Debug.Log($"[Panel] Owner set to client {ownerId} (netId {ownerNetId}).");
     }
