@@ -110,8 +110,6 @@ public class ThrowableItem : NetworkBehaviour
                 Physics.IgnoreCollision(thisCollider, throwerCol, true);
         }
 
-        Vector3 throwDir = direction + Vector3.up * Mathf.Tan(upwardAngle * Mathf.Deg2Rad);
-        rb.AddForce(throwDir.normalized * throwForce, ForceMode.Impulse);
     }
 
     void OnCollisionEnter(Collision collision)
