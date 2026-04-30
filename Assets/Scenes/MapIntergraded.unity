@@ -10430,6 +10430,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 692264975}
+  - component: {fileID: 692264977}
+  - component: {fileID: 692264976}
   m_Layer: 0
   m_Name: WinnManager
   m_TagString: Untagged
@@ -10452,6 +10454,46 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &692264976
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692264974}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c326c75ea8df63043a1c9c5aa50c7230, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerShowWinningScreen
+  syncMode: 0
+  syncInterval: 0.1
+  winScreens:
+  - playerName: 0
+    winScreenObject: {fileID: 75785402}
+  - playerName: 1
+    winScreenObject: {fileID: 1107769847}
+  - playerName: 2
+    winScreenObject: {fileID: 285746476}
+  - playerName: 3
+    winScreenObject: {fileID: 1483033370}
+--- !u!114 &692264977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 692264974}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 2705353028
+  serverOnly: 0
+  visible: 0
+  m_AssetId: 
+  hasSpawned: 0
 --- !u!1 &703552753
 GameObject:
   m_ObjectHideFlags: 0
