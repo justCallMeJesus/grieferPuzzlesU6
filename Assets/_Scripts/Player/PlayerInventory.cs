@@ -144,7 +144,14 @@ public class PlayerInventory : NetworkBehaviour
     {
         bigInventorySlot = item;
         if (isServer) PushStateToClient();
-        else RefreshUILocal();
+        else
+        {
+            // FIX: Also tell the server about this pickup so its inventory
+            // state stays in sync. Previously this was client-only, causing
+            // CmdThrow to find an empty slot on the server for joined clients.
+            CmdSyncItemToSlot(item != null ? item.name : "", 0);
+            RefreshUILocal();
+        }
     }
 
     public void StoreSmallItem(ItemData item)
@@ -155,7 +162,13 @@ public class PlayerInventory : NetworkBehaviour
             {
                 smallItemInventory[i] = item;
                 if (isServer) PushStateToClient();
-                else RefreshUILocal();
+                else
+                {
+                    // FIX: Same as StoreBigItem — push to server so its state
+                    // matches the client's after a pickup.
+                    CmdSyncItemToSlot(item != null ? item.name : "", i + 1);
+                    RefreshUILocal();
+                }
                 return;
             }
         }
@@ -260,15 +273,23 @@ public class PlayerInventory : NetworkBehaviour
             RefreshUILocal();
         }
 
-        CmdThrow(slotToThrow, transform.forward);
+        // FIX: Pass the item name through the Command so the server can resolve
+        // it even if its own inventory state is still desynced. This is a
+        // safety net on top of fixing StoreBigItem/StoreSmallItem above.
+        CmdThrow(slotToThrow, transform.forward, item.name);
     }
 
     [Command]
-    private void CmdThrow(int slot, Vector3 direction)
+    private void CmdThrow(int slot, Vector3 direction, string itemName)
     {
         if (connectionToClient == null) return;
 
+        // FIX: Try the server's own inventory first; fall back to the item
+        // name sent by the client. Handles any remaining desync edge cases.
         ItemData item = GetSelectedItem(slot);
+        if (item == null)
+            item = ItemRegistry.Get(itemName);
+
         if (item == null || item.prefab == null)
         {
             // Server rejected throw — re-sync so client can recover.
