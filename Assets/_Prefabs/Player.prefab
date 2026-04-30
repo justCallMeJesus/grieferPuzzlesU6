@@ -346,17 +346,18 @@ MonoBehaviour:
   syncInterval: 0.1
   playerTextures:
   - {fileID: 2800000, guid: 9d5c57e3f17af5b44bd6441ead7a15a8, type: 3}
-  - {fileID: 2800000, guid: 798c7bc8f0ea46f48a04abce1b084e33, type: 3}
   - {fileID: 2800000, guid: e5a3cd0ce68233d4cbd4906857ce2841, type: 3}
+  - {fileID: 2800000, guid: 798c7bc8f0ea46f48a04abce1b084e33, type: 3}
   - {fileID: 2800000, guid: d3e4cc2b53114164a84658d71925519a, type: 3}
   nameColors:
   - {r: 0, g: 0.6117647, b: 1, a: 1}
-  - {r: 0.9803922, g: 0.34117648, b: 0.34117648, a: 1}
   - {r: 0.2784314, g: 0.9333334, b: 0.14117648, a: 1}
+  - {r: 0.9803922, g: 0.34117648, b: 0.34117648, a: 1}
   - {r: 0.9843138, g: 0.8588236, b: 0.33333334, a: 1}
   playerMeshParts:
   - {fileID: 5456792659694189398}
   - {fileID: 5456792659709734572}
+  - {fileID: 5456792659709747106}
   nameLabel: {fileID: 5676851579340123858}
 --- !u!1 &5555519677867722031
 GameObject:
@@ -945,5 +946,10 @@ MeshRenderer:
 --- !u!23 &5456792659709734572 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 2349644, guid: fe2a5bf9b4c2d4a4b9853a8506f18c40, type: 3}
+  m_PrefabInstance: {fileID: 5456792659707753696}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &5456792659709747106 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2337602, guid: fe2a5bf9b4c2d4a4b9853a8506f18c40, type: 3}
   m_PrefabInstance: {fileID: 5456792659707753696}
   m_PrefabAsset: {fileID: 0}

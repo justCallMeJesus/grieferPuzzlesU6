@@ -14,6 +14,8 @@ public class GameStartHandler : NetworkBehaviour
     [Tooltip("How long (seconds) to wait for slow clients to become ready before giving up on them.")]
     public float readyWaitTimeout = 10f;
 
+
+    public Panel panelScript;
     // Called by your UI Button (the "Start Game" button).
     // IMPORTANT: Only the Host should be able to click this!
     public void RequestStartGame()
@@ -77,10 +79,12 @@ public class GameStartHandler : NetworkBehaviour
         foreach (var conn in NetworkServer.connections.Values)
         {
             if (!conn.isReady || conn.identity != null) continue;
-
+            Debug.Log($"Spawning player for connection {conn.connectionId} at spawn point {sortedSpawns[playerIndex % sortedSpawns.Count].name}");
             Transform chosenSpawn = sortedSpawns[playerIndex % sortedSpawns.Count];
             GameObject playerTank = Instantiate(PlayerPrefab, chosenSpawn.position, chosenSpawn.rotation);
             NetworkServer.AddPlayerForConnection(conn, playerTank);
+            //panelScript.OnOwnerChanged(0,conn.connectionId);
+
 
             // 1. Set Steam Identity and Color
             string pName;
