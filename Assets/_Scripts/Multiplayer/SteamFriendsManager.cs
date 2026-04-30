@@ -121,9 +121,14 @@ public class SteamFriendsManager : MonoBehaviour
             var nameText = row.transform.Find("FriendName").GetComponent<TextMeshProUGUI>();
             var idText = row.transform.Find("FriendSteamID").GetComponent<TextMeshProUGUI>();
             var profilePic = row.transform.Find("FriendProfilePic").GetComponent<RawImage>();
-            var inviteBtn = row.transform.Find("InviteButton").GetComponent<Button>();
+            // Updated path including the new parent
+            var inviteBtn = row.transform.Find("BorderImage (1)/InviteButton").GetComponent<Button>();
 
-            var joinBtn = row.transform.Find("JoinButton").GetComponent<Button>();
+            //Both work lol
+            var joinBtn = row.transform.Find("BorderImage (2)").Find("JoinButton").GetComponent<Button>();
+
+            var BorderImage1 = row.transform.Find("BorderImage (1)");
+            var BorderImage2 = row.transform.Find("BorderImage (2)");
 
             // 3. Set basic data
             nameText.text = friend.Name;
@@ -135,7 +140,7 @@ public class SteamFriendsManager : MonoBehaviour
 
             if (friend.IsPlayingThisGame && friend.GameInfo?.Lobby != null)
             {
-                joinBtn.gameObject.SetActive(true);
+                BorderImage2.gameObject.SetActive(true);
 
                 // Get the Lobby ID for the join function
                 var lobbyId = friend.GameInfo.Value.Lobby.Value.Id;
@@ -143,7 +148,7 @@ public class SteamFriendsManager : MonoBehaviour
             }
             else
             {
-                joinBtn.gameObject.SetActive(false);
+                BorderImage2.gameObject.SetActive(false);
             }
             UpdateSingleFriendUI(friend, row);
             // 5. Load Avatar Asynchronously (So the UI doesn't freeze)
@@ -182,7 +187,7 @@ public class SteamFriendsManager : MonoBehaviour
 
     private void UpdateSingleFriendUI(Friend friend, GameObject row)
     {
-        var joinBtn = row.transform.Find("JoinButton").GetComponent<Button>();
+        var joinBtn = row.transform.Find("BorderImage (2)").Find("JoinButton").GetComponent<Button>();
 
         // Check Steam for lobby info
         if (friend.IsPlayingThisGame && friend.GameInfo?.Lobby != null)
@@ -254,15 +259,16 @@ public class SteamFriendsManager : MonoBehaviour
             Debug.Log(member.Id);
 
             // 4. Transform the "Invite" button into a "Kick" button
-            var btn = row.transform.Find("InviteButton").GetComponent<Button>();
+            var btn = row.transform.Find("BorderImage (1)");
+            var btnbtn = row.transform.Find("BorderImage (1)/InviteButton").GetComponent<Button>();
             btn.gameObject.SetActive(false);
 
-            var btn_join = row.transform.Find("JoinButton").GetComponent<Button>();
+            var btn_join = row.transform.Find("BorderImage (2)");
             btn_join.gameObject.SetActive(false);
-            var btnText = btn.GetComponentInChildren<TextMeshProUGUI>();
+            var btnText = btnbtn.GetComponentInChildren<TextMeshProUGUI>();
 
             btnText.text = "KICK";
-            btn.onClick.RemoveAllListeners();
+            btnbtn.onClick.RemoveAllListeners();
 
             // 5. Logic: Only Host can see Kick button, and not on themselves
             bool isHost = lobbyManager.currentLobby.IsOwnedBy(SteamClient.SteamId);
@@ -270,7 +276,7 @@ public class SteamFriendsManager : MonoBehaviour
 
             if (isHost && !isMe)
             {
-                btn.onClick.AddListener(() => KickPlayer(member.Id));
+                btnbtn.onClick.AddListener(() => KickPlayer(member.Id));
             }
             else
             {

@@ -178,7 +178,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: Close App
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -245,7 +245,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &17976627
@@ -464,8 +464,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: X
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 79459efec17a4d00a321bdcc27bbc385, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2720,7 +2720,7 @@ MonoBehaviour:
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -2787,7 +2787,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &217587091
@@ -4005,7 +4005,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: Start Game
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -4072,7 +4072,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &322738928
@@ -5953,7 +5953,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: X
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 79459efec17a4d00a321bdcc27bbc385, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -6020,7 +6020,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &458537011
@@ -8374,7 +8374,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: Leave
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -8441,7 +8441,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &562580358
@@ -9548,8 +9548,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "Steam ist nicht ge\xF6ffnet"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -9615,7 +9615,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &685617254
@@ -10274,8 +10274,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Rules
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -10409,10 +10409,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Join
+  m_text: J0in
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -10782,8 +10782,8 @@ MonoBehaviour:
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -12460,7 +12460,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &964024225
 RectTransform:
   m_ObjectHideFlags: 0
@@ -12541,7 +12541,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: X
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 79459efec17a4d00a321bdcc27bbc385, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -12608,7 +12608,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &965679711
@@ -16044,20 +16044,19 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "<size=120%><color=#FFD700><b>HOW TO WIN</b></color></size>\n\n<color=#00FF00><b>1.
-    BUILD YOUR GRID</b></color>\nFind Tetris blocks scattered across the map and
-    bring them to your base. Fill your <b>5x5 Grid</b> to unlock the endgame.\n\n<color=#FF4500><b>2.
-    SABOTAGE & STEAL</b></color>\nTo steal a piece from an opponent's grid:\n\u2022
-    Pick up weapons around the map.\n\u2022 <b>Eliminate</b> the player (they respawn
-    in 10s).\n\u2022 Once killed, their panel is unlocked for you!\n<i>Note: Panels
-    have a <b>30s cooldown</b> after a piece is stolen.</i>\n\n<color=#FFD700><b>3.
-    CLAIM THE CROWN</b></color>\nWhen a grid is complete, the <b>Center Vault</b>
-    opens. \n\u2022 Everyone is alerted! \n\u2022 Race to the middle to collect your
-    <b>Crown</b>.\n\u2022 Beware: Others can still kill you and steal pieces to reset
-    your progress!\n\n<align=center><size=120%><i>First to the Crown wins!</i></size></align>\n"
+  m_text: "<size=120%><align=center><color=#FFD700>H0W T0 WIN\n\n <color=#00FF00>1.
+    BUILD Y0UR GRID Find Tetris bl0cks scattered acr0ss the map and bring them t0
+    y0ur base. Fill y0ur 5x5 Grid t0 unl0ck the endgame. <color=#FF4500>\n\n2. SAB0TAGE
+    & STEAL T0 steal a piece fr0m an 0pp0nent's grid: \u2022 Pick up weap0ns ar0und
+    the map. \u2022 Eliminate the player (they respawn in 10s). \u2022 0nce killed,
+    their panel is unl0cked f0r y0u! N0te: Panels have a 30s c00ld0wn after a piece
+    is st0len. <color=#FFD700>\n\n3. CLAIM THE CR0WN When a grid is c0mplete, the
+    Center Vault 0pens. \u2022 Every0ne is alerted! \u2022 Race t0 the middle t0
+    c0llect y0ur Cr0wn. \u2022 Beware: 0thers can still kill y0u and steal pieces
+    t0 reset y0ur pr0gress! <align=center><size=120%>\n\nFirst t0 the Cr0wn wins!"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -17235,6 +17234,7 @@ GameObject:
   - component: {fileID: 1457563063}
   - component: {fileID: 1457563062}
   - component: {fileID: 1457563061}
+  - component: {fileID: 1457563064}
   m_Layer: 0
   m_Name: geometry_0 (17)
   m_TagString: Untagged
@@ -17336,6 +17336,27 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1457563059}
   m_Mesh: {fileID: -780830572462372624, guid: 425d81049f0788e40833c2fd8ddef202, type: 3}
+--- !u!65 &1457563064
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1457563059}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0007995, y: 0.45977876, z: 0.100680485}
+  m_Center: {x: 0.00008171801, y: -0.0013807565, z: 0.000022605076}
 --- !u!1 &1464518557
 GameObject:
   m_ObjectHideFlags: 0
@@ -19446,7 +19467,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: X
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 79459efec17a4d00a321bdcc27bbc385, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -19513,7 +19534,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1674167954
@@ -22034,7 +22055,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1859523737}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b175930a2104224396fba36fb0cc3fa, type: 3}
+  m_Script: {fileID: 11500000, guid: 00543df3afb42b541a0336c798f4afb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mirror.FizzySteam.FizzyFacepunch
   Channels: 0200000001000000
@@ -22103,7 +22124,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: Rules
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -22170,7 +22191,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &1872331850
@@ -23948,17 +23969,16 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "<size=120%><color=#FFD700><b>HOW TO WIN</b></color></size>\n\n<color=#00FF00><b>1.
-    BUILD YOUR GRID</b></color>\nFind Tetris blocks scattered across the map and
-    bring them to your base. Fill your <b>5x5 Grid</b> to unlock the endgame.\n\n<color=#FF4500><b>2.
-    SABOTAGE & STEAL</b></color>\nTo steal a piece from an opponent's grid:\n\u2022
-    Pick up weapons around the map.\n\u2022 <b>Eliminate</b> the player (they respawn
-    in 10s).\n\u2022 Once killed, their panel is unlocked for you!\n<i>Note: Panels
-    have a <b>30s cooldown</b> after a piece is stolen.</i>\n\n<color=#FFD700><b>3.
-    CLAIM THE CROWN</b></color>\nWhen a grid is complete, the <b>Center Vault</b>
-    opens. \n\u2022 Everyone is alerted! \n\u2022 Race to the middle to collect your
-    <b>Crown</b>.\n\u2022 Beware: Others can still kill you and steal pieces to reset
-    your progress!\n\n<align=center><size=120%><i>First to the Crown wins!</i></size></align>\n"
+  m_text: "<size=120%><align=center><color=#FFD700>H0W T0 WIN\n\n <color=#00FF00>1.
+    BUILD Y0UR GRID Find Tetris bl0cks scattered acr0ss the map and bring them t0
+    y0ur base. Fill y0ur 5x5 Grid t0 unl0ck the endgame. <color=#FF4500>\n\n2. SAB0TAGE
+    & STEAL T0 steal a piece fr0m an 0pp0nent's grid: \u2022 Pick up weap0ns ar0und
+    the map. \u2022 Eliminate the player (they respawn in 10s). \u2022 0nce killed,
+    their panel is unl0cked f0r y0u! N0te: Panels have a 30s c00ld0wn after a piece
+    is st0len. <color=#FFD700>\n\n3. CLAIM THE CR0WN When a grid is c0mplete, the
+    Center Vault 0pens. \u2022 Every0ne is alerted! \u2022 Race t0 the middle t0
+    c0llect y0ur Cr0wn. \u2022 Beware: 0thers can still kill y0u and steal pieces
+    t0 reset y0ur pr0gress! <align=center><size=120%>\n\nFirst t0 the Cr0wn wins!"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -25074,12 +25094,12 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Host
+  m_text: 'H0st
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -25328,7 +25348,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: Leave
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -25395,7 +25415,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &2068809200
