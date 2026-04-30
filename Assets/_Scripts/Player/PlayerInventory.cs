@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -287,7 +288,30 @@ public class PlayerInventory : NetworkBehaviour
 
         if (thrown.TryGetComponent(out ThrowableItem throwable))
         {
-            throwable.RpcLaunch(direction, connectionToClient.connectionId, netId);
+            // FIX: Delay RpcLaunch by one frame after NetworkServer.Spawn().
+            // When spawning with client authority (connectionToClient), Mirror
+            // needs a frame to propagate the ObjectSpawnMessage to the client
+            // before any RPC targeting that object can be processed. Calling
+            // RpcLaunch in the same frame causes the client to receive the RPC
+            // before it has registered the netId, producing:
+            //   "Spawned object not found when handling Command message [netId=X]"
+            // This only manifested on small items because big item prefabs lack
+            // a ThrowableItem component and therefore never called RpcLaunch.
+            int connId = connectionToClient.connectionId;
+            uint throwerId = netId;
+            StartCoroutine(LaunchNextFrame(throwable, direction, connId, throwerId));
         }
+    }
+
+    // Waits one server frame then fires RpcLaunch, by which point the client
+    // has received and registered the spawned object's NetworkIdentity.
+    private IEnumerator LaunchNextFrame(ThrowableItem throwable, Vector3 direction, int connId, uint throwerId)
+    {
+        yield return null;
+
+        // Guard: object may have been destroyed in the intervening frame
+        // (e.g. landed inside geometry and triggered immediate despawn).
+        if (throwable != null)
+            throwable.RpcLaunch(direction, connId, throwerId);
     }
 }
