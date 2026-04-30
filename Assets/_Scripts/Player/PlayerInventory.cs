@@ -309,17 +309,14 @@ public class PlayerInventory : NetworkBehaviour
 
         if (thrown.TryGetComponent(out ThrowableItem throwable))
         {
-            // FIX: Delay RpcLaunch by one frame after NetworkServer.Spawn().
-            // When spawning with client authority (connectionToClient), Mirror
-            // needs a frame to propagate the ObjectSpawnMessage to the client
-            // before any RPC targeting that object can be processed. Calling
-            // RpcLaunch in the same frame causes the client to receive the RPC
-            // before it has registered the netId, producing:
-            //   "Spawned object not found when handling Command message [netId=X]"
-            // This only manifested on small items because big item prefabs lack
-            // a ThrowableItem component and therefore never called RpcLaunch.
             int connId = connectionToClient.connectionId;
             uint throwerId = netId;
+
+            // Apply physics and ignore-collision on the server immediately.
+            throwable.ServerLaunch(direction, connId, throwerId);
+
+            // Delay RpcLaunch by one frame after NetworkServer.Spawn() so clients
+            // have registered the netId before the RPC arrives.
             StartCoroutine(LaunchNextFrame(throwable, direction, connId, throwerId));
         }
     }

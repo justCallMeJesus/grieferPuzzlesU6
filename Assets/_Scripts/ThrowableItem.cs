@@ -49,6 +49,32 @@ public class ThrowableItem : NetworkBehaviour
     }
 
     /// <summary>
+    /// Called directly on the server instance after spawn to apply physics and
+    /// set up ignore-collision. RpcLaunch handles the same for all clients.
+    /// </summary>
+    public void ServerLaunch(Vector3 direction, int connId, uint throwerNetId)
+    {
+        throwerConnectionId = connId;
+        hasHit = false;
+        wasDroppedByPlayer = true;
+
+        if (flightTimeoutDuration > 0f)
+            flightTimeoutCoroutine = StartCoroutine(FlightTimeoutCoroutine());
+
+        itemComponent?.SetGrounded(false);
+
+        if (NetworkServer.spawned.TryGetValue(throwerNetId, out NetworkIdentity throwerIdentity))
+        {
+            Collider throwerCol = throwerIdentity.GetComponent<Collider>();
+            if (throwerCol != null && thisCollider != null)
+                Physics.IgnoreCollision(thisCollider, throwerCol, true);
+        }
+
+        Vector3 throwDir = direction + Vector3.up * Mathf.Tan(upwardAngle * Mathf.Deg2Rad);
+        rb.AddForce(throwDir.normalized * throwForce, ForceMode.Impulse);
+    }
+
+    /// <summary>
     /// Call this on the server before calling RpcLaunch.
     /// throwerNetId = the netId of the player who threw this item.
     /// </summary>
@@ -99,7 +125,9 @@ public class ThrowableItem : NetworkBehaviour
             bool isSelfHit = hitPlayer.connectionToClient != null
                 && hitPlayer.connectionToClient.connectionId == throwerConnectionId;
 
-            if (!isSelfHit && throwerConnectionId != -1)
+            if (isSelfHit) return;
+
+            if (throwerConnectionId != -1)
             {
                 PlayerManager throwerManager = GetPlayerByConnId(throwerConnectionId);
                 throwerManager?.RegisterKill(hitPlayer.netId);
