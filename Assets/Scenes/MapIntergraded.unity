@@ -713,7 +713,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 7.009
+      value: 63.7
       objectReference: {fileID: 0}
     - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
       propertyPath: m_LocalRotation.w
@@ -730,6 +730,10 @@ PrefabInstance:
     - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -60.6
       objectReference: {fileID: 0}
     - target: {fileID: 7847223719813723150, guid: d174020801eaa5448b708549fcf11741, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -4004,6 +4008,17 @@ MonoBehaviour:
   showGizmos: 0
   showOverlay: 0
   overlayColor: {r: 0, g: 0, b: 0, a: 1}
+--- !u!114 &302970064 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7400590714076232787, guid: d174020801eaa5448b708549fcf11741, type: 3}
+  m_PrefabInstance: {fileID: 58649701}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 302970053}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 968633ed33f816443aa5a07dbc311741, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TetrisPanel
 --- !u!1 &306030218
 GameObject:
   m_ObjectHideFlags: 0
@@ -6277,6 +6292,7 @@ GameObject:
   - component: {fileID: 437191724}
   - component: {fileID: 437191726}
   - component: {fileID: 437191725}
+  - component: {fileID: 437191727}
   m_Layer: 0
   m_Name: TetrisSpawnManager
   m_TagString: Untagged
@@ -6335,14 +6351,14 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0.1
   prefabsToSpawn:
-  - {fileID: 3580833662035054333, guid: 14c5624b753f88a48b48c0f77686c8c9, type: 3}
-  - {fileID: 3580833662035054333, guid: 2623997bbeb07be40b497ea1cc698c8c, type: 3}
-  - {fileID: 3580833662035054333, guid: a1fdc6e9ef92fed4a9675e97f3bc5ef9, type: 3}
-  - {fileID: 1115568661958708351, guid: 733fbf8a469bb8c468c1d78185c5dcb4, type: 3}
-  - {fileID: 2674610291692133068, guid: ecd9a528310d264468c70991fea3f969, type: 3}
-  - {fileID: 3580833662035054333, guid: 3915a2fadc8a4254daae1b77d20a1c6a, type: 3}
-  - {fileID: 3580833662035054333, guid: 60814c238c4f46b4587f58dcfc06242c, type: 3}
-  - {fileID: 3580833662035054333, guid: 6827ebba482e60f4a9347d81996eb898, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   spawnPoints:
   - {fileID: 1176517766}
   - {fileID: 619463271}
@@ -6353,6 +6369,31 @@ MonoBehaviour:
   initialDelay: 0
   avoidRepeatSpawnPoint: 1
   autoStart: 1
+--- !u!114 &437191727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 437191722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 4138286601
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &455168787
 GameObject:
   m_ObjectHideFlags: 0
@@ -10468,15 +10509,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShowWinningScreen
   syncMode: 0
   syncInterval: 0.1
-  winScreens:
-  - playerName: 0
-    winScreenObject: {fileID: 75785402}
-  - playerName: 1
-    winScreenObject: {fileID: 1107769847}
-  - playerName: 2
-    winScreenObject: {fileID: 285746476}
-  - playerName: 3
-    winScreenObject: {fileID: 1483033370}
+  winScreens: []
 --- !u!114 &692264977
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13296,7 +13329,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &964024225
 RectTransform:
   m_ObjectHideFlags: 0
@@ -20648,6 +20681,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1610674545}
   - component: {fileID: 1610674544}
+  - component: {fileID: 1610674546}
   m_Layer: 0
   m_Name: SpawnPositionBlue
   m_TagString: Untagged
@@ -20682,6 +20716,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 913221072}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1610674546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1610674543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c35e088a76d2a2841b1f210ff9f059c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnpoint
+  panel: {fileID: 302970064}
 --- !u!1 &1617753518
 GameObject:
   m_ObjectHideFlags: 0
@@ -24033,7 +24080,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1859523737}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b175930a2104224396fba36fb0cc3fa, type: 3}
+  m_Script: {fileID: 11500000, guid: 6ef1e05b44fdaf147b6af48657c2417a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mirror.FizzySteam.FizzyFacepunch
   Channels: 0200000001000000
@@ -25515,7 +25562,6 @@ MonoBehaviour:
   PlayerPrefab: {fileID: 4476075104031600432, guid: febb531ef4c4b684b893405188a8a94c, type: 3}
   uiManager: {fileID: 455168788}
   readyWaitTimeout: 10
-  panelScript: {fileID: 0}
 --- !u!114 &1978725906
 MonoBehaviour:
   m_ObjectHideFlags: 0
