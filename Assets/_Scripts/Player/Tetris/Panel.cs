@@ -36,6 +36,12 @@ public class Panel : NetworkBehaviour, IInteractable
 
     private bool isLocallyOpen = false;
     private bool isLocallyInStealMode = false;
+    private bool isFull = false;
+
+    public bool IsFull => isFull;
+
+    public event System.Action OnPanelFull;
+    public event System.Action OnPanelNoLongerFull;
 
     // -- Mirror Lifecycle --
 
@@ -43,14 +49,20 @@ public class Panel : NetworkBehaviour, IInteractable
     {
         base.OnStartClient();
         if (inventoryTetris != null)
+        {
             inventoryTetris.OnGridFull += HandleGridFull;
+            inventoryTetris.OnGridNoLongerFull += HandleGridNoLongerFull;
+        }
     }
 
     public override void OnStopClient()
     {
         base.OnStopClient();
         if (inventoryTetris != null)
+        {
             inventoryTetris.OnGridFull -= HandleGridFull;
+            inventoryTetris.OnGridNoLongerFull -= HandleGridNoLongerFull;
+        }
     }
 
     // -- IInteractable --
@@ -94,10 +106,8 @@ public class Panel : NetworkBehaviour, IInteractable
 
         if (ownerId == NOBODY)
         {
-            // First ever opener becomes owner — record both ids
-            ownerId = requesterId;
-            ownerNetId = sender.identity != null ? sender.identity.netId : 0;
-            Debug.Log($"[Panel] Client {requesterId} (netId {ownerNetId}) claimed ownership.");
+            TargetGrantAccess(sender, "Panel has no owner.", false, false, false);
+            return;
         }
 
         bool requesterIsOwner = (ownerId == requesterId);
@@ -300,7 +310,18 @@ public class Panel : NetworkBehaviour, IInteractable
 
     private void HandleGridFull()
     {
+        if (isFull) return;
+        isFull = true;
         Debug.Log("[Panel] Grid fully filled!");
+        OnPanelFull?.Invoke();
+    }
+
+    private void HandleGridNoLongerFull()
+    {
+        if (!isFull) return;
+        isFull = false;
+        Debug.Log("[Panel] Grid no longer full.");
+        OnPanelNoLongerFull?.Invoke();
     }
 
     private PlayerManager GetLocalPlayerManager()
@@ -325,4 +346,27 @@ public class Panel : NetworkBehaviour, IInteractable
     public int GetOwnerId() => ownerId;
     public bool IsClaimed() => ownerId != NOBODY;
     public bool IsInUse() => currentUserId != NOBODY || readOnlyUserId != NOBODY;
+
+    [Server]
+    public void SetOwner(PlayerManager player, NetworkConnectionToClient conn)
+    {
+        if (player == null || conn == null)
+        {
+            ownerId = NOBODY;
+            ownerNetId = 0;
+            Debug.Log("[Panel] Owner cleared.");
+            return;
+        }
+
+        NetworkIdentity identity = player.GetComponent<NetworkIdentity>();
+        if (identity == null)
+        {
+            Debug.LogWarning("[Panel] SetOwner failed — player has no NetworkIdentity.");
+            return;
+        }
+
+        ownerId = conn.connectionId;
+        ownerNetId = identity.netId;
+        Debug.Log($"[Panel] Owner set to client {ownerId} (netId {ownerNetId}).");
+    }
 }
