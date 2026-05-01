@@ -26,7 +26,7 @@ RectTransform:
   m_GameObject: {fileID: 1379131320207592045}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.11, y: 0.11, z: 0.11}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3182719790504856862}
@@ -36,7 +36,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -143.89}
+  m_AnchoredPosition: {x: 0, y: -418.5}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1307190218980334714
@@ -51,11 +51,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3019d50f39c9b4747a78631168a298bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInventoryUI
-  bigSlot: {fileID: 6440688140264150990}
-  smallSlots:
-  - {fileID: 3522320623311541767, guid: 137ff6905212fe14faa209020f2dce99, type: 3}
-  - {fileID: 6633021644133086, guid: aa1493b4b91d8ed488941f28e90951ce, type: 3}
-  - {fileID: 2207438644174535645, guid: 946bc8c7857d39246a90bffedc2fd5d9, type: 3}
   playerManager: {fileID: 0}
 --- !u!1 &5839534166241070220
 GameObject:
@@ -373,7 +368,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3968677174151061571, guid: aa1493b4b91d8ed488941f28e90951ce, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 262.26965
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3968677174151061571, guid: aa1493b4b91d8ed488941f28e90951ce, type: 3}
       propertyPath: m_LocalRotation.w
@@ -471,7 +466,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 569082615791821978, guid: 137ff6905212fe14faa209020f2dce99, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 262.26965
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 569082615791821978, guid: 137ff6905212fe14faa209020f2dce99, type: 3}
       propertyPath: m_LocalRotation.w
@@ -577,7 +572,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3001200198759565632, guid: 946bc8c7857d39246a90bffedc2fd5d9, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 262.26965
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3001200198759565632, guid: 946bc8c7857d39246a90bffedc2fd5d9, type: 3}
       propertyPath: m_LocalRotation.w

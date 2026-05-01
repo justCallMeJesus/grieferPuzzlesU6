@@ -46,6 +46,7 @@ GameObject:
   - component: {fileID: 1369480863665674825}
   - component: {fileID: 4244081607257289988}
   - component: {fileID: 6724482590768125108}
+  - component: {fileID: 7575281913095905322}
   - component: {fileID: 5431813926534380635}
   - component: {fileID: 2477462578062158283}
   - component: {fileID: 3322085791753349677}
@@ -211,6 +212,23 @@ MonoBehaviour:
   movement: {fileID: 0}
   playerInventoryUIPrefab: {fileID: 1307190218980334714, guid: a88e58162cdcf6641abb831dfdd2b650, type: 3}
   playerInventoryUI: {fileID: 0}
+--- !u!114 &7575281913095905322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4476075104031600432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 157dfdf5fd1d19d4f8e7a0fac55cf81d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMouseRotation
+  mousePosition: {fileID: -5901852056291874008, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  aim: {fileID: -4090225696740746782, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  trackerLayer:
+    serializedVersion: 2
+    m_Bits: 1024
 --- !u!114 &5431813926534380635
 MonoBehaviour:
   m_ObjectHideFlags: 0

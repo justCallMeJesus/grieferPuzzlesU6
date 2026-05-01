@@ -41,7 +41,6 @@ public class ThrowableItem : NetworkBehaviour
         itemComponent = GetComponent<Item>();
         renderers = GetComponentsInChildren<Renderer>();
         thisCollider = GetComponent<Collider>();
-        SetRenderersVisible(false);
     }
 
     void FixedUpdate()
@@ -55,6 +54,7 @@ public class ThrowableItem : NetworkBehaviour
     /// </summary>
     public void ServerLaunch(Vector3 direction, int connId, uint throwerNetId)
     {
+        RpcHideForThrow(); // hide on all clients the moment it's thrown
         throwerConnectionId = connId;
         hasHit = false;
         wasDroppedByPlayer = true;
@@ -73,6 +73,11 @@ public class ThrowableItem : NetworkBehaviour
 
         Vector3 throwDir = direction + Vector3.up * Mathf.Tan(upwardAngle * Mathf.Deg2Rad);
         rb.AddForce(throwDir.normalized * throwForce, ForceMode.Impulse);
+    }
+    [ClientRpc]
+    private void RpcHideForThrow()
+    {
+        SetRenderersVisible(false);
     }
 
     /// <summary>

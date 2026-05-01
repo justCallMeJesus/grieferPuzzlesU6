@@ -140,6 +140,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "MousePosition",
+                    "type": "Value",
+                    "id": "66919b55-8f0a-4457-bfb3-2b463fe575f4",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -541,6 +550,17 @@
                 },
                 {
                     "name": "",
+                    "id": "4b518947-86f3-42ca-861d-823bffbc9ed7",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Throw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "79568fd3-510b-4d61-b0a6-84e4801eaa2b",
                     "path": "<Keyboard>/1",
                     "interactions": "",
@@ -580,6 +600,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "SelectSlot4",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7fb10efc-d693-4a70-bd0f-8ef0821a4897",
+                    "path": "<Mouse>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "MousePosition",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -164,4 +164,9 @@ public class PlayerMovement : NetworkBehaviour
             freelook.LookAt = this.transform;
         }
     }
+
+    public bool IsMoving()
+    {
+        return Move.action.ReadValue<Vector2>().magnitude > 0f;
+    }
 }

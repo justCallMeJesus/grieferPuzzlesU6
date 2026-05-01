@@ -6,25 +6,31 @@ public class Item : NetworkBehaviour, IPickupable
     public ItemData ItemData;
     public GameObject GameObject => this.gameObject;
 
-    // --- SyncVars (Mirror equivalent of NetworkVariable) ---
-
     [SyncVar(hook = nameof(OnCollectedChanged))]
     private bool isCollected = false;
 
     [SyncVar]
     private bool isGrounded = true;
 
-    // Run when the object is initialized on clients
+    // Cache the renderer so we're not calling GetComponent every time
+    private MeshRenderer _meshRenderer;
+
     public override void OnStartClient()
     {
         base.OnStartClient();
-        // Set initial visibility based on state
-        gameObject.SetActive(!isCollected);
+        _meshRenderer = GetComponent<MeshRenderer>();
+        SetVisible(!isCollected);
     }
 
     private void OnCollectedChanged(bool oldVal, bool newVal)
     {
-        gameObject.SetActive(!newVal);
+        SetVisible(!newVal);
+    }
+
+    private void SetVisible(bool visible)
+    {
+        if (_meshRenderer != null)
+            _meshRenderer.enabled = visible;
     }
 
     // ── Grounded state ────────────────────────────────────────────────────────
