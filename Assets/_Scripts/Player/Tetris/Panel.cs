@@ -229,6 +229,7 @@ public class Panel : NetworkBehaviour, IInteractable
         {
             localPlayer.interaction.currentlyInteractingObject = (IInteractable)this;
             localPlayer.FreezePlayer();
+            localPlayer.IsPanelOpen = true; // Block throwing while panel is open
         }
     }
 
@@ -305,7 +306,11 @@ public class Panel : NetworkBehaviour, IInteractable
         inventoryTetris.SetPanelIsOpen(false);
 
         PlayerManager player = GetLocalPlayerManager();
-        player?.UnfreezePlayer();
+        if (player != null)
+        {
+            player.IsPanelOpen = false; // Re-enable throwing now that panel is closed
+            player.UnfreezePlayer();
+        }
     }
 
     private void HandleGridFull()

@@ -1,18 +1,26 @@
-﻿using UnityEngine;
+﻿using UnityEngine.EventSystems;
+using UnityEngine;
+
+using UnityEngine;
 using UnityEngine.EventSystems;
 using Mirror;
 
 public class InventorySlot : MonoBehaviour, IDropHandler
 {
     [SerializeField] private bool bigSlot = false;
+
+    [SerializeField] private GameObject selectIndicator;
+
+    // slotIndex: 0 = big, 1 = small.  Kept for API compatibility with any
+    // code that still references it, but small slots no longer differ by index.
     [SerializeField] private int slotIndex;
 
     private PlayerInventory playerInventory;
     private PlayerInventoryUI playerInventoryUI;
 
-    // In InventorySlot.cs, add these two properties:
     public bool IsBigSlot => bigSlot;
     public int SlotIndex => slotIndex;
+
     private void Start()
     {
         playerInventoryUI = GetComponentInParent<PlayerInventoryUI>();
@@ -28,55 +36,84 @@ public class InventorySlot : MonoBehaviour, IDropHandler
 
     public void OnDrop(PointerEventData eventData)
     {
-        if (transform.childCount > 0) return;
-
         GameObject dropped = eventData.pointerDrag;
-        DraggableItem draggableItem = dropped.GetComponent<DraggableItem>();
+        if (dropped == null) return;
 
-        if (draggableItem != null)
+        // ââ Big-slot path: accept DraggableItem drags (panel / hotbar rearranging) ââ
+        if (bigSlot)
         {
-            if (draggableItem.itemData.largeItem != bigSlot) return;
+            // Only accept drops onto an empty big slot.
+            if (transform.childCount > 0) return;
 
-            InventorySlot originSlot = draggableItem.parentAfterDrag?
-                                                     .GetComponent<InventorySlot>();
-
-            if (originSlot == this)
+            DraggableItem draggable = dropped.GetComponent<DraggableItem>();
+            if (draggable != null && draggable.itemData.largeItem)
             {
-                draggableItem.parentAfterDrag = transform;
+                InventorySlot originSlot = draggable.parentAfterDrag?.GetComponent<InventorySlot>();
+
+                if (originSlot == this)
+                {
+                    draggable.parentAfterDrag = transform;
+                    return;
+                }
+
+                if (originSlot != null)
+                    playerInventory?.SyncItemToSlot(null, originSlot.slotIndex);
+
+                draggable.parentAfterDrag = transform;
+                playerInventory?.SyncItemToSlot(draggable.itemData, slotIndex);
                 return;
             }
 
-            if (originSlot != null)
-                playerInventory?.SyncItemToSlot(null, originSlot.slotIndex);
+            // World drop of a large IStorable into the big slot.
+            IStorable droppable = dropped.GetComponent<IStorable>();
+            if (droppable != null && droppable.GetItemData().largeItem)
+            {
+                ItemData data = droppable.GetItemData();
+                DraggableItem.Create(data, gameObject, playerInventory);
 
-            draggableItem.parentAfterDrag = transform;
-            playerInventory?.SyncItemToSlot(draggableItem.itemData, slotIndex);
+                if (InventoryTetris.IsStealMode)
+                {
+                    Panel stealPanel = InventoryTetris.StealSourcePanel;
+                    InventoryTetris stealSource = InventoryDragDropSystem.Instance.GetStealSource();
+                    if (stealPanel != null && stealSource != null)
+                    {
+                        string updatedJson = stealSource.Save();
+                        stealPanel.CmdCommitSteal(updatedJson);
+                        stealPanel.CloseLocalPanel();
+                    }
+                }
+
+                Destroy(dropped);
+                playerInventory?.StoreBigItem(data);
+            }
+
             return;
         }
 
-        // World drop (IStorable)
-        IStorable droppable = dropped.GetComponent<IStorable>();
-        if (droppable != null && droppable.GetItemData().largeItem == bigSlot)
+        // ââ Small-slot path: count-based stacking, no drag rearranging needed ââ
+
+        // Accept a world drop of a small IStorable (e.g. picking up from ground).
+        IStorable smallDroppable = dropped.GetComponent<IStorable>();
+        if (smallDroppable != null && !smallDroppable.GetItemData().largeItem)
         {
-            ItemData data = droppable.GetItemData();
-            DraggableItem.Create(data, gameObject, playerInventory);
+            if (!playerInventory.HasSmallSpace()) return;
 
-            if (InventoryTetris.IsStealMode)
-            {
-                Panel stealPanel = InventoryTetris.StealSourcePanel;
-                InventoryTetris stealSource = InventoryDragDropSystem.Instance.GetStealSource();
-                if (stealPanel != null && stealSource != null)
-                {
-                    // FIX: Removed the old int localId argument — Panel.CmdCommitSteal now
-                    // reads the sender id server-side automatically via Mirror
-                    string updatedJson = stealSource.Save();
-                    stealPanel.CmdCommitSteal(updatedJson);
-                    stealPanel.CloseLocalPanel();
-                }
-            }
-
+            ItemData data = smallDroppable.GetItemData();
             Destroy(dropped);
-            playerInventory?.SyncItemToSlot(data, slotIndex);
+            playerInventory?.StoreSmallItem(data);
         }
+    }
+
+    // Called by PlayerInventory when a drag-and-drop from a panel needs to
+    // write directly to a slot index (big slot only â mirrors old SyncItemToSlot).
+    public void SyncItemToSlot(ItemData item, int targetSlotIndex)
+    {
+        playerInventory?.SyncItemToSlot(item, targetSlotIndex);
+    }
+
+    public void SetSelected(bool selected)
+    {
+        if (selectIndicator != null)
+            selectIndicator.SetActive(selected);
     }
 }

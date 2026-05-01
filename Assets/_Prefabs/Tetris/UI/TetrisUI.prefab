@@ -290,14 +290,13 @@ MonoBehaviour:
   gridHeight: 6
   cellSize: 200
   itemSODatabase:
-  - {fileID: 11400000, guid: 49d25b1d6f1a837449350a2366050a00, type: 2}
-  - {fileID: 11400000, guid: 70abb4322b7ac8045932bf94199b2cbf, type: 2}
   - {fileID: 11400000, guid: a1b7972966569b543950e2083cf79cc8, type: 2}
   - {fileID: 11400000, guid: bf03ded5ce6cded44b4db2a9f4c73291, type: 2}
-  - {fileID: 11400000, guid: b2b8f4a873edbe144a8ce0210faac1c2, type: 2}
-  - {fileID: 11400000, guid: 62c97a811f72f60458ebe30ce5eb720b, type: 2}
   - {fileID: 11400000, guid: 195d0c219342d754e8c95e97db6f63d9, type: 2}
   - {fileID: 11400000, guid: 51ecbee8d6cb3d848868d46ae7b19a66, type: 2}
+  - {fileID: 11400000, guid: 6354246510ce95b41bdd7f861aa2538f, type: 2}
+  - {fileID: 11400000, guid: 62c97a811f72f60458ebe30ce5eb720b, type: 2}
+  - {fileID: 11400000, guid: b2b8f4a873edbe144a8ce0210faac1c2, type: 2}
 --- !u!114 &4037169443022557898
 MonoBehaviour:
   m_ObjectHideFlags: 0

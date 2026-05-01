@@ -19,6 +19,11 @@ public class PlayerManager : NetworkBehaviour
     // Total kill count -- increments on every kill, including repeat victims.
     public int TotalKillCount { get; private set; } = 0;
 
+    // True while the local player has a Panel UI open (edit, read-only, or steal mode).
+    // Set by Panel.TargetGrantAccess / Panel.CloseLocalPanel.
+    // Used by PlayerInventory to block throwing while a panel is open.
+    public bool IsPanelOpen { get; set; } = false;
+
     public override void OnStartClient()
     {
         base.OnStartClient();

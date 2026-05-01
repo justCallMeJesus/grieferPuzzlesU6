@@ -15,8 +15,8 @@ public class ThrowableItem : NetworkBehaviour
     public bool destroyOnPlayerHit = true;
 
     [Header("Despawn Settings")]
-    public float groundedDespawnDelay = 15f;
-    public float flightTimeoutDuration = 10f;
+    [Tooltip("Total time (seconds) before the item despawns after being thrown. Timer starts the moment it is thrown.")]
+    public float lifetimeDuration = 15f;
     public float blinkWarningDuration = 3f;
     public float blinkInterval = 0.15f;
 
@@ -29,7 +29,6 @@ public class ThrowableItem : NetworkBehaviour
 
     private Coroutine despawnCoroutine;
     private Coroutine blinkCoroutine;
-    private Coroutine flightTimeoutCoroutine;
 
     private Renderer[] renderers;
     private Item itemComponent;
@@ -59,8 +58,13 @@ public class ThrowableItem : NetworkBehaviour
         hasHit = false;
         wasDroppedByPlayer = true;
 
-        if (flightTimeoutDuration > 0f)
-            flightTimeoutCoroutine = StartCoroutine(FlightTimeoutCoroutine());
+        // Start the lifetime timer immediately — item will despawn after
+        // lifetimeDuration regardless of whether it lands or keeps bouncing.
+        if (lifetimeDuration > 0f)
+        {
+            if (despawnCoroutine != null) StopCoroutine(despawnCoroutine);
+            despawnCoroutine = StartCoroutine(DespawnAfterDelay(lifetimeDuration));
+        }
 
         itemComponent?.SetGrounded(false);
 
@@ -91,18 +95,14 @@ public class ThrowableItem : NetworkBehaviour
         hasHit = false;
         wasDroppedByPlayer = true;
 
-        StopActiveCoroutines();
+        // Only stop the blink coroutine — NOT the despawn coroutine.
+        // The despawn coroutine runs on the server (via ServerLaunch) and
+        // must not be cancelled here, or the item will never despawn on a host.
+        if (blinkCoroutine != null) StopCoroutine(blinkCoroutine);
         SetRenderersVisible(true);
-
-        if (isServer && flightTimeoutDuration > 0f)
-            flightTimeoutCoroutine = StartCoroutine(FlightTimeoutCoroutine());
 
         itemComponent?.SetGrounded(false);
 
-        // Physically ignore the thrower's collider so the item can't
-        // deflect off them or register a self-hit on any client.
-        // NetworkClient.spawned is empty on a dedicated server, so we must
-        // also check NetworkServer.spawned (populated on host and server).
         NetworkIdentity throwerIdentity = null;
         if (NetworkServer.spawned.TryGetValue(throwerNetId, out NetworkIdentity serverIdentity))
             throwerIdentity = serverIdentity;
@@ -115,7 +115,6 @@ public class ThrowableItem : NetworkBehaviour
             if (throwerCol != null && thisCollider != null)
                 Physics.IgnoreCollision(thisCollider, throwerCol, true);
         }
-
     }
 
     void OnCollisionEnter(Collision collision)
@@ -144,16 +143,10 @@ public class ThrowableItem : NetworkBehaviour
         }
 
         // Hit ground / wall — item is now at rest.
+        // The lifetime timer (started at throw time) is already running;
+        // no need to start a separate grounded despawn here.
         hasHit = true;
         RpcOnLanded();
-
-        if (flightTimeoutCoroutine != null) StopCoroutine(flightTimeoutCoroutine);
-
-        if (wasDroppedByPlayer && groundedDespawnDelay > 0f)
-        {
-            if (despawnCoroutine != null) StopCoroutine(despawnCoroutine);
-            despawnCoroutine = StartCoroutine(DespawnAfterDelay(groundedDespawnDelay));
-        }
     }
 
     [ClientRpc]
@@ -190,13 +183,6 @@ public class ThrowableItem : NetworkBehaviour
             NetworkServer.Destroy(gameObject);
     }
 
-    private IEnumerator FlightTimeoutCoroutine()
-    {
-        yield return new WaitForSeconds(flightTimeoutDuration);
-        if (gameObject != null)
-            NetworkServer.Destroy(gameObject);
-    }
-
     [ClientRpc]
     private void RpcStartBlink()
     {
@@ -226,7 +212,6 @@ public class ThrowableItem : NetworkBehaviour
     {
         if (despawnCoroutine != null) StopCoroutine(despawnCoroutine);
         if (blinkCoroutine != null) StopCoroutine(blinkCoroutine);
-        if (flightTimeoutCoroutine != null) StopCoroutine(flightTimeoutCoroutine);
     }
 
     private PlayerManager GetPlayerByConnId(int connId)

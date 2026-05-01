@@ -424,6 +424,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8138546632748480625, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
+      propertyPath: m_AssetId
+      value: 60814c238c4f46b4587f58dcfc06242c
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5995171435285576790, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
     m_RemovedGameObjects:
@@ -462,12 +466,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec286555256c5044fabc3d1fd26fc12f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThrowableItem
-  throwForce: 5
+  syncMode: 0
+  syncInterval: 0.1
+  throwForce: 3
   upwardAngle: 10
   stunDuration: 2
   knockbackForce: 8
   destroyOnPlayerHit: 1
-  throwerClientId: 18446744073709551615
+  lifetimeDuration: 15
+  blinkWarningDuration: 3
+  blinkInterval: 0.15
+  throwerConnectionId: -1
 --- !u!4 &3281430346895290428 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7839003023019968176, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}

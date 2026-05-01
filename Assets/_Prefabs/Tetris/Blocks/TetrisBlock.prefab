@@ -256,13 +256,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ThrowableItem
   syncMode: 0
   syncInterval: 0.1
-  throwForce: 5
+  throwForce: 3
   upwardAngle: 10
   stunDuration: 2
   knockbackForce: 8
   destroyOnPlayerHit: 1
-  groundedDespawnDelay: 15
-  flightTimeoutDuration: 10
+  lifetimeDuration: 15
   blinkWarningDuration: 3
   blinkInterval: 0.15
   throwerConnectionId: -1
