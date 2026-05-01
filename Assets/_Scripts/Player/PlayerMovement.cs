@@ -19,7 +19,13 @@ public class PlayerMovement : NetworkBehaviour
     private GameObject spawnedCamera;
 
     [Header("Animation")]
-    [SerializeField] private Animator anim; // Drag your Animator here in the Inspector
+    [SerializeField] private Animator anim;
+
+    [Header("Walking Sound")]
+    [SerializeField] private AudioSource footstepAudioSource;
+    [SerializeField] private AudioClip footstepClip;
+    [SerializeField] private float footstepMinDistance = 1f;  // Full volume within this range
+    [SerializeField] private float footstepMaxDistance = 20f; // Silent beyond this range
 
     [Header("Free Movement Parameters")]
     public float speed = 4f;
@@ -32,17 +38,30 @@ public class PlayerMovement : NetworkBehaviour
     private void Awake()
     {
         currentMode = freeMovement;
-        // Safety check: if you forgot to drag it in, try to find it on this object
         if (anim == null) anim = GetComponent<Animator>();
+
+        if (footstepAudioSource == null)
+            footstepAudioSource = gameObject.AddComponent<AudioSource>();
+
+        footstepAudioSource.clip = footstepClip;
+        footstepAudioSource.loop = true;
+        footstepAudioSource.playOnAwake = false;
+        footstepAudioSource.spatialBlend = 1f;           // Full 3D — Unity handles distance falloff
+        footstepAudioSource.rolloffMode = AudioRolloffMode.Linear;
+        footstepAudioSource.minDistance = footstepMinDistance;
+        footstepAudioSource.maxDistance = footstepMaxDistance;
     }
 
     private void Update()
     {
-        if (!isLocalPlayer) return;
+        // Input & camera controls only run for the local player
+        if (isLocalPlayer)
+        {
+            if (Keyboard.current.iKey.wasPressedThisFrame) OnDeathSpectate();
+            if (Keyboard.current.pKey.wasPressedThisFrame) OnRespawnCamera();
+        }
 
-        if (Keyboard.current.iKey.wasPressedThisFrame) OnDeathSpectate();
-        if (Keyboard.current.pKey.wasPressedThisFrame) OnRespawnCamera();
-
+        // Movement and footsteps run for ALL players (so remote players animate and make noise)
         currentMode.Tick(this);
     }
 
@@ -55,47 +74,63 @@ public class PlayerMovement : NetworkBehaviour
     {
         public void Tick(PlayerMovement player)
         {
-            Vector2 inputVector = player.Move.action.ReadValue<Vector2>().normalized;
-            Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
-
-            // --- ANIMATION LOGIC START ---
-            // We use the magnitude of the input to drive the "Speed" float
-            if (player.anim != null)
+            // Only the local player reads input and moves via physics.
+            // Remote players are moved by Mirror's NetworkTransform, so we only
+            // need to drive their footstep audio based on whether they're actually moving.
+            if (player.isLocalPlayer)
             {
-                player.anim.SetFloat("Speed", inputVector.magnitude);
-            }
-            // --- ANIMATION LOGIC END ---
+                Vector2 inputVector = player.Move.action.ReadValue<Vector2>().normalized;
+                Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
 
-            float moveDistance = player.speed * Time.deltaTime;
-            float playerRadius = 0.3f;
-            float playerHeight = 1f;
+                if (player.anim != null)
+                    player.anim.SetFloat("Speed", inputVector.magnitude);
 
-            bool canMove = !Physics.CapsuleCast(player.transform.position + Vector3.up * 0.5f,
-                player.transform.position + Vector3.up * playerHeight, playerRadius, moveDir,
-                out RaycastHit hit, moveDistance, ~player.collisionIgnoreMask);
-
-            float rotateSpeed = 25f;
-            if (moveDir != Vector3.zero)
-            {
-                player.transform.forward = Vector3.Slerp(player.transform.forward, moveDir, Time.deltaTime * rotateSpeed);
-            }
-
-            if (!canMove)
-            {
-                Vector3 moveDirX = new Vector3(moveDir.x, 0, 0);
-                canMove = !Physics.CapsuleCast(player.transform.position, player.transform.position + Vector3.up * playerHeight, playerRadius, moveDirX, moveDistance);
-                if (canMove) moveDir = moveDirX;
+                if (inputVector.magnitude > 0.1f)
+                    player.ResumeFootsteps();
                 else
-                {
-                    Vector3 moveDirZ = new Vector3(0, 0, moveDir.z);
-                    canMove = !Physics.CapsuleCast(player.transform.position, player.transform.position + Vector3.up * playerHeight, playerRadius, moveDirZ, moveDistance);
-                    if (canMove) moveDir = moveDirZ;
-                }
-            }
+                    player.PauseFootsteps();
 
-            if (canMove)
+                float moveDistance = player.speed * Time.deltaTime;
+                float playerRadius = 0.3f;
+                float playerHeight = 1f;
+
+                bool canMove = !Physics.CapsuleCast(player.transform.position + Vector3.up * 0.5f,
+                    player.transform.position + Vector3.up * playerHeight, playerRadius, moveDir,
+                    out RaycastHit hit, moveDistance, ~player.collisionIgnoreMask);
+
+                float rotateSpeed = 25f;
+                if (moveDir != Vector3.zero)
+                    player.transform.forward = Vector3.Slerp(player.transform.forward, moveDir, Time.deltaTime * rotateSpeed);
+
+                if (!canMove)
+                {
+                    Vector3 moveDirX = new Vector3(moveDir.x, 0, 0);
+                    canMove = !Physics.CapsuleCast(player.transform.position, player.transform.position + Vector3.up * playerHeight, playerRadius, moveDirX, moveDistance);
+                    if (canMove) moveDir = moveDirX;
+                    else
+                    {
+                        Vector3 moveDirZ = new Vector3(0, 0, moveDir.z);
+                        canMove = !Physics.CapsuleCast(player.transform.position, player.transform.position + Vector3.up * playerHeight, playerRadius, moveDirZ, moveDistance);
+                        if (canMove) moveDir = moveDirZ;
+                    }
+                }
+
+                if (canMove)
+                    player.transform.position += moveDir * moveDistance;
+            }
+            else
             {
-                player.transform.position += moveDir * moveDistance;
+                // For remote players, check if they're actually moving (NetworkTransform is
+                // updating their position) and drive footsteps + animation accordingly.
+                bool remoteIsMoving = player.IsMoving();
+
+                if (player.anim != null)
+                    player.anim.SetFloat("Speed", remoteIsMoving ? 1f : 0f);
+
+                if (remoteIsMoving)
+                    player.ResumeFootsteps();
+                else
+                    player.PauseFootsteps();
             }
         }
     }
@@ -104,12 +139,25 @@ public class PlayerMovement : NetworkBehaviour
     {
         public void Tick(PlayerMovement player)
         {
-            // Set speed to 0 when movement is disabled
             if (player.anim != null) player.anim.SetFloat("Speed", 0f);
+            player.PauseFootsteps();
         }
     }
 
-    // ... (Rest of your RpcHideUI, OnStartLocalPlayer, Spectate methods remain the same)
+    public void ResumeFootsteps()
+    {
+        if (footstepAudioSource == null) return;
+        if (!footstepAudioSource.isPlaying)
+            footstepAudioSource.Play();
+    }
+
+    public void PauseFootsteps()
+    {
+        if (footstepAudioSource == null) return;
+        if (footstepAudioSource.isPlaying)
+            footstepAudioSource.Pause();
+    }
+
     [ClientRpc]
     public void RpcHideUI()
     {
@@ -165,8 +213,17 @@ public class PlayerMovement : NetworkBehaviour
         }
     }
 
+    // For remote players: treat any velocity (position change) as movement.
+    // We reuse the velocity Mirror's NetworkTransform gives us via position delta.
+    private Vector3 _lastPosition;
     public bool IsMoving()
     {
-        return Move.action.ReadValue<Vector2>().magnitude > 0f;
+        if (isLocalPlayer)
+            return Move.action.ReadValue<Vector2>().magnitude > 0f;
+
+        // Remote: detect movement from position change each frame
+        bool moved = Vector3.Distance(transform.position, _lastPosition) > 0.001f;
+        _lastPosition = transform.position;
+        return moved;
     }
 }
