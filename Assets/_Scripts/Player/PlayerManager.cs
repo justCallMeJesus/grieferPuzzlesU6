@@ -104,4 +104,10 @@ public class PlayerManager : NetworkBehaviour
 
     public void FreezePlayer() => movement.DisableMovement();
     public void UnfreezePlayer() => movement.EnableMovement();
+
+
+    private void Awake()
+    {
+        gameObject.AddComponent<AudioListener>();
+    }
 }
