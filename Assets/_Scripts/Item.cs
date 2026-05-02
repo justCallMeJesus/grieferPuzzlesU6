@@ -66,11 +66,13 @@ public class Item : NetworkBehaviour, IPickupable
         {
             if (!player.HasSmallSpace()) return;
             CmdPickup(player.gameObject);
+            SoundManager.Instance?.PlayOneShot("ItemGrab");
         }
         else
         {
             if (!player.HasBigSpace()) return;
             CmdPickupLarge(player.gameObject);
+            SoundManager.Instance?.PlayOneShot("ItemGrab");
         }
     }
 

@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5937766146953625649
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8093943496458428168}
+  - component: {fileID: 1226728938572607009}
+  m_Layer: 0
+  m_Name: SoundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8093943496458428168
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5937766146953625649}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -93.60815, y: 11.54832, z: 73.27476}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1226728938572607009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5937766146953625649}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a399c1f642436c64bbb214ec9477bab6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SoundManager
+  sounds:
+  - id: TetrisPickup
+    clip: {fileID: 8300000, guid: f2da4c61b49b2b54ca5b8c1dfd4ffea2, type: 3}
+    volume: 1
+    pitch: 2.18
+    pitchVariance: 0
+    loop: 0
+    source: {fileID: 0}
+  - id: ItemGrab
+    clip: {fileID: 8300000, guid: 001f34f95dd97e748b5306abb5e0dd3a, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    loop: 0
+    source: {fileID: 0}
+  - id: TetrisTurn
+    clip: {fileID: 8300000, guid: c9faf5e093da7c64995e47ee4cc8ae70, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+    loop: 0
+    source: {fileID: 0}
+  - id: TetrisPlace
+    clip: {fileID: 8300000, guid: 9b205fa9c99909d41858455ac8eeaff7, type: 3}
+    volume: 1
+    pitch: 1.56
+    pitchVariance: 0
+    loop: 0
+    source: {fileID: 0}
+  - id: BlockThrowing
+    clip: {fileID: 8300000, guid: 001f34f95dd97e748b5306abb5e0dd3a, type: 3}
+    volume: 1
+    pitch: 1.1
+    pitchVariance: 0
+    loop: 0
+    source: {fileID: 0}
+  masterVolume: 1
