@@ -47,19 +47,13 @@ public class ThrowableItem : NetworkBehaviour
         lastVelocity = rb.linearVelocity;
     }
 
-    /// <summary>
-    /// Called directly on the server instance after spawn to apply physics and
-    /// set up ignore-collision. RpcLaunch handles the same for all clients.
-    /// </summary>
     public void ServerLaunch(Vector3 direction, int connId, uint throwerNetId)
     {
-        RpcHideForThrow(); // hide on all clients the moment it's thrown
+        RpcHideForThrow();
         throwerConnectionId = connId;
         hasHit = false;
         wasDroppedByPlayer = true;
 
-        // Start the lifetime timer immediately — item will despawn after
-        // lifetimeDuration regardless of whether it lands or keeps bouncing.
         if (lifetimeDuration > 0f)
         {
             if (despawnCoroutine != null) StopCoroutine(despawnCoroutine);
@@ -78,16 +72,13 @@ public class ThrowableItem : NetworkBehaviour
         Vector3 throwDir = direction + Vector3.up * Mathf.Tan(upwardAngle * Mathf.Deg2Rad);
         rb.AddForce(throwDir.normalized * throwForce, ForceMode.Impulse);
     }
+
     [ClientRpc]
     private void RpcHideForThrow()
     {
         SetRenderersVisible(false);
     }
 
-    /// <summary>
-    /// Call this on the server before calling RpcLaunch.
-    /// throwerNetId = the netId of the player who threw this item.
-    /// </summary>
     [ClientRpc]
     public void RpcLaunch(Vector3 direction, int throwerId, uint throwerNetId)
     {
@@ -95,9 +86,6 @@ public class ThrowableItem : NetworkBehaviour
         hasHit = false;
         wasDroppedByPlayer = true;
 
-        // Only stop the blink coroutine — NOT the despawn coroutine.
-        // The despawn coroutine runs on the server (via ServerLaunch) and
-        // must not be cancelled here, or the item will never despawn on a host.
         if (blinkCoroutine != null) StopCoroutine(blinkCoroutine);
         SetRenderersVisible(true);
 
@@ -119,12 +107,10 @@ public class ThrowableItem : NetworkBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        // Only the server resolves hit logic.
         if (!isServer || hasHit) return;
 
         if (collision.gameObject.TryGetComponent(out PlayerManager hitPlayer))
         {
-            // Self-hit guard (server-side, belt-and-suspenders).
             bool isSelfHit = hitPlayer.connectionToClient != null
                 && hitPlayer.connectionToClient.connectionId == throwerConnectionId;
 
@@ -136,24 +122,56 @@ public class ThrowableItem : NetworkBehaviour
                 throwerManager?.RegisterKill(hitPlayer.netId);
             }
 
+            // Respawn the hit player at their assigned spawn
+            if (hitPlayer.connectionToClient != null)
+            {
+                int hitConnId = hitPlayer.connectionToClient.connectionId;
+                if (ConnectionsManager.PlayerSpawns.TryGetValue(hitConnId, out Transform spawn))
+                {
+                    hitPlayer.transform.position = spawn.position;
+                    hitPlayer.transform.rotation = spawn.rotation;
+
+                    Rigidbody hitRb = hitPlayer.GetComponent<Rigidbody>();
+                    if (hitRb != null)
+                    {
+                        hitRb.linearVelocity = Vector3.zero;
+                        hitRb.angularVelocity = Vector3.zero;
+                    }
+
+                    RpcRespawnPlayer(hitPlayer.netId, spawn.position, spawn.rotation);
+                }
+            }
+
             if (destroyOnPlayerHit)
                 NetworkServer.Destroy(gameObject);
 
             return;
         }
 
-        // Hit ground / wall — item is now at rest.
-        // The lifetime timer (started at throw time) is already running;
-        // no need to start a separate grounded despawn here.
         hasHit = true;
         RpcOnLanded();
     }
 
     [ClientRpc]
+    private void RpcRespawnPlayer(uint playerNetId, Vector3 position, Quaternion rotation)
+    {
+        if (NetworkClient.spawned.TryGetValue(playerNetId, out NetworkIdentity identity))
+        {
+            identity.transform.position = position;
+            identity.transform.rotation = rotation;
+
+            Rigidbody hitRb = identity.GetComponent<Rigidbody>();
+            if (hitRb != null)
+            {
+                hitRb.linearVelocity = Vector3.zero;
+                hitRb.angularVelocity = Vector3.zero;
+            }
+        }
+    }
+
+    [ClientRpc]
     private void RpcOnLanded()
     {
-        // Per-object: ignore collision with every player that currently exists.
-        // This does NOT affect any other throwable in the scene.
         if (thisCollider != null)
         {
             foreach (var player in FindObjectsByType<PlayerManager>(FindObjectsSortMode.None))

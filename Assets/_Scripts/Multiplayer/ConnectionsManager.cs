@@ -2,6 +2,7 @@ using Mirror;
 using Steamworks;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 public class ConnectionsManager : NetworkManager
@@ -9,6 +10,9 @@ public class ConnectionsManager : NetworkManager
     [Header("Game Start Settings")]
     public float readyWaitTimeout = 10f;
     public GameObject PlayerPrefab;
+
+    // Maps connectionId -> spawn Transform so ThrowableItem can respawn players
+    public static readonly Dictionary<int, Transform> PlayerSpawns = new Dictionary<int, Transform>();
 
     public override void OnServerSceneChanged(string sceneName)
     {
@@ -56,6 +60,8 @@ public class ConnectionsManager : NetworkManager
 
     private void SpawnPlayers()
     {
+        PlayerSpawns.Clear();
+
         var sortedSpawns = startPositions.OrderBy(s => s.name).ToList();
         int playerIndex = 0;
 
@@ -69,6 +75,8 @@ public class ConnectionsManager : NetworkManager
             PlayerManager playerManager = playerTank.GetComponent<PlayerManager>();
 
             NetworkServer.AddPlayerForConnection(conn, playerTank);
+
+            PlayerSpawns[conn.connectionId] = chosenSpawn;
 
             spawnPoint.panel.SetOwner(playerManager, conn);
 
