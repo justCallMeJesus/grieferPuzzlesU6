@@ -198,6 +198,15 @@ public class PlayerInventory : NetworkBehaviour
         }
     }
 
+    [Server]
+    public void ClearInventory()
+    {
+        bigInventorySlot = null;
+        smallItemType = null;
+        smallItemCount = 0;
+        PushStateToClient();
+    }
+
     // -------------------------------------------------------------------------
     // Big-slot drag-drop compatibility (used by InventorySlot / panel system)
     // Only slot 0 (big) is meaningful here; small items use StoreSmallItem.
