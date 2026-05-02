@@ -98,6 +98,12 @@ public class SoundManager : MonoBehaviour
                 sound.source.volume = sound.volume * masterVolume;
         }
     }
+    public void PlayOneShotFromEntry(SoundEntry sound)
+    {
+        float pitch = sound.pitch + Random.Range(-sound.pitchVariance, sound.pitchVariance);
+        sound.source.pitch = pitch;
+        sound.source.PlayOneShot(sound.clip, sound.volume * masterVolume);
+    }
 
     // ── Helpers ─────────────────────────────────────────────
 

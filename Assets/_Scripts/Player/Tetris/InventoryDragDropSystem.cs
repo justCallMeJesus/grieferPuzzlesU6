@@ -30,7 +30,10 @@ public class InventoryDragDropSystem : MonoBehaviour
         if (!isDragging) return;
 
         if (Keyboard.current.rKey.wasPressedThisFrame)
+        {
             currentDir = ItemTetrisSO.GetNextDir(currentDir);
+            SoundManager.Instance?.PlayOneShot("TetrisTurn");
+        }
 
         SnapDraggedItem();
 
@@ -86,6 +89,7 @@ public class InventoryDragDropSystem : MonoBehaviour
 
         inventory.PickUpItem(item);
         draggingItem.transform.SetAsLastSibling();
+        SoundManager.Instance?.PlayOneShot("TetrisPickup");
     }
 
     public void EndDrag()
@@ -125,6 +129,7 @@ public class InventoryDragDropSystem : MonoBehaviour
                 {
                     item.DestroySelf();
                     placed = true;
+                    SoundManager.Instance?.PlayOneShot("TetrisPlace");
                 }
             }
 
@@ -169,12 +174,11 @@ public class InventoryDragDropSystem : MonoBehaviour
                 item.DestroySelf();
                 if (stealPanel != null)
                 {
-                    // FIX: Removed the old int localId argument — Panel.CmdCommitSteal now
-                    // reads the sender id server-side automatically via Mirror
                     string updatedJson = source.Save();
                     stealPanel.CmdCommitSteal(updatedJson);
                     Debug.Log($"[InventoryDragDropSystem] Steal committed via Mirror Command.");
                 }
+                SoundManager.Instance?.PlayOneShot("TetrisPlace");
                 placed = true;
             }
         }

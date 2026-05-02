@@ -67,26 +67,25 @@ public class PlayerInteraction : NetworkBehaviour
         Debug.Log("Pickup action performed");
         if (closestPickupableInRange != null)
         {
-            // This triggers the Command inside the item for pickup
             closestPickupableInRange.OnPickup(playerManager.inventory);
         }
     }
 
     private void Update()
     {
-       
+
         // Only the local player needs to run the detection logic for UI/Interaction
         if (!isLocalPlayer) return;
-        
-            Collider[] hits = Physics.OverlapSphere(transform.position, interactRadius);
 
-            List<IPickupable> pickupables = new List<IPickupable>();
-            List<IInteractable> interactables = new List<IInteractable>();
+        Collider[] hits = Physics.OverlapSphere(transform.position, interactRadius);
 
-            foreach (Collider hit in hits)
-            {
-                IPickupable item = hit.GetComponent<IPickupable>();
-                if (item != null) pickupables.Add(item);
+        List<IPickupable> pickupables = new List<IPickupable>();
+        List<IInteractable> interactables = new List<IInteractable>();
+
+        foreach (Collider hit in hits)
+        {
+            IPickupable item = hit.GetComponent<IPickupable>();
+            if (item != null) pickupables.Add(item);
             NetworkIdentity ni = hit.GetComponent<NetworkIdentity>();
             if (ni != null)
             {
@@ -94,62 +93,62 @@ public class PlayerInteraction : NetworkBehaviour
 
                 if (interactable != null) interactables.Add(interactable);
             }
-            }
+        }
 
-            // --- Handle Pickupables ---
-            if (pickupables.Count > 0)
+        // --- Handle Pickupables ---
+        if (pickupables.Count > 0)
+        {
+            IPickupable closest = null;
+            float minDistance = Mathf.Infinity;
+            Vector3 playerPos = transform.position;
+
+            foreach (IPickupable item in pickupables)
             {
-                IPickupable closest = null;
-                float minDistance = Mathf.Infinity;
-                Vector3 playerPos = transform.position;
-
-                foreach (IPickupable item in pickupables)
+                float distance = Vector3.Distance(playerPos, item.GameObject.transform.position);
+                if (distance < minDistance)
                 {
-                    float distance = Vector3.Distance(playerPos, item.GameObject.transform.position);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        closest = item;
-                    }
+                    minDistance = distance;
+                    closest = item;
                 }
-                closestPickupableInRange = closest;
-                objectInRange = closest.GameObject;
             }
-            else
-            {
-                closestPickupableInRange = null;
-            }
+            closestPickupableInRange = closest;
+            objectInRange = closest.GameObject;
+        }
+        else
+        {
+            closestPickupableInRange = null;
+        }
 
-            // --- Handle Interactables ---
-            if (interactables.Count > 0)
-            {
-                IInteractable closest = null;
-                float minDistance = Mathf.Infinity;
-                Vector3 playerPos = transform.position;
+        // --- Handle Interactables ---
+        if (interactables.Count > 0)
+        {
+            IInteractable closest = null;
+            float minDistance = Mathf.Infinity;
+            Vector3 playerPos = transform.position;
 
-                foreach (IInteractable item in interactables)
+            foreach (IInteractable item in interactables)
+            {
+                float distance = Vector3.Distance(playerPos, item.GameObject.transform.position);
+                if (distance < minDistance)
                 {
-                    float distance = Vector3.Distance(playerPos, item.GameObject.transform.position);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        closest = item;
-                    }
+                    minDistance = distance;
+                    closest = item;
                 }
-                closestInteractableInRange = closest;
-                objectInRange = closest.GameObject;
             }
-            else
-            {
-                closestInteractableInRange = null;
-            }
+            closestInteractableInRange = closest;
+            objectInRange = closest.GameObject;
+        }
+        else
+        {
+            closestInteractableInRange = null;
+        }
 
-            // If nothing is in range, clear the objectInRange reference
-            if (closestPickupableInRange == null && closestInteractableInRange == null)
-            {
-                objectInRange = null;
-            }
-        
+        // If nothing is in range, clear the objectInRange reference
+        if (closestPickupableInRange == null && closestInteractableInRange == null)
+        {
+            objectInRange = null;
+        }
+
     }
 
     // Optional: Draw the interaction radius in the editor
