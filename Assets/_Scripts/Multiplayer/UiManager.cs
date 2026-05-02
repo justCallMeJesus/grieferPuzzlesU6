@@ -29,7 +29,7 @@ public class UiManager : MonoBehaviour
     private void Awake()
     {
         // Singleton pattern to keep this manager accessible
-        if (Instance == null) { Instance = this; DontDestroyOnLoad(gameObject); }
+        if (Instance == null) { Instance = this; }
         else { Destroy(gameObject); }
     }
 
@@ -102,7 +102,10 @@ public class UiManager : MonoBehaviour
         if (startGameButton != null)
         {
             // currentLobby.IsOwnedByMe is built into Facepunch
+            
             startGameButton.SetActive(currentLobby.Owner.Id == SteamClient.SteamId);
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            Debug.Log($"Start Game Button active: {startGameButton.activeSelf}");
         }
     }
 

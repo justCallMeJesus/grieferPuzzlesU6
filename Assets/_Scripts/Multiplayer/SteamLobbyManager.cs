@@ -38,7 +38,7 @@ public class SteamLobbyManager : MonoBehaviour
 
     private void Start()
     {
-        DontDestroyOnLoad(this);
+     
 
         SteamMatchmaking.OnLobbyCreated += OnLobbyCreatedCallBack;
         SteamMatchmaking.OnLobbyEntered += OnLobbyEntered;
@@ -129,19 +129,22 @@ public class SteamLobbyManager : MonoBehaviour
     {
         Debug.Log("Entered Steam lobby.");
         currentLobby = lobby;
-
         OnLobbyJoined.Invoke();
 
-        // Clients connect via Mirror here. The host's NetworkManager.StartHost()
-        // is called in OnLobbyCreatedCallBack, so we guard against calling StartClient on the host.
-        if (!NetworkServer.active)
+        // Check if I am the owner. If I am, I should be hosting, not joining.
+        if (lobby.Owner.Id == SteamClient.SteamId)
         {
-            string hostSteamId = lobby.Owner.Id.ToString();
-            NetworkManager.singleton.networkAddress = hostSteamId;
-            NetworkManager.singleton.StartClient();
-            Debug.Log($"Mirror client connecting to host: {hostSteamId}");
+            Debug.Log("I am the Lobby Owner. Mirror is already starting the host.");
+            return;
         }
+
+        // Only join as a client if I am NOT the owner
+        string hostSteamId = lobby.Owner.Id.ToString();
+        NetworkManager.singleton.networkAddress = hostSteamId;
+        NetworkManager.singleton.StartClient();
+        Debug.Log($"Mirror client connecting to host: {hostSteamId}");
     }
+
 
     public async void JoinLobby(SteamId lobbyId)
     {
