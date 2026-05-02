@@ -97,6 +97,22 @@ public class PanelGate : NetworkBehaviour
 
     private void OnFilledPanelsChanged()
     {
+        // --- Visual update: runs on every client (and host) ---
+        filledList.Clear();
+        foreach (var kvp in panelStateTracker.FilledPanels)
+            filledList.Add(kvp.Value);
+
+        if (filledList.Count == 0)
+        {
+            ApplyDefault();
+        }
+        else
+        {
+            cycleIndex = Mathf.Clamp(cycleIndex, 0, filledList.Count - 1);
+            ApplyMaterial(filledList[cycleIndex].TeamColor);
+        }
+
+        // --- Passthrough grant/revoke: server only ---
         if (!isServer) return;
 
         HashSet<int> newOwners = new();
@@ -106,14 +122,12 @@ public class PanelGate : NetworkBehaviour
                 newOwners.Add(kvp.Value.OwnerId);
         }
 
-        // Grant passthrough to newly filled owners.
         foreach (int connId in newOwners)
         {
             if (!passThroughOwners.Contains(connId))
                 SetPassthroughForConnection(connId, true);
         }
 
-        // Revoke passthrough from owners whose panel is no longer full.
         foreach (int connId in passThroughOwners)
         {
             if (!newOwners.Contains(connId))
@@ -123,20 +137,6 @@ public class PanelGate : NetworkBehaviour
         passThroughOwners.Clear();
         foreach (int id in newOwners)
             passThroughOwners.Add(id);
-
-        // Rebuild the visual list.
-        filledList.Clear();
-        foreach (var kvp in panelStateTracker.FilledPanels)
-            filledList.Add(kvp.Value);
-
-        if (filledList.Count == 0)
-        {
-            RpcApplyDefault();
-            return;
-        }
-
-        cycleIndex = Mathf.Clamp(cycleIndex, 0, filledList.Count - 1);
-        RpcApplyMaterial(filledList[cycleIndex].TeamColor?.name ?? "");
     }
 
     // -- Passthrough Helpers (Server to Client) --
@@ -157,39 +157,6 @@ public class PanelGate : NetworkBehaviour
             pm.collisionIgnoreMask |= (1 << gateLayer);
         else
             pm.collisionIgnoreMask &= ~(1 << gateLayer);
-    }
-
-    // -- Visual RPCs --
-
-    [ClientRpc]
-    private void RpcApplyDefault()
-    {
-        filledList.Clear();
-        ApplyDefault();
-    }
-
-    [ClientRpc]
-    private void RpcApplyMaterial(string materialName)
-    {
-        // Rebuild filledList from the tracker on the client side.
-        filledList.Clear();
-        foreach (var kvp in panelStateTracker.FilledPanels)
-            filledList.Add(kvp.Value);
-
-        cycleIndex = Mathf.Clamp(cycleIndex, 0, filledList.Count - 1);
-
-        // Match by name so all clients display the same material.
-        Material mat = null;
-        foreach (var info in filledList)
-        {
-            if (info.TeamColor != null && info.TeamColor.name == materialName)
-            {
-                mat = info.TeamColor;
-                break;
-            }
-        }
-
-        ApplyMaterial(mat ?? (filledList.Count > 0 ? filledList[0].TeamColor : null));
     }
 
     // -- Material Helpers --

@@ -39,6 +39,8 @@ public class Panel : NetworkBehaviour, IInteractable
 
     private bool isLocallyOpen = false;
     private bool isLocallyInStealMode = false;
+
+    [SyncVar(hook = nameof(OnIsFullChanged))]
     private bool isFull = false;
 
     public bool IsFull => isFull;
@@ -309,18 +311,41 @@ public class Panel : NetworkBehaviour, IInteractable
 
     private void HandleGridFull()
     {
-        if (isFull) return;
-        isFull = true;
-        Debug.Log("[Panel] Grid fully filled!");
-        OnPanelFull?.Invoke();
+        // Tell the server — it will set the SyncVar, which fires OnIsFullChanged on all clients.
+        CmdSetFull(true);
     }
 
     private void HandleGridNoLongerFull()
     {
-        if (!isFull) return;
-        isFull = false;
-        Debug.Log("[Panel] Grid no longer full.");
-        OnPanelNoLongerFull?.Invoke();
+        CmdSetFull(false);
+    }
+
+    [Command(requiresAuthority = false)]
+    private void CmdSetFull(bool full, NetworkConnectionToClient sender = null)
+    {
+        // Only the current editor (or the owner) may change the full state.
+        if (sender != null && sender.connectionId != currentUserId && sender.connectionId != ownerId)
+            return;
+
+        if (isFull == full) return;
+        isFull = full; // SyncVar — hook fires on all clients automatically.
+
+        Debug.Log($"[Panel] isFull set to {full} by client {sender?.connectionId}.");
+    }
+
+    // SyncVar hook — fires on every client (and host) whenever isFull changes.
+    private void OnIsFullChanged(bool oldValue, bool newValue)
+    {
+        if (newValue)
+        {
+            Debug.Log("[Panel] Grid fully filled! (synced)");
+            OnPanelFull?.Invoke();
+        }
+        else
+        {
+            Debug.Log("[Panel] Grid no longer full. (synced)");
+            OnPanelNoLongerFull?.Invoke();
+        }
     }
 
     private PlayerManager GetLocalPlayerManager()

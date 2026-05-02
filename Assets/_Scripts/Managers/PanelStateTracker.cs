@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -77,6 +77,12 @@ public class PanelStateTracker : MonoBehaviour
             var listener = new PanelListener(panel, this);
             listener.Subscribe();
             listeners.Add(listener);
+
+            // Catch panels that were already full before we subscribed
+            // (e.g. a client that connects mid-game receives the SyncVar value
+            // immediately, but the hook has already fired on the server).
+            if (panel.IsFull)
+                HandlePanelFull(panel);
         }
     }
 
@@ -94,7 +100,7 @@ public class PanelStateTracker : MonoBehaviour
         int ownerId = panel.GetOwnerId();
         filledPanels[panel] = new FilledPanelInfo(panel, ownerId, panel.teamColor);
 
-        Debug.Log($"[PanelStateTracker] Panel '{panel.name}' full — owner {ownerId}, colour '{panel.teamColor?.name}'.");
+        Debug.Log($"[PanelStateTracker] Panel '{panel.name}' full ï¿½ owner {ownerId}, colour '{panel.teamColor?.name}'.");
         OnFilledPanelsChanged?.Invoke();
     }
 
