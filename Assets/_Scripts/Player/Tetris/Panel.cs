@@ -48,25 +48,8 @@ public class Panel : NetworkBehaviour, IInteractable
 
     // -- Mirror Lifecycle --
 
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-        if (inventoryTetris != null)
-        {
-            inventoryTetris.OnGridFull += HandleGridFull;
-            inventoryTetris.OnGridNoLongerFull += HandleGridNoLongerFull;
-        }
-    }
-
-    public override void OnStopClient()
-    {
-        base.OnStopClient();
-        if (inventoryTetris != null)
-        {
-            inventoryTetris.OnGridFull -= HandleGridFull;
-            inventoryTetris.OnGridNoLongerFull -= HandleGridNoLongerFull;
-        }
-    }
+    public override void OnStartClient() => base.OnStartClient();
+    public override void OnStopClient() => base.OnStopClient();
 
     // -- IInteractable --
 
@@ -227,6 +210,10 @@ public class Panel : NetworkBehaviour, IInteractable
         inventoryPanel.SetActive(true);
         inventoryTetris.SetPanelIsOpen(true);
 
+        // Subscribe now — this is the only panel using InventoryTetris right now.
+        inventoryTetris.OnGridFull += HandleGridFull;
+        inventoryTetris.OnGridNoLongerFull += HandleGridNoLongerFull;
+
         PlayerManager localPlayer = NetworkClient.localPlayer?.GetComponent<PlayerManager>();
         if (localPlayer != null)
         {
@@ -299,6 +286,10 @@ public class Panel : NetworkBehaviour, IInteractable
     {
         isLocallyOpen = false;
         isLocallyInStealMode = false;
+
+        // Unsubscribe before clearing state so no stale events fire during teardown.
+        inventoryTetris.OnGridFull -= HandleGridFull;
+        inventoryTetris.OnGridNoLongerFull -= HandleGridNoLongerFull;
 
         SetDragHandlersEnabled(false);
         inventoryTetris.SetLocalPlayerEditor(false);

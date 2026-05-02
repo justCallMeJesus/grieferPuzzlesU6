@@ -1,4 +1,4 @@
-using Mirror;
+﻿using Mirror;
 using System.Linq;
 using Unity.Cinemachine;
 using UnityEngine;
@@ -46,7 +46,7 @@ public class PlayerMovement : NetworkBehaviour
         footstepAudioSource.clip = footstepClip;
         footstepAudioSource.loop = true;
         footstepAudioSource.playOnAwake = false;
-        footstepAudioSource.spatialBlend = 1f;           // Full 3D � Unity handles distance falloff
+        footstepAudioSource.spatialBlend = 1f;           // Full 3D — Unity handles distance falloff
         footstepAudioSource.rolloffMode = AudioRolloffMode.Linear;
         footstepAudioSource.minDistance = footstepMinDistance;
         footstepAudioSource.maxDistance = footstepMaxDistance;

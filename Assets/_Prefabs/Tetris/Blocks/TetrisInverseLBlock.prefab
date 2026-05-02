@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: TetrisInverseLBlock
       objectReference: {fileID: 0}
+    - target: {fileID: 5866867830976764728, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 7772939223861586711, guid: d10b31887f678d8499910faaeb66bd1c, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
