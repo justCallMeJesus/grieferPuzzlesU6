@@ -1106,7 +1106,7 @@ MonoBehaviour:
   m_text: Close App
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2941,7 +2941,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &61811455
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8885,7 +8885,7 @@ MonoBehaviour:
 '
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -20278,7 +20278,7 @@ MonoBehaviour:
   m_text: X
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 79459efec17a4d00a321bdcc27bbc385, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -38914,7 +38914,7 @@ MonoBehaviour:
   m_text: X
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 79459efec17a4d00a321bdcc27bbc385, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -72217,7 +72217,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1767591928
 RectTransform:
   m_ObjectHideFlags: 0
@@ -72227,8 +72227,8 @@ RectTransform:
   m_GameObject: {fileID: 1767591927}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 2.18, y: 2.18, z: 2.18}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1931722031}
   - {fileID: 171857158}
@@ -76558,7 +76558,7 @@ MonoBehaviour:
   m_text: Rules
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -81553,10 +81553,12 @@ MonoBehaviour:
     is st0len. <color=#FFD700>\n\n3. CLAIM THE CR0WN When a grid is c0mplete, the
     Center Vault 0pens. \u2022 Every0ne is alerted! \u2022 Race t0 the middle t0
     c0llect y0ur Cr0wn. \u2022 Beware: 0thers can still kill y0u and steal pieces
-    t0 reset y0ur pr0gress! <align=center><size=120%>\n\nFirst t0 the Cr0wn wins!"
+    t0 reset y0ur pr0gress! <align=center><size=120%>\n\nFirst t0 the Cr0wn wins!\n\n\nPr0
+    Tip: Use right click t0 aim and then left click t0 sh00t!\nCh0se which item t0
+    use by clicking 1 0r 2"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -84940,7 +84942,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2068396730
 RectTransform:
   m_ObjectHideFlags: 0
@@ -85083,7 +85085,7 @@ MonoBehaviour:
   m_text: Leave
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 4506915905344622943, guid: 1aa585dd26b50564f8fa0e52b4ee4cfa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
