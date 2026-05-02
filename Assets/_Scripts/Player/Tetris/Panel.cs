@@ -11,6 +11,9 @@ public class Panel : NetworkBehaviour, IInteractable
     [SerializeField] private GameObject inventoryPanel;
     [SerializeField] private InventoryTetris inventoryTetris;
 
+    [Header("Team Settings")]
+    public Material teamColor;
+
     private const int NOBODY = -1;
 
     [SyncVar(hook = nameof(OnSavedStateChanged))]
