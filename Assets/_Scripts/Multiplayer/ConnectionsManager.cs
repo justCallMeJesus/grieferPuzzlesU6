@@ -25,15 +25,6 @@ public class ConnectionsManager : NetworkManager
         }
     }
 
-    public override void OnClientSceneChanged()
-    {
-        base.OnClientSceneChanged();
-
-        if (LoadingScreenManager.Instance != null)
-        {
-            LoadingScreenManager.Instance.HideLoadingScreen();
-        }
-    }
 
     [Server]
     private IEnumerator WaitForPlayersAndStart()

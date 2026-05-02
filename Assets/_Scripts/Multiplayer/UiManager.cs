@@ -18,7 +18,6 @@ public class UiManager : MonoBehaviour
     public GameObject RulesContainerCopy; //This is an excact copy in the settings container, im just lazy lol
     public GameObject PauseMenuUI;
     public GameObject MainContainer;
-    public GameObject TetrisContainer;
     public GameObject SettingsContainer;
 
     private bool isPaused = false;
@@ -122,13 +121,6 @@ public class UiManager : MonoBehaviour
         if (LeaveButton != null) LeaveButton.SetActive(false);
         if (startGameButton != null) startGameButton.SetActive(false);
         if (MainContainer != null) MainContainer.SetActive(true);
-
-        Transform inventoryTransform = TetrisContainer.transform.Find("PlayerInventory (Clone)");
-
-        if (inventoryTransform != null)
-        {
-            Destroy(inventoryTransform.gameObject);
-        }
     }
 
     // Some Ui stuff (hopefully every Change in Ui is in this script lol)
@@ -163,6 +155,7 @@ public class UiManager : MonoBehaviour
         if (mainMenuUI != null) mainMenuUI.SetActive(false);
         if (LeaveButton != null) LeaveButton.SetActive(true);
         if (HostedLobbyUI != null) HostedLobbyUI.SetActive(true);
+        if (startGameButton != null) startGameButton.SetActive(false);
     }
 
     // Pause Menu Logic
