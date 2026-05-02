@@ -50,25 +50,8 @@ public class Panel : NetworkBehaviour, IInteractable
 
     // -- Mirror Lifecycle --
 
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-        if (inventoryTetris != null)
-        {
-            inventoryTetris.OnGridFull += HandleGridFull;
-            inventoryTetris.OnGridNoLongerFull += HandleGridNoLongerFull;
-        }
-    }
-
-    public override void OnStopClient()
-    {
-        base.OnStopClient();
-        if (inventoryTetris != null)
-        {
-            inventoryTetris.OnGridFull -= HandleGridFull;
-            inventoryTetris.OnGridNoLongerFull -= HandleGridNoLongerFull;
-        }
-    }
+    public override void OnStartClient() => base.OnStartClient();
+    public override void OnStopClient() => base.OnStopClient();
 
     // -- IInteractable --
 
@@ -162,6 +145,8 @@ public class Panel : NetworkBehaviour, IInteractable
         if (readOnlyUserId == requesterId)
             readOnlyUserId = NOBODY;
 
+        UpdateIsFullFromState(savedState);
+
         Debug.Log($"[Panel] Closed by {requesterId}. Panel is now free.");
     }
 
@@ -187,6 +172,8 @@ public class Panel : NetworkBehaviour, IInteractable
 
         savedState = updatedPanelJson;
         Debug.Log($"[Panel] Client {requesterId} stole from panel owned by {ownerId} (netId {ownerNetId}).");
+
+        UpdateIsFullFromState(savedState);
 
         // Remove steal rights so the thief can only view the panel on future opens.
         // Do NOT transfer ownership — ownerId stays with the original owner so the
@@ -318,24 +305,33 @@ public class Panel : NetworkBehaviour, IInteractable
         }
     }
 
-    private void HandleGridFull()
+    /// <summary>
+    /// Called server-side whenever savedState is written.
+    /// Loads the JSON into InventoryTetris temporarily to check fullness,
+    /// then immediately clears it — the grid UI is not affected.
+    /// </summary>
+    [Server]
+    private void UpdateIsFullFromState(string json)
     {
-        if (isFull) return;
-        if (isServer) isFull = true;  // SyncVar — replicates to all clients via OnIsFullChanged
-        else CmdSetFull(true);
+        if (string.IsNullOrEmpty(json))
+        {
+            SetIsFull(false);
+            return;
+        }
+
+        inventoryTetris.ClearAll();
+        inventoryTetris.Load(json);
+        bool full = inventoryTetris.IsGridFull();
+        inventoryTetris.ClearAll();
+
+        SetIsFull(full);
     }
 
-    private void HandleGridNoLongerFull()
+    [Server]
+    private void SetIsFull(bool value)
     {
-        if (!isFull) return;
-        if (isServer) isFull = false;
-        else CmdSetFull(false);
-    }
-
-    [Command(requiresAuthority = false)]
-    private void CmdSetFull(bool full)
-    {
-        isFull = full;
+        if (isFull == value) return;
+        isFull = value;
     }
 
     private void OnIsFullChanged(bool oldValue, bool newValue)
