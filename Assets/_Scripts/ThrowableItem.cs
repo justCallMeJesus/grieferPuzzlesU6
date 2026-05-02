@@ -3,6 +3,7 @@ using UnityEngine;
 using Mirror;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(AudioSource))]
 public class ThrowableItem : NetworkBehaviour
 {
     [Header("Throw Settings")]
@@ -33,6 +34,7 @@ public class ThrowableItem : NetworkBehaviour
     private Renderer[] renderers;
     private Item itemComponent;
     private Collider thisCollider;
+    private AudioSource audioSource;
 
     void Awake()
     {
@@ -40,6 +42,8 @@ public class ThrowableItem : NetworkBehaviour
         itemComponent = GetComponent<Item>();
         renderers = GetComponentsInChildren<Renderer>();
         thisCollider = GetComponent<Collider>();
+        audioSource = GetComponent<AudioSource>();
+        audioSource.spatialBlend = 1f; // full 3D so distance falloff works
     }
 
     void FixedUpdate()
@@ -77,11 +81,23 @@ public class ThrowableItem : NetworkBehaviour
 
         Vector3 throwDir = direction + Vector3.up * Mathf.Tan(upwardAngle * Mathf.Deg2Rad);
         rb.AddForce(throwDir.normalized * throwForce, ForceMode.Impulse);
+
+        // Broadcast throw sound to all clients (null-checked inside the Rpc).
+        RpcPlayThrowSound();
     }
     [ClientRpc]
     private void RpcHideForThrow()
     {
         SetRenderersVisible(false);
+    }
+
+    [ClientRpc]
+    private void RpcPlayThrowSound()
+    {
+        if (itemComponent == null || itemComponent.ItemData == null) return;
+        AudioClip clip = itemComponent.ItemData.throwSound;
+        if (clip == null) return;
+        audioSource.PlayOneShot(clip);
     }
 
     /// <summary>

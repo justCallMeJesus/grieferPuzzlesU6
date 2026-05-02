@@ -11,6 +11,8 @@ public class ItemData : ScriptableObject
 
     public GameObject prefab;
 
+    public AudioClip throwSound;
+
 
 
 }

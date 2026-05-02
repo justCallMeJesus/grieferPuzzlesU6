@@ -55,6 +55,7 @@ GameObject:
   - component: {fileID: 4320693578364150370}
   - component: {fileID: 7090798729383726257}
   - component: {fileID: 9102513342678327366}
+  - component: {fileID: 5430164114862228295}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -521,6 +522,14 @@ MonoBehaviour:
   syncInterval: 0.1
   clientAuthority: 1
   animator: {fileID: 5829250403124531307}
+--- !u!81 &5430164114862228295
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4476075104031600432}
+  m_Enabled: 1
 --- !u!1 &5555519677867722031
 GameObject:
   m_ObjectHideFlags: 0

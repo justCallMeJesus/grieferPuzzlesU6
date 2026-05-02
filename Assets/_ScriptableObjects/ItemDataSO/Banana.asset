@@ -16,3 +16,4 @@ MonoBehaviour:
   largeItem: 0
   sprite: {fileID: 21300000, guid: 7986e5b6f127bef458705897d6c805c8, type: 3}
   prefab: {fileID: 3518657916991147774, guid: e643239f5b3ada3488c987aca8809a3d, type: 3}
+  throwSound: {fileID: 8300000, guid: 39e1f37758fbe284da1fa73acc7a0761, type: 3}
