@@ -63,6 +63,8 @@ public class PlayerManager : NetworkBehaviour
         playerInventoryUI = Instantiate(playerInventoryUIPrefab, uiParent.transform);
         playerInventoryUI.playerManager = this;
         playerInventoryUI.Init(inventory);
+        if (GetComponent<AudioListener>() == null)
+            gameObject.AddComponent<AudioListener>();
 
     }
 
