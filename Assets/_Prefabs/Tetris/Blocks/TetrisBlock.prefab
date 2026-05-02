@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4269550444728737417}
   - component: {fileID: 2296797539530224710}
   - component: {fileID: 4621954079386811044}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -125,9 +125,7 @@ GameObject:
   - component: {fileID: 4093386471262618260}
   - component: {fileID: 816882100552188492}
   - component: {fileID: 1135152892580464580}
-  - component: {fileID: 5995171435285576790}
-  - component: {fileID: -819051015281955291}
-  - component: {fileID: 1115568661958708351}
+  - component: {fileID: 8138546632748480625}
   m_Layer: 7
   m_Name: TetrisBlock
   m_TagString: Untagged
@@ -166,7 +164,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 441254437
+  GlobalObjectIdHash: 948981789
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -242,76 +240,7 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0.1
   ItemData: {fileID: 11400000, guid: c7fb8186716cae44887d5eb0f8719c71, type: 2}
---- !u!114 &5995171435285576790
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5866867830976764728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec286555256c5044fabc3d1fd26fc12f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ThrowableItem
-  syncMode: 0
-  syncInterval: 0.1
-  throwForce: 3
-  upwardAngle: 10
-  stunDuration: 2
-  knockbackForce: 8
-  destroyOnPlayerHit: 1
-  lifetimeDuration: 15
-  blinkWarningDuration: 3
-  blinkInterval: 0.15
-  throwerConnectionId: -1
---- !u!114 &-819051015281955291
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5866867830976764728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.Components.NetworkTransform
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AutoOwnerAuthorityTickOffset: 1
-  PositionInterpolationType: 0
-  RotationInterpolationType: 0
-  ScaleInterpolationType: 0
-  PositionLerpSmoothing: 1
-  PositionMaxInterpolationTime: 0.1
-  RotationLerpSmoothing: 1
-  RotationMaxInterpolationTime: 0.1
-  ScaleLerpSmoothing: 1
-  ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 0
-  TickSyncChildren: 0
-  UseUnreliableDeltas: 0
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  UseQuaternionSynchronization: 0
-  UseQuaternionCompression: 0
-  UseHalfFloatPrecision: 0
-  InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
-  Interpolate: 1
-  SlerpPosition: 0
---- !u!114 &1115568661958708351
+--- !u!114 &8138546632748480625
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -326,7 +255,7 @@ MonoBehaviour:
   sceneId: 0
   serverOnly: 0
   visible: 0
-  m_AssetId: 733fbf8a469bb8c468c1d78185c5dcb4
+  m_AssetId: d10b31887f678d8499910faaeb66bd1c
   hasSpawned: 0
 --- !u!1 &6905106745844847416
 GameObject:
@@ -340,7 +269,7 @@ GameObject:
   - component: {fileID: 1947404262348923920}
   - component: {fileID: 7772939223861586711}
   - component: {fileID: 4422456607621433413}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -452,7 +381,7 @@ GameObject:
   - component: {fileID: 7869036807974100524}
   - component: {fileID: 4712312187683227309}
   - component: {fileID: 1088252602013545544}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: Cube (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -564,7 +493,7 @@ GameObject:
   - component: {fileID: 5745863203673274984}
   - component: {fileID: 4638605606563947876}
   - component: {fileID: 3222765356657218113}
-  m_Layer: 7
+  m_Layer: 0
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
