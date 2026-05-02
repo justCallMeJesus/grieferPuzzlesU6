@@ -1,4 +1,3 @@
-using Mirror;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,12 +22,44 @@ public class PanelStateTracker : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Holds stable delegate references for a single panel so they can be
+    /// cleanly added and removed without lambda capture issues.
+    /// </summary>
+    private class PanelListener
+    {
+        private readonly Panel panel;
+        private readonly PanelStateTracker tracker;
+
+        public PanelListener(Panel panel, PanelStateTracker tracker)
+        {
+            this.panel = panel;
+            this.tracker = tracker;
+        }
+
+        public void Subscribe()
+        {
+            panel.OnPanelFull += OnFull;
+            panel.OnPanelNoLongerFull += OnNoLongerFull;
+        }
+
+        public void Unsubscribe()
+        {
+            panel.OnPanelFull -= OnFull;
+            panel.OnPanelNoLongerFull -= OnNoLongerFull;
+        }
+
+        private void OnFull() => tracker.HandlePanelFull(panel);
+        private void OnNoLongerFull() => tracker.HandlePanelNoLongerFull(panel);
+    }
+
     [SerializeField] private Panel[] panels = new Panel[4];
 
     /// <summary>Raised whenever the set of filled panels changes.</summary>
     public event System.Action OnFilledPanelsChanged;
 
     private readonly Dictionary<Panel, FilledPanelInfo> filledPanels = new();
+    private readonly List<PanelListener> listeners = new();
 
     // -- Public read-only access --
 
@@ -39,30 +70,21 @@ public class PanelStateTracker : MonoBehaviour
 
     private void OnEnable()
     {
+        listeners.Clear();
         foreach (Panel panel in panels)
-            Subscribe(panel);
+        {
+            if (panel == null) continue;
+            var listener = new PanelListener(panel, this);
+            listener.Subscribe();
+            listeners.Add(listener);
+        }
     }
 
     private void OnDisable()
     {
-        foreach (Panel panel in panels)
-            Unsubscribe(panel);
-    }
-
-    // -- Subscription helpers --
-
-    private void Subscribe(Panel panel)
-    {
-        if (panel == null) return;
-        panel.OnPanelFull += () => HandlePanelFull(panel);
-        panel.OnPanelNoLongerFull += () => HandlePanelNoLongerFull(panel);
-    }
-
-    private void Unsubscribe(Panel panel)
-    {
-        if (panel == null) return;
-        panel.OnPanelFull -= () => HandlePanelFull(panel);
-        panel.OnPanelNoLongerFull -= () => HandlePanelNoLongerFull(panel);
+        foreach (PanelListener listener in listeners)
+            listener.Unsubscribe();
+        listeners.Clear();
     }
 
     // -- Event handlers --
@@ -70,11 +92,9 @@ public class PanelStateTracker : MonoBehaviour
     private void HandlePanelFull(Panel panel)
     {
         int ownerId = panel.GetOwnerId();
-
         filledPanels[panel] = new FilledPanelInfo(panel, ownerId, panel.teamColor);
 
         Debug.Log($"[PanelStateTracker] Panel '{panel.name}' full — owner {ownerId}, colour '{panel.teamColor?.name}'.");
-
         OnFilledPanelsChanged?.Invoke();
     }
 
@@ -83,7 +103,6 @@ public class PanelStateTracker : MonoBehaviour
         if (!filledPanels.Remove(panel)) return;
 
         Debug.Log($"[PanelStateTracker] Panel '{panel.name}' no longer full.");
-
         OnFilledPanelsChanged?.Invoke();
     }
 }
