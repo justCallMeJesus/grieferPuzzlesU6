@@ -30,6 +30,14 @@ public class PlayerManager : NetworkBehaviour
         inventory = GetComponent<PlayerInventory>();
         interaction = GetComponent<PlayerInteraction>();
         movement = GetComponent<PlayerMovement>();
+
+        // Disable the AudioListener on every player that isn't ours.
+        // OnStartClient runs for ALL player objects on every client.
+        if (!isLocalPlayer)
+        {
+            AudioListener al = GetComponent<AudioListener>();
+            if (al != null) al.enabled = false;
+        }
     }
 
     public override void OnStartLocalPlayer()
@@ -56,9 +64,6 @@ public class PlayerManager : NetworkBehaviour
         playerInventoryUI.playerManager = this;
         playerInventoryUI.Init(inventory);
 
-        // Only the local player's camera should have an AudioListener.
-        // Adding it here (instead of Awake) ensures it's skipped on all remote player objects.
-        gameObject.AddComponent<AudioListener>();
     }
 
     /// <summary>
