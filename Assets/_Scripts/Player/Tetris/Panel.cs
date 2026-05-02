@@ -14,6 +14,9 @@ public class Panel : NetworkBehaviour, IInteractable
     [Header("Team Settings")]
     public Material teamColor;
 
+    [Header("Full Indicator")]
+    [SerializeField] private GameObject panelFullIndicator;
+
     private const int NOBODY = -1;
 
     [SyncVar(hook = nameof(OnSavedStateChanged))]
@@ -336,6 +339,9 @@ public class Panel : NetworkBehaviour, IInteractable
     // SyncVar hook — fires on every client (and host) whenever isFull changes.
     private void OnIsFullChanged(bool oldValue, bool newValue)
     {
+        if (panelFullIndicator != null)
+            panelFullIndicator.SetActive(newValue);
+
         if (newValue)
         {
             Debug.Log("[Panel] Grid fully filled! (synced)");
