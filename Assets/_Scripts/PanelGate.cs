@@ -12,6 +12,7 @@ using UnityEngine;
 ///
 /// Any player who owns a filled panel has the gate's layer added to their
 /// collisionIgnoreMask so PlayerMovement's CapsuleCast skips it entirely.
+/// The layer is removed again if their panel is no longer full.
 /// </summary>
 [RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(MeshRenderer))]
@@ -29,16 +30,19 @@ public class PanelGate : NetworkBehaviour
     private MeshRenderer meshRenderer;
     private CapsuleCollider capsuleCollider;
 
-    // The ordered list of materials to display/cycle, owned by this client.
-    private readonly List<Material> activeMaterials = new();
-
-    // Runtime instance of the currently displayed material (never modify shared assets).
+    // Runtime material instance — never modify the shared asset directly.
     private Material activeMaterialInstance;
 
+    // Snapshot of filled panels rebuilt whenever OnFilledPanelsChanged fires.
+    private readonly List<PanelStateTracker.FilledPanelInfo> filledList = new();
+
+    // Which entry in filledList is currently displayed.
     private int cycleIndex = 0;
+
+    // Tracks the previous pulse phase so we can detect a completed pulse cycle.
     private float previousSine = 1f;
 
-    // Server-only: connectionIds currently allowed to pass through.
+    // connectionIds of owners currently allowed to pass through.
     private readonly HashSet<int> passThroughOwners = new();
 
     // -- Unity Lifecycle --
@@ -67,7 +71,7 @@ public class PanelGate : NetworkBehaviour
 
     private void Update()
     {
-        if (activeMaterials.Count == 0) return;
+        if (filledList.Count == 0) return;
 
         float sine = Mathf.Sin(Time.time * pulseSpeed);
         float alpha = Mathf.Lerp(pulseAlphaMin, pulseAlphaMax, (sine + 1f) * 0.5f);
@@ -79,58 +83,63 @@ public class PanelGate : NetworkBehaviour
             activeMaterialInstance.color = c;
         }
 
-        // Advance once per full pulse at the trough crossing.
-        if (activeMaterials.Count > 1 && previousSine < 0f && sine >= 0f)
+        // Advance the cycle index once per full pulse (at the trough crossing).
+        if (filledList.Count > 1 && previousSine < 0f && sine >= 0f)
         {
-            cycleIndex = (cycleIndex + 1) % activeMaterials.Count;
-            SetDisplayMaterial(activeMaterials[cycleIndex]);
+            cycleIndex = (cycleIndex + 1) % filledList.Count;
+            ApplyMaterial(filledList[cycleIndex].TeamColor);
         }
 
         previousSine = sine;
     }
 
-    // -- Server: react to panel state changes --
+    // -- State Management --
 
     private void OnFilledPanelsChanged()
     {
         if (!isServer) return;
 
-        // Build the new owner set and material name list from the tracker.
         HashSet<int> newOwners = new();
-        List<string> materialNames = new();
-
         foreach (var kvp in panelStateTracker.FilledPanels)
         {
-            var info = kvp.Value;
-            if (info.OwnerId != -1)
-                newOwners.Add(info.OwnerId);
-            if (info.TeamColor != null)
-                materialNames.Add(info.TeamColor.name);
+            if (kvp.Value.OwnerId != -1)
+                newOwners.Add(kvp.Value.OwnerId);
         }
 
-        // Update passthrough: grant to new owners, revoke from removed ones.
+        // Grant passthrough to newly filled owners.
         foreach (int connId in newOwners)
+        {
             if (!passThroughOwners.Contains(connId))
                 SetPassthroughForConnection(connId, true);
+        }
 
+        // Revoke passthrough from owners whose panel is no longer full.
         foreach (int connId in passThroughOwners)
+        {
             if (!newOwners.Contains(connId))
                 SetPassthroughForConnection(connId, false);
+        }
 
         passThroughOwners.Clear();
         foreach (int id in newOwners)
             passThroughOwners.Add(id);
 
-        // Push visual state to all clients.
-        // Pass material names as a string array — clients resolve them locally
-        // from their Panel references, which are always available via the scene.
-        if (materialNames.Count == 0)
+        // Rebuild the visual list.
+        filledList.Clear();
+        foreach (var kvp in panelStateTracker.FilledPanels)
+            filledList.Add(kvp.Value);
+
+        if (filledList.Count == 0)
+        {
             RpcApplyDefault();
-        else
-            RpcApplyMaterials(materialNames.ToArray());
+            return;
+        }
+
+        cycleIndex = Mathf.Clamp(cycleIndex, 0, filledList.Count - 1);
+        RpcApplyMaterial(filledList[cycleIndex].TeamColor?.name ?? "");
     }
 
-    // -- Passthrough (server → specific client) --
+    // -- Passthrough Helpers (Server to Client) --
 
     private void SetPassthroughForConnection(int connId, bool ignore)
     {
@@ -150,51 +159,55 @@ public class PanelGate : NetworkBehaviour
             pm.collisionIgnoreMask &= ~(1 << gateLayer);
     }
 
-    // -- Visual RPCs (server → all clients) --
+    // -- Visual RPCs --
 
     [ClientRpc]
     private void RpcApplyDefault()
     {
-        activeMaterials.Clear();
-        cycleIndex = 0;
+        filledList.Clear();
         ApplyDefault();
     }
 
     [ClientRpc]
-    private void RpcApplyMaterials(string[] materialNames)
+    private void RpcApplyMaterial(string materialName)
     {
-        // Resolve material names to actual Material assets via the Panel references
-        // on this client. Panels are scene objects so their serialized fields
-        // (teamColor) are always available regardless of who has them open.
-        activeMaterials.Clear();
-        cycleIndex = 0;
+        // Rebuild filledList from the tracker on the client side.
+        filledList.Clear();
+        foreach (var kvp in panelStateTracker.FilledPanels)
+            filledList.Add(kvp.Value);
 
-        foreach (string matName in materialNames)
+        cycleIndex = Mathf.Clamp(cycleIndex, 0, filledList.Count - 1);
+
+        // Match by name so all clients display the same material.
+        Material mat = null;
+        foreach (var info in filledList)
         {
-            Material mat = FindMaterialByName(matName);
-            if (mat != null)
-                activeMaterials.Add(mat);
+            if (info.TeamColor != null && info.TeamColor.name == materialName)
+            {
+                mat = info.TeamColor;
+                break;
+            }
         }
 
-        if (activeMaterials.Count == 0) { ApplyDefault(); return; }
-
-        SetDisplayMaterial(activeMaterials[0]);
+        ApplyMaterial(mat ?? (filledList.Count > 0 ? filledList[0].TeamColor : null));
     }
 
     // -- Material Helpers --
-
-    private void SetDisplayMaterial(Material source)
-    {
-        DestroyActiveMaterialInstance();
-        activeMaterialInstance = new Material(source);
-        meshRenderer.material = activeMaterialInstance;
-    }
 
     private void ApplyDefault()
     {
         DestroyActiveMaterialInstance();
         meshRenderer.material = defaultMaterial;
         activeMaterialInstance = null;
+    }
+
+    private void ApplyMaterial(Material source)
+    {
+        if (source == null) { ApplyDefault(); return; }
+
+        DestroyActiveMaterialInstance();
+        activeMaterialInstance = new Material(source);
+        meshRenderer.material = activeMaterialInstance;
     }
 
     private void DestroyActiveMaterialInstance()
@@ -204,21 +217,5 @@ public class PanelGate : NetworkBehaviour
             Destroy(activeMaterialInstance);
             activeMaterialInstance = null;
         }
-    }
-
-    /// <summary>
-    /// Finds a Material asset by name by scanning the Panel references
-    /// in the PanelStateTracker. This avoids a Resources.Load dependency.
-    /// </summary>
-    private Material FindMaterialByName(string matName)
-    {
-        // Access panels through the tracker's serialized field via reflection
-        // would be messy — instead we just scan all Panel scene objects directly.
-        foreach (Panel panel in FindObjectsByType<Panel>(FindObjectsSortMode.None))
-        {
-            if (panel.teamColor != null && panel.teamColor.name == matName)
-                return panel.teamColor;
-        }
-        return null;
     }
 }
