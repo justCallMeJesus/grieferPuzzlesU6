@@ -39,8 +39,6 @@ public class Panel : NetworkBehaviour, IInteractable
 
     private bool isLocallyOpen = false;
     private bool isLocallyInStealMode = false;
-
-    [SyncVar(hook = nameof(OnIsFullChanged))]
     private bool isFull = false;
 
     public bool IsFull => isFull;
@@ -50,25 +48,8 @@ public class Panel : NetworkBehaviour, IInteractable
 
     // -- Mirror Lifecycle --
 
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-        if (inventoryTetris != null)
-        {
-            inventoryTetris.OnGridFull += HandleGridFull;
-            inventoryTetris.OnGridNoLongerFull += HandleGridNoLongerFull;
-        }
-    }
-
-    public override void OnStopClient()
-    {
-        base.OnStopClient();
-        if (inventoryTetris != null)
-        {
-            inventoryTetris.OnGridFull -= HandleGridFull;
-            inventoryTetris.OnGridNoLongerFull -= HandleGridNoLongerFull;
-        }
-    }
+    public override void OnStartClient() => base.OnStartClient();
+    public override void OnStopClient() => base.OnStopClient();
 
     // -- IInteractable --
 
@@ -229,6 +210,10 @@ public class Panel : NetworkBehaviour, IInteractable
         inventoryPanel.SetActive(true);
         inventoryTetris.SetPanelIsOpen(true);
 
+        // Subscribe now — this is the only panel using InventoryTetris right now.
+        inventoryTetris.OnGridFull += HandleGridFull;
+        inventoryTetris.OnGridNoLongerFull += HandleGridNoLongerFull;
+
         PlayerManager localPlayer = NetworkClient.localPlayer?.GetComponent<PlayerManager>();
         if (localPlayer != null)
         {
@@ -302,6 +287,10 @@ public class Panel : NetworkBehaviour, IInteractable
         isLocallyOpen = false;
         isLocallyInStealMode = false;
 
+        // Unsubscribe before clearing state so no stale events fire during teardown.
+        inventoryTetris.OnGridFull -= HandleGridFull;
+        inventoryTetris.OnGridNoLongerFull -= HandleGridNoLongerFull;
+
         SetDragHandlersEnabled(false);
         inventoryTetris.SetLocalPlayerEditor(false);
         inventoryTetris.SetStealMode(false, null);
@@ -321,35 +310,17 @@ public class Panel : NetworkBehaviour, IInteractable
     private void HandleGridFull()
     {
         if (isFull) return;
-        if (isServer) isFull = true;  // SyncVar — replicates to all clients via OnIsFullChanged
-        else CmdSetFull(true);
+        isFull = true;
+        Debug.Log("[Panel] Grid fully filled!");
+        OnPanelFull?.Invoke();
     }
 
     private void HandleGridNoLongerFull()
     {
         if (!isFull) return;
-        if (isServer) isFull = false;
-        else CmdSetFull(false);
-    }
-
-    [Command(requiresAuthority = false)]
-    private void CmdSetFull(bool full)
-    {
-        isFull = full;
-    }
-
-    private void OnIsFullChanged(bool oldValue, bool newValue)
-    {
-        if (newValue)
-        {
-            Debug.Log("[Panel] Grid fully filled!");
-            OnPanelFull?.Invoke();
-        }
-        else
-        {
-            Debug.Log("[Panel] Grid no longer full.");
-            OnPanelNoLongerFull?.Invoke();
-        }
+        isFull = false;
+        Debug.Log("[Panel] Grid no longer full.");
+        OnPanelNoLongerFull?.Invoke();
     }
 
     private PlayerManager GetLocalPlayerManager()
