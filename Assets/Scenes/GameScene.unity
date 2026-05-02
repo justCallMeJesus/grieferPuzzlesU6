@@ -1649,11 +1649,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6774274539225945976, guid: cc72a49b8cfd31d4393690ad15b5af6e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: -66
       objectReference: {fileID: 0}
     - target: {fileID: 6774274539225945976, guid: cc72a49b8cfd31d4393690ad15b5af6e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -26
       objectReference: {fileID: 0}
     - target: {fileID: 6774274539225945976, guid: cc72a49b8cfd31d4393690ad15b5af6e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1669,11 +1669,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7258270072878142965, guid: cc72a49b8cfd31d4393690ad15b5af6e, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7613783643965511718, guid: cc72a49b8cfd31d4393690ad15b5af6e, type: 3}
       propertyPath: m_Name
       value: TetrisUI
+      objectReference: {fileID: 0}
+    - target: {fileID: 7613783643965511718, guid: cc72a49b8cfd31d4393690ad15b5af6e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7982046277939207520, guid: cc72a49b8cfd31d4393690ad15b5af6e, type: 3}
       propertyPath: m_LocalScale.x
