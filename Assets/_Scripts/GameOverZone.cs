@@ -19,6 +19,7 @@ public class GameOverZone : NetworkBehaviour
         Debug.Log($"Game Over triggered by: Connection ID {connId}");
 
         RpcShowWinScreen(connId);
+        RpcDisableAllMovement();
     }
 
     [ClientRpc]
@@ -34,5 +35,12 @@ public class GameOverZone : NetworkBehaviour
             YellowWon.SetActive(true);
         else
             Debug.Log($"Unknown player with Connection ID {connId} hit the Game Over zone.");
+    }
+
+    [ClientRpc]
+    private void RpcDisableAllMovement()
+    {
+        foreach (var pm in FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None))
+            pm.DisableMovement();
     }
 }
