@@ -1,4 +1,5 @@
 using Mirror;
+using Steamworks;
 using UnityEngine;
 using System.Collections;
 using System.Linq;
@@ -20,7 +21,6 @@ public class ConnectionsManager : NetworkManager
         }
     }
 
-    // Called on every client (including host) after the scene finishes loading locally
     public override void OnClientSceneChanged()
     {
         base.OnClientSceneChanged();
@@ -67,9 +67,39 @@ public class ConnectionsManager : NetworkManager
             PlayerSpawnpoint spawnPoint = chosenSpawn.GetComponent<PlayerSpawnpoint>();
             GameObject playerTank = Instantiate(PlayerPrefab, chosenSpawn.position, chosenSpawn.rotation);
             PlayerManager playerManager = playerTank.GetComponent<PlayerManager>();
-            spawnPoint.panel.SetOwner(playerManager, conn);
-            
+
             NetworkServer.AddPlayerForConnection(conn, playerTank);
+
+            spawnPoint.panel.SetOwner(playerManager, conn);
+
+            // Steam name
+            string pName;
+            try
+            {
+                pName = new Friend((ulong)conn.connectionId).Name;
+                if (string.IsNullOrEmpty(pName) || pName == "[unknown]")
+                    pName = "Player " + (playerIndex + 1);
+            }
+            catch
+            {
+                Debug.LogWarning($"Failed to get Steam name for connection {conn.connectionId}. Using default name.");
+                pName = "Player " + (playerIndex + 1);
+            }
+
+            // Color & identity
+            PlayerColor identity = playerTank.GetComponent<PlayerColor>();
+            if (identity != null)
+            {
+                identity.SetPlayerIdentity(playerIndex, pName);
+            }
+
+            // Hide UI
+            PlayerMovement playerScript = playerTank.GetComponent<PlayerMovement>();
+            if (playerScript != null)
+            {
+                playerScript.RpcHideUI();
+            }
+
             playerIndex++;
         }
     }
