@@ -155,6 +155,7 @@ MonoBehaviour:
   collisionIgnoreMask:
     serializedVersion: 2
     m_Bits: 128
+  footstepVolume: 0.3
 --- !u!114 &1369480863665674825
 MonoBehaviour:
   m_ObjectHideFlags: 0

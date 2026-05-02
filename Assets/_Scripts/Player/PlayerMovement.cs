@@ -35,6 +35,8 @@ public class PlayerMovement : NetworkBehaviour
     IMovementMode freeMovement = new FreeMovement();
     IMovementMode noMovement = new NoMovement();
 
+    [SerializeField][Range(0f, 1f)] private float footstepVolume = 0.4f;
+
     private void Awake()
     {
         currentMode = freeMovement;
@@ -50,6 +52,7 @@ public class PlayerMovement : NetworkBehaviour
         footstepAudioSource.rolloffMode = AudioRolloffMode.Linear;
         footstepAudioSource.minDistance = footstepMinDistance;
         footstepAudioSource.maxDistance = footstepMaxDistance;
+        footstepAudioSource.volume = footstepVolume;
     }
 
     private void Update()
