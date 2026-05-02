@@ -12,6 +12,7 @@ public class UiManagerGameScene : MonoBehaviour
     [Header("UI Elements")]
 
     public GameObject RulesContainerCopy;
+    public GameObject RulesContainerCopyCopy;
     public GameObject PauseMenuUI;
     public GameObject SettingsContainer;
 
@@ -66,6 +67,11 @@ public class UiManagerGameScene : MonoBehaviour
     public void HideRules()
     {
         if (RulesContainerCopy != null) RulesContainerCopy.SetActive(false);
+    }
+
+    public void HideRulesCopy()
+    {
+        if (RulesContainerCopyCopy != null) RulesContainerCopyCopy.SetActive(false);
     }
 
     private void OpenPauseMenu()
