@@ -5528,13 +5528,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b175930a2104224396fba36fb0cc3fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mirror.FizzySteam.FizzyFacepunch
-  Channels: 0200000001000000
-  Timeout: 25
-  SteamAppID: 480
-  AllowSteamRelay: 1
-  UseNextGenSteamNetworking: 1
-  InitFacepunch: 1
-  SteamUserID: 0
 --- !u!114 &1859523742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5553,7 +5546,7 @@ MonoBehaviour:
   serverTickRate: 30
   offlineScene: Assets/Scenes/LobbyScene.unity
   onlineScene: 
-  transport: {fileID: 1859523741}
+  transport: {fileID: 1859523743}
   networkAddress: localhost
   maxConnections: 100
   authenticator: {fileID: 0}
@@ -5583,7 +5576,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1859523737}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b175930a2104224396fba36fb0cc3fa, type: 3}
+  m_Script: {fileID: 11500000, guid: 6ef1e05b44fdaf147b6af48657c2417a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Mirror.FizzySteam.FizzyFacepunch
   Channels: 0200000001000000

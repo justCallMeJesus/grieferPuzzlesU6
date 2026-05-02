@@ -2,20 +2,31 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Mirror; // Switched from Netcode
+using Mirror;
 
 public class PlayerInteraction : NetworkBehaviour
 {
+    // -------------------------------------------------------------------------
+    // Static event — fired once by the local player when it spawns.
+    // UITooltip (on the Canvas) subscribes to this to get a reference to
+    // the correct PlayerInteraction without any Inspector drag-and-drop.
+    // -------------------------------------------------------------------------
+    public static event Action<PlayerInteraction> OnLocalPlayerSpawned;
+
     [SerializeField] private float interactRadius = 2f;
     [SerializeField] private InputActionReference pickupAction;
     [SerializeField] private InputActionReference objectInteractAction;
 
     public GameObject objectInRange;
-    private IPickupable closestPickupableInRange;
-    private IInteractable closestInteractableInRange;
+
+    // Public properties so UITooltip can read detection state each frame.
+    public IPickupable closestPickupableInRange { get; private set; }
+    public IInteractable closestInteractableInRange { get; private set; }
 
     public PlayerManager playerManager;
     public IInteractable currentlyInteractingObject;
+
+    // -------------------------------------------------------------------------
 
     private void Start()
     {
@@ -24,7 +35,9 @@ public class PlayerInteraction : NetworkBehaviour
 
     public override void OnStartLocalPlayer()
     {
-        // In Mirror, we only want the actual player to listen for inputs
+        // Tell any listening UI that the local player is now alive.
+        OnLocalPlayerSpawned?.Invoke(this);
+
         pickupAction.action.Enable();
         objectInteractAction.action.Enable();
 
@@ -34,16 +47,15 @@ public class PlayerInteraction : NetworkBehaviour
 
     public override void OnStopLocalPlayer()
     {
-        // Clean up listeners when the client stops
         pickupAction.action.performed -= Action_performed;
         objectInteractAction.action.performed -= objectInteractAction_performed;
     }
 
     private void objectInteractAction_performed(InputAction.CallbackContext context)
     {
-        // isLocalPlayer is the Mirror equivalent of IsOwner for the player object
         if (!isLocalPlayer) return;
         Debug.Log("Interact action performed");
+
         if (currentlyInteractingObject != null)
         {
             currentlyInteractingObject.OnStopInteraction(playerManager);
@@ -56,7 +68,6 @@ public class PlayerInteraction : NetworkBehaviour
         {
             if (!closestInteractableInRange.CanInteract()) return;
             Debug.Log("Interacting with object: " + closestInteractableInRange.GameObject.name);
-            // This triggers the Command inside the interactable object (like the Panel)
             closestInteractableInRange.OnInteract(playerManager);
         }
     }
@@ -73,8 +84,6 @@ public class PlayerInteraction : NetworkBehaviour
 
     private void Update()
     {
-
-        // Only the local player needs to run the detection logic for UI/Interaction
         if (!isLocalPlayer) return;
 
         Collider[] hits = Physics.OverlapSphere(transform.position, interactRadius);
@@ -86,11 +95,11 @@ public class PlayerInteraction : NetworkBehaviour
         {
             IPickupable item = hit.GetComponent<IPickupable>();
             if (item != null) pickupables.Add(item);
+
             NetworkIdentity ni = hit.GetComponent<NetworkIdentity>();
             if (ni != null)
             {
                 IInteractable interactable = hit.GetComponent<IInteractable>();
-
                 if (interactable != null) interactables.Add(interactable);
             }
         }
@@ -99,18 +108,15 @@ public class PlayerInteraction : NetworkBehaviour
         if (pickupables.Count > 0)
         {
             IPickupable closest = null;
-            float minDistance = Mathf.Infinity;
+            float minDist = Mathf.Infinity;
             Vector3 playerPos = transform.position;
 
             foreach (IPickupable item in pickupables)
             {
-                float distance = Vector3.Distance(playerPos, item.GameObject.transform.position);
-                if (distance < minDistance)
-                {
-                    minDistance = distance;
-                    closest = item;
-                }
+                float d = Vector3.Distance(playerPos, item.GameObject.transform.position);
+                if (d < minDist) { minDist = d; closest = item; }
             }
+
             closestPickupableInRange = closest;
             objectInRange = closest.GameObject;
         }
@@ -123,18 +129,15 @@ public class PlayerInteraction : NetworkBehaviour
         if (interactables.Count > 0)
         {
             IInteractable closest = null;
-            float minDistance = Mathf.Infinity;
+            float minDist = Mathf.Infinity;
             Vector3 playerPos = transform.position;
 
             foreach (IInteractable item in interactables)
             {
-                float distance = Vector3.Distance(playerPos, item.GameObject.transform.position);
-                if (distance < minDistance)
-                {
-                    minDistance = distance;
-                    closest = item;
-                }
+                float d = Vector3.Distance(playerPos, item.GameObject.transform.position);
+                if (d < minDist) { minDist = d; closest = item; }
             }
+
             closestInteractableInRange = closest;
             objectInRange = closest.GameObject;
         }
@@ -143,15 +146,10 @@ public class PlayerInteraction : NetworkBehaviour
             closestInteractableInRange = null;
         }
 
-        // If nothing is in range, clear the objectInRange reference
         if (closestPickupableInRange == null && closestInteractableInRange == null)
-        {
             objectInRange = null;
-        }
-
     }
 
-    // Optional: Draw the interaction radius in the editor
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
