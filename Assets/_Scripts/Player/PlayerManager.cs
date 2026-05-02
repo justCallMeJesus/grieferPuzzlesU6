@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 
@@ -42,7 +42,7 @@ public class PlayerManager : NetworkBehaviour
             return;
         }
 
-        // Find the container — it should already be on the canvas in the scene
+        // Find the container ï¿½ it should already be on the canvas in the scene
         GameObject uiParent = GameObject.Find("TetrisStuffContainer");
         if (uiParent == null)
         {
@@ -50,11 +50,15 @@ public class PlayerManager : NetworkBehaviour
             return;
         }
 
-        // Don't reparent it — it should already be under the Canvas in your scene hierarchy
+        // Don't reparent it ï¿½ it should already be under the Canvas in your scene hierarchy
 
         playerInventoryUI = Instantiate(playerInventoryUIPrefab, uiParent.transform);
         playerInventoryUI.playerManager = this;
         playerInventoryUI.Init(inventory);
+
+        // Only the local player's camera should have an AudioListener.
+        // Adding it here (instead of Awake) ensures it's skipped on all remote player objects.
+        gameObject.AddComponent<AudioListener>();
     }
 
     /// <summary>
@@ -104,10 +108,4 @@ public class PlayerManager : NetworkBehaviour
 
     public void FreezePlayer() => movement.DisableMovement();
     public void UnfreezePlayer() => movement.EnableMovement();
-
-
-    private void Awake()
-    {
-        gameObject.AddComponent<AudioListener>();
-    }
 }
