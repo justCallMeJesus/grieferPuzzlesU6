@@ -153,6 +153,10 @@ public class ThrowableItem : NetworkBehaviour
                         hitRb.angularVelocity = Vector3.zero;
                     }
 
+                    // Clear the hit player's inventory on death
+                    PlayerInventory hitInventory = hitPlayer.GetComponent<PlayerInventory>();
+                    hitInventory?.ClearInventory();
+
                     RpcRespawnPlayer(hitPlayer.netId, spawn.position, spawn.rotation);
                 }
             }
