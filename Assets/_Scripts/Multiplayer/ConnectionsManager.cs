@@ -64,7 +64,11 @@ public class ConnectionsManager : NetworkManager
             if (!conn.isReady || conn.identity != null) continue;
 
             Transform chosenSpawn = sortedSpawns[playerIndex % sortedSpawns.Count];
+            PlayerSpawnpoint spawnPoint = chosenSpawn.GetComponent<PlayerSpawnpoint>();
             GameObject playerTank = Instantiate(PlayerPrefab, chosenSpawn.position, chosenSpawn.rotation);
+            PlayerManager playerManager = playerTank.GetComponent<PlayerManager>();
+            spawnPoint.panel.SetOwner(playerManager, conn);
+            
             NetworkServer.AddPlayerForConnection(conn, playerTank);
             playerIndex++;
         }

@@ -5291,6 +5291,7 @@ GameObject:
   - component: {fileID: 1859523740}
   - component: {fileID: 1859523741}
   - component: {fileID: 1859523742}
+  - component: {fileID: 1859523743}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -5350,7 +5351,7 @@ MonoBehaviour:
   serverTickRate: 30
   offlineScene: Assets/Scenes/LobbyScene.unity
   onlineScene: 
-  transport: {fileID: 1859523741}
+  transport: {fileID: 1859523743}
   networkAddress: localhost
   maxConnections: 100
   authenticator: {fileID: 0}
@@ -5371,6 +5372,25 @@ MonoBehaviour:
   - {fileID: 1165039230313409972, guid: 65c66b7f7682c6c4789d5f6f7ef842e1, type: 3}
   readyWaitTimeout: 10
   PlayerPrefab: {fileID: 4476075104031600432, guid: febb531ef4c4b684b893405188a8a94c, type: 3}
+--- !u!114 &1859523743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1859523737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ef1e05b44fdaf147b6af48657c2417a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Mirror.FizzySteam.FizzyFacepunch
+  Channels: 0200000001000000
+  Timeout: 25
+  SteamAppID: 480
+  AllowSteamRelay: 1
+  UseNextGenSteamNetworking: 1
+  InitFacepunch: 1
+  SteamUserID: 0
 --- !u!1 &1978725904
 GameObject:
   m_ObjectHideFlags: 0
