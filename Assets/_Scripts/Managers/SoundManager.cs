@@ -25,6 +25,8 @@ public class SoundManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         InitializeSounds();
+
+        Play("Backgroundmusic");
     }
 
     private void InitializeSounds()

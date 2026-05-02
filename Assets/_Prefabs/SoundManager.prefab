@@ -80,4 +80,11 @@ MonoBehaviour:
     pitchVariance: 0
     loop: 0
     source: {fileID: 0}
+  - id: Backgroundmusic
+    clip: {fileID: 8300000, guid: 00998e9e8617c154f879b702fb5d8866, type: 3}
+    volume: 0.135
+    pitch: 1
+    pitchVariance: 0
+    loop: 1
+    source: {fileID: 0}
   masterVolume: 1
