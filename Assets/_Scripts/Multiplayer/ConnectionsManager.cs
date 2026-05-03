@@ -34,11 +34,22 @@ public class ConnectionsManager : NetworkManager
 
         while (elapsed < readyWaitTimeout)
         {
-            bool allReady = NetworkServer.connections.Values.All(conn => conn.isReady);
+            // Count connections that don't yet have a player spawned
+            int pendingCount = NetworkServer.connections.Values.Count(conn => conn.identity == null);
 
-            if (allReady && NetworkServer.connections.Count > 0)
+            if (NetworkServer.connections.Count > 0 && pendingCount == NetworkServer.connections.Count)
             {
-                SpawnPlayers();
+                // No one has been spawned yet — check if all are ready
+                bool allReady = NetworkServer.connections.Values.All(conn => conn.isReady);
+                if (allReady)
+                {
+                    SpawnPlayers();
+                    yield break;
+                }
+            }
+            else if (pendingCount == 0)
+            {
+                // Everyone already has a player — nothing to do
                 yield break;
             }
 
@@ -46,6 +57,7 @@ public class ConnectionsManager : NetworkManager
             yield return new WaitForSeconds(0.5f);
         }
 
+        Debug.LogWarning("Server: Timed out waiting for clients. Spawning whoever is ready.");
         SpawnPlayers();
     }
 
@@ -56,9 +68,10 @@ public class ConnectionsManager : NetworkManager
         var sortedSpawns = startPositions.OrderBy(s => s.name).ToList();
         int playerIndex = 0;
 
-        foreach (var conn in NetworkServer.connections.Values)
+        // Sort by connectionId for consistent spawn order across editor and build
+        foreach (var conn in NetworkServer.connections.Values.OrderBy(c => c.connectionId))
         {
-            if (!conn.isReady || conn.identity != null) continue;
+            if (conn.identity != null) continue; // already has a player
 
             Transform chosenSpawn = sortedSpawns[playerIndex % sortedSpawns.Count];
             PlayerSpawnpoint spawnPoint = chosenSpawn.GetComponent<PlayerSpawnpoint>();
